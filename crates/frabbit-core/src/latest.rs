@@ -10,7 +10,7 @@ use crate::package::{
 use crate::plan::AvailablePackage;
 use crate::version::Version;
 
-const USER_AGENT: &str = "FRABBIT/0.1 (+https://github.com/ReaperAccessible/frabbit)";
+const USER_AGENT: &str = concat!("FRABBIT/", env!("CARGO_PKG_VERSION"), " (+https://github.com/ReaperAccessible/frabbit)");
 
 pub const REAPER_DOWNLOAD_URL: &str = "https://www.reaper.fm/download.php";
 pub const OSARA_UPDATE_URL: &str = "https://osara.reaperaccessibility.com/snapshots/update.json";

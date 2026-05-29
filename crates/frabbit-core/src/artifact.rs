@@ -48,7 +48,7 @@ const DOWNLOAD_PROGRESS_MIN_INTERVAL: Duration = Duration::from_millis(200);
 /// 30 MB in well under a second still produces ~15 progress ticks.
 const DOWNLOAD_PROGRESS_MIN_BYTES: u64 = 256 * 1024;
 
-const USER_AGENT: &str = "FRABBIT/0.1 (+https://github.com/ReaperAccessible/frabbit)";
+const USER_AGENT: &str = concat!("FRABBIT/", env!("CARGO_PKG_VERSION"), " (+https://github.com/ReaperAccessible/frabbit)");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

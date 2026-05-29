@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Assembles a Ffrabbit.app bundle from a built frabbit binary, then wraps it in a
+# Assembles a Frabbit.app bundle from a built frabbit binary, then wraps it in a
 # zip alongside an "Open Me First.command" helper that clears macOS's
 # first-launch quarantine. FRABBIT ships unsigned, so the helper is the
 # friction-free path users take in place of right-click → Open or
 # `xattr -dr com.apple.quarantine`.
 #
 # Zip layout (one wrapper folder so both items extract together):
-#   Ffrabbit/
-#     Ffrabbit.app/Contents/{Info.plist,MacOS/frabbit,Resources,PkgInfo}
+#   Frabbit/
+#     Frabbit.app/Contents/{Info.plist,MacOS/frabbit,Resources,PkgInfo}
 #     Open Me First.command
 set -euo pipefail
 
@@ -16,8 +16,8 @@ usage() {
 Usage: build-bundle.sh --binary <path> --version <x.y.z> --out <dir> --zip-name <name.zip>
   --binary     Path to the built frabbit Mach-O executable.
   --version    Version string to embed in CFBundleVersion / CFBundleShortVersionString.
-  --out        Output directory; will be created if missing. Both Ffrabbit.app and the zip land here.
-  --zip-name   Filename for the zipped bundle (e.g. ffrabbit-0.1.0-macos-aarch64.app.zip).
+  --out        Output directory; will be created if missing. Both Frabbit.app and the zip land here.
+  --zip-name   Filename for the zipped bundle (e.g. frabbit-0.1.0-macos-aarch64.app.zip).
   --adhoc-sign Optionally ad-hoc sign the bundle (codesign -s -). Off by default.
 USAGE
 	exit 64
@@ -57,7 +57,7 @@ if [ ! -f "$INFO_PLIST_TEMPLATE" ]; then
 fi
 
 mkdir -p "$OUT_DIR"
-APP_DIR="$OUT_DIR/Ffrabbit.app"
+APP_DIR="$OUT_DIR/Frabbit.app"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
@@ -92,21 +92,21 @@ if [ "$ADHOC_SIGN" -eq 1 ]; then
 	codesign --force --deep --sign - "$APP_DIR"
 fi
 
-# Stage Ffrabbit.app + the unquarantine helper under a single wrapper folder so
+# Stage Frabbit.app + the unquarantine helper under a single wrapper folder so
 # both extract together when the user double-clicks the zip.
 STAGE_DIR="$OUT_DIR/.bundle-stage"
-WRAPPER_NAME="Ffrabbit"
+WRAPPER_NAME="Frabbit"
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR/$WRAPPER_NAME"
-mv "$APP_DIR" "$STAGE_DIR/$WRAPPER_NAME/Ffrabbit.app"
-APP_DIR="$STAGE_DIR/$WRAPPER_NAME/Ffrabbit.app"
+mv "$APP_DIR" "$STAGE_DIR/$WRAPPER_NAME/Frabbit.app"
+APP_DIR="$STAGE_DIR/$WRAPPER_NAME/Frabbit.app"
 
 cat > "$STAGE_DIR/$WRAPPER_NAME/Open Me First.command" <<'HELPER'
 #!/bin/bash
 # FRABBIT ships unsigned (no Apple Developer Program enrollment). This helper
 # does two things:
 #
-#   1. Clears `com.apple.quarantine` from Ffrabbit.app and every file inside
+#   1. Clears `com.apple.quarantine` from Frabbit.app and every file inside
 #      it. On older macOS that's enough — the app launches normally
 #      afterward.
 #
@@ -120,7 +120,7 @@ cat > "$STAGE_DIR/$WRAPPER_NAME/Open Me First.command" <<'HELPER'
 set -u
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-TARGET="$DIR/Ffrabbit.app"
+TARGET="$DIR/Frabbit.app"
 
 pause() {
 	# Keep the Terminal window open after the script finishes so the user can
@@ -136,10 +136,10 @@ echo "================================"
 echo
 
 if [ ! -d "$TARGET" ]; then
-	echo "Ffrabbit.app was not found next to this helper at:"
+	echo "Frabbit.app was not found next to this helper at:"
 	echo "  $TARGET"
 	echo
-	echo "Make sure both items (Ffrabbit.app and 'Open Me First.command')"
+	echo "Make sure both items (Frabbit.app and 'Open Me First.command')"
 	echo "extracted into the same folder, then run this helper again."
 	pause
 	exit 1
@@ -174,21 +174,21 @@ remaining="$(find "$TARGET" -exec sh -c '
 ' _ {} +)"
 if [ -n "$remaining" ]; then
 	count="$(printf '%s\n' "$remaining" | wc -l | tr -d ' ')"
-	echo "ERROR: $count file(s) inside Ffrabbit.app still carry com.apple.quarantine."
+	echo "ERROR: $count file(s) inside Frabbit.app still carry com.apple.quarantine."
 	echo "First few paths:"
 	printf '%s\n' "$remaining" | head -5 | sed 's/^/  /'
 	echo
 	echo "Common causes:"
 	echo
-	echo "  - The Ffrabbit folder is on Desktop, Documents, or iCloud Drive and"
+	echo "  - The Frabbit folder is on Desktop, Documents, or iCloud Drive and"
 	echo "    Terminal does not have permission to modify files there."
-	echo "    Fix: move the Ffrabbit folder to ~/Downloads and run this helper"
+	echo "    Fix: move the Frabbit folder to ~/Downloads and run this helper"
 	echo "    again, OR open System Settings -> Privacy & Security ->"
 	echo "    Files and Folders, find Terminal, and enable access for the"
 	echo "    folder you extracted into."
 	echo
-	echo "  - Ffrabbit.app is still inside the downloaded .zip (read-only)."
-	echo "    Fix: extract the Ffrabbit folder to a writable location first."
+	echo "  - Frabbit.app is still inside the downloaded .zip (read-only)."
+	echo "    Fix: extract the Frabbit folder to a writable location first."
 	echo
 	echo "Manual fallback (run in Terminal):"
 	echo "  xattr -dr com.apple.quarantine \"$TARGET\""
@@ -196,7 +196,7 @@ if [ -n "$remaining" ]; then
 	exit 1
 fi
 
-echo "Quarantine cleared from Ffrabbit.app and every file inside it."
+echo "Quarantine cleared from Frabbit.app and every file inside it."
 echo
 
 # Step 3: route the user to Gatekeeper approval on macOS 15+ where the
@@ -219,11 +219,11 @@ fi
 
 if [ "$needs_settings_approval" -eq 0 ]; then
 	echo "Detected macOS $macos_version. Quarantine clearance is sufficient on this version."
-	echo "You can close this window and double-click Ffrabbit.app to launch FRABBIT."
+	echo "You can close this window and double-click Frabbit.app to launch FRABBIT."
 	echo
 	echo "If macOS still blocks the launch with a security warning, open"
 	echo "System Settings -> Privacy & Security, scroll to the Security section,"
-	echo "and click 'Open Anyway' next to the Ffrabbit entry."
+	echo "and click 'Open Anyway' next to the Frabbit entry."
 	pause
 	exit 0
 fi
@@ -235,7 +235,7 @@ echo
 # Trigger the launch attempt. We don't care about `open`'s exit status —
 # it returns 0 the moment LaunchServices accepts the request, regardless
 # of whether Gatekeeper later blocks the actual execution. The point is
-# to register Ffrabbit.app with Gatekeeper so an "Open Anyway" entry
+# to register Frabbit.app with Gatekeeper so an "Open Anyway" entry
 # appears in the Privacy & Security pane.
 open "$TARGET" >/dev/null 2>&1 || true
 
@@ -254,18 +254,18 @@ open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension" >/
 
 cat <<'NEXT_STEPS'
 
-macOS likely showed a security warning instead of launching Ffrabbit.
+macOS likely showed a security warning instead of launching Frabbit.
 That's expected for unsigned apps on macOS 15 and later. To approve:
 
   1. Dismiss the security warning (click "Done").
   2. In the Settings window we just opened, scroll to the "Security"
      section near the bottom of Privacy & Security.
-  3. Click "Open Anyway" next to the Ffrabbit entry.
-  4. Confirm with your password or Touch ID if asked. Ffrabbit.app
+  3. Click "Open Anyway" next to the Frabbit entry.
+  4. Confirm with your password or Touch ID if asked. Frabbit.app
      will launch.
 
 This approval is per-app, not per-launch — once you've clicked
-"Open Anyway", future double-clicks on Ffrabbit.app work normally.
+"Open Anyway", future double-clicks on Frabbit.app work normally.
 FRABBIT's self-update replaces the binary in place under the same bundle
 identity, so updates inherit the approval; only a fresh download into a
 different location triggers the dance again.
@@ -278,7 +278,7 @@ ZIP_PATH="$OUT_DIR/$ZIP_NAME"
 rm -f "$ZIP_PATH"
 # `ditto -c -k --keepParent` preserves the executable bit and resource forks
 # (plain `zip` does not, which would produce a broken .app on extract). The
-# wrapper folder keeps Ffrabbit.app + the helper grouped after extraction.
+# wrapper folder keeps Frabbit.app + the helper grouped after extraction.
 ditto -c -k --keepParent "$STAGE_DIR/$WRAPPER_NAME" "$ZIP_PATH"
 
 shasum -a 256 "$ZIP_PATH" | awk -v name="$ZIP_NAME" '{print tolower($1) "  " name}' > "$ZIP_PATH.sha256"
