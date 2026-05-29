@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::preflight::{PreflightOptions, PreflightReport, run_install_preflight};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

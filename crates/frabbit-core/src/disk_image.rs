@@ -13,7 +13,7 @@ use frabbit_platform::DiskImageError;
 pub use frabbit_platform::{MountedDiskImage, mount_disk_image as platform_mount_disk_image};
 
 use crate::archive::ExtractedUserPlugin;
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::package::PackageSpec;
 
 const DIRECTORY_SEARCH_MAX_DEPTH: usize = 6;

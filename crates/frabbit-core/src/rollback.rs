@@ -4,7 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{IoPathContext, JsonPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, JsonPathContext, Result};
 use crate::hash::sha256_file;
 use crate::preflight::{PreflightOptions, PreflightReport, run_install_preflight};
 

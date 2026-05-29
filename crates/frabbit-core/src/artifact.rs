@@ -8,7 +8,7 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::hash::sha256_file;
 use crate::hfs::{fetch_file_list, file_url as hfs_file_url};
 use crate::latest::{

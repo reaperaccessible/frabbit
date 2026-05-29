@@ -5,7 +5,7 @@ use fluent_bundle::{FluentArgs, FluentBundle, FluentResource};
 use serde::{Deserialize, Serialize};
 use unic_langid::LanguageIdentifier;
 
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 
 pub const DEFAULT_LOCALE: &str = "fr-FR";
 pub const LOCALE_FILE_NAME: &str = "frabbit.ftl";

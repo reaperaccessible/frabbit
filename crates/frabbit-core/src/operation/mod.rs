@@ -17,7 +17,7 @@ use crate::artifact::{
 use crate::detection::{
     default_standard_installation, detect_components, matching_user_plugin_files,
 };
-use crate::error::{IoPathContext, FrabbitError};
+use crate::error::{FrabbitError, IoPathContext};
 use crate::hash::sha256_file;
 use crate::install::{
     InstallFileReport, InstallOptions, InstallReport, install_cached_artifacts_with_progress,

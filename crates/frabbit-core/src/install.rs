@@ -10,7 +10,7 @@ use crate::archive::{
 };
 use crate::artifact::{ArtifactKind, CachedArtifact};
 use crate::disk_image::extract_user_plugin_from_disk_image;
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::hash::sha256_file;
 use crate::package::{PACKAGE_FFMPEG, PackageSpec, package_specs_by_id};
 use crate::preflight::{PreflightOptions, PreflightReport, run_install_preflight};

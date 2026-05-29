@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::artifact::ArtifactKind;
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::model::Platform;
 use crate::package::PACKAGE_OSARA;
 use crate::reapack::extract_scr_lines;

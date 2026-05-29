@@ -2,7 +2,7 @@ use std::fs;
 use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 
-use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::package::PackageSpec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

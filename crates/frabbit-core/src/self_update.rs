@@ -8,7 +8,7 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
-use crate::error::{IoPathContext, FrabbitError};
+use crate::error::{FrabbitError, IoPathContext};
 use crate::hash::sha256_file;
 use crate::model::{Architecture, Platform};
 use crate::signature::{SignatureVerdict, verify_executable_signature};
