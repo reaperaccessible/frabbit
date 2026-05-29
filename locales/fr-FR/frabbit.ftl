@@ -62,6 +62,7 @@ wizard-target-heading = Choisir une tâche
 wizard-target-language-label = Langue
 wizard-target-language-restart-note = Le changement de langue redémarre FRABBIT pour que la nouvelle langue prenne effet.
 wizard-locale-name-fr-FR = Français (France)
+wizard-locale-name-en-US = Anglais (États-Unis)
 wizard-target-choice-label = Chemin d'installation
 wizard-target-details-label = Détails de la cible
 wizard-target-empty = Aucune cible d'installation REAPER n'est sélectionnée.
@@ -99,8 +100,8 @@ wizard-configuration-row-summary-suffix = ({ $reason })
 # $package est le nom localisé du paquet dépendant.
 wizard-configuration-row-status-requires = nécessite { $package }
 wizard-configuration-row-status-already-applied = déjà appliqué
-config-reapack-reaper-accessibility-name = Ajouter le dépôt ReaPack REAPER Accessibility de Toni
-config-reapack-reaper-accessibility-description = Ajoute le dépôt ReaPack REAPER Accessibility de Toni Barth (https://github.com/Timtam/reapack/raw/master/index.xml). Une fois ajouté, allez dans le menu Extensions, ReaPack, Parcourir les paquets pour obtenir des scripts et plugins accessibles supplémentaires.
+config-reapack-reaper-accessibility-name = Ajouter le dépôt ReaPack ReaperAccessible
+config-reapack-reaper-accessibility-description = Ajoute le dépôt ReaPack ReaperAccessible. Une fois ajouté, allez dans le menu Extensions, ReaPack, Parcourir les paquets pour obtenir des scripts et plugins accessibles supplémentaires.
 
 wizard-reapack-ack-heading = Avis de don ReaPack
 wizard-reapack-ack-body = ReaPack est un logiciel libre publié sous licence LGPL. Son auteur Christian Fillion accepte des dons facultatifs pour soutenir le développement continu. Christian maintient également les extensions SWS et a contribué du code spécifiquement pour améliorer la compatibilité avec OSARA par le passé. Tout soutien que vous pouvez apporter est bien mérité.

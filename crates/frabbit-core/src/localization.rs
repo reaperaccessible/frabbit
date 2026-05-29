@@ -11,7 +11,8 @@ pub const DEFAULT_LOCALE: &str = "fr-FR";
 pub const LOCALE_FILE_NAME: &str = "frabbit.ftl";
 
 const DEFAULT_LOCALE_SOURCE: &str = include_str!("../../../locales/fr-FR/frabbit.ftl");
-const EMBEDDED_LOCALES: &[&str] = &[DEFAULT_LOCALE];
+const EN_US_LOCALE_SOURCE: &str = include_str!("../../../locales/en-US/frabbit.ftl");
+const EMBEDDED_LOCALES: &[&str] = &[DEFAULT_LOCALE, "en-US"];
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LocalizedText {
@@ -225,6 +226,7 @@ fn normalize_posix_locale(raw: &str) -> String {
 pub fn embedded_locale_source(locale: &str) -> Option<&'static str> {
     match locale {
         DEFAULT_LOCALE => Some(DEFAULT_LOCALE_SOURCE),
+        "en-US" => Some(EN_US_LOCALE_SOURCE),
         _ => None,
     }
 }
@@ -331,19 +333,33 @@ mod tests {
 
     #[test]
     fn exposes_embedded_default_locale_source() {
-        assert_eq!(embedded_locales(), &[DEFAULT_LOCALE]);
+        assert_eq!(embedded_locales(), &[DEFAULT_LOCALE, "en-US"]);
         assert!(
             embedded_locale_source(DEFAULT_LOCALE)
+                .unwrap()
+                .contains("app-title")
+        );
+        assert!(
+            embedded_locale_source("en-US")
                 .unwrap()
                 .contains("app-title")
         );
     }
 
     #[test]
-    fn embedded_falls_back_to_default_when_locale_is_unknown() {
+    fn loads_embedded_english_messages() {
         let localizer = Localizer::embedded("en-US").unwrap();
 
         assert_eq!(localizer.requested_locale(), "en-US");
+        assert_eq!(localizer.active_locale(), "en-US");
+        assert!(!localizer.fallback_used());
+    }
+
+    #[test]
+    fn embedded_falls_back_to_default_when_locale_is_unknown() {
+        let localizer = Localizer::embedded("de-DE").unwrap();
+
+        assert_eq!(localizer.requested_locale(), "de-DE");
         assert_eq!(localizer.active_locale(), DEFAULT_LOCALE);
         assert!(localizer.fallback_used());
     }
@@ -433,13 +449,14 @@ mod tests {
         use super::match_embedded_locale;
         assert_eq!(match_embedded_locale("fr-FR"), Some("fr-FR".to_string()));
         assert_eq!(match_embedded_locale("fr-CA"), Some("fr-FR".to_string()));
-        assert_eq!(match_embedded_locale("en-US"), None);
+        assert_eq!(match_embedded_locale("en-US"), Some("en-US".to_string()));
+        assert_eq!(match_embedded_locale("en-GB"), Some("en-US".to_string()));
         assert_eq!(match_embedded_locale("de-DE"), None);
         assert_eq!(match_embedded_locale(""), None);
     }
 
     #[test]
-    fn lists_locale_directories_with_locale_files_plus_embedded_default() {
+    fn lists_locale_directories_with_locale_files_plus_embedded() {
         let dir = tempdir().unwrap();
         fs::create_dir_all(dir.path().join("fr-FR")).unwrap();
         fs::create_dir_all(dir.path().join("not_a_locale")).unwrap();
@@ -448,9 +465,7 @@ mod tests {
 
         let locales = available_locales(dir.path()).unwrap();
 
-        assert_eq!(
-            locales,
-            vec![DEFAULT_LOCALE.to_string()]
-        );
+        assert!(locales.contains(&"fr-FR".to_string()));
+        assert!(locales.contains(&"en-US".to_string()));
     }
 }

@@ -692,12 +692,14 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             let packages = selected_package_ids(package);
             ensure_reapack_donation_acknowledged(&packages, accept_reapack_donation_notice)?;
             let cache_dir = cache_dir.unwrap_or_else(default_cache_dir);
+            let active_locale = resolve_runtime_locale();
             let configuration_step_ids = resolve_configuration_step_ids(
                 &resource_path,
                 platform,
                 &packages,
                 &config_step,
                 &skip_config_step,
+                &active_locale,
             );
             let report = execute_setup_operation(
                 &resource_path,
@@ -715,6 +717,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     lock_path: None,
                     force_reinstall_packages: Vec::new(),
                     configuration_step_ids,
+                    active_locale: active_locale.clone(),
                 },
             )?;
             let report_path =
@@ -930,6 +933,7 @@ fn resolve_configuration_step_ids(
     package_ids: &[String],
     explicit: &[String],
     skip: &[String],
+    active_locale: &str,
 ) -> Vec<String> {
     use std::collections::BTreeSet;
     let skip_set: BTreeSet<&str> = skip.iter().map(String::as_str).collect();
@@ -950,7 +954,7 @@ fn resolve_configuration_step_ids(
         }
     }
 
-    frabbit_core::configuration::builtin_configuration_steps()
+    frabbit_core::configuration::builtin_configuration_steps(active_locale)
         .into_iter()
         .filter(|step| step.recommended && !skip_set.contains(step.id.as_str()))
         .filter(|step| {

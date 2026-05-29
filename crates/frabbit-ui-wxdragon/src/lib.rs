@@ -351,6 +351,8 @@ pub struct WizardInstallRequest {
     /// Configuration step ids the user opted in to. Forwarded straight
     /// through to [`SetupOptions::configuration_step_ids`].
     pub configuration_step_ids: Vec<String>,
+    /// Active locale, used to select the correct ReaPack repository.
+    pub active_locale: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -965,6 +967,7 @@ pub fn install_request_from_target_and_rows(
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
         configuration_step_ids,
+        active_locale: model.current_language.clone(),
     })
 }
 
@@ -1585,6 +1588,7 @@ pub fn execute_wizard_install_with_progress(
             lock_path: None,
             force_reinstall_packages: request.force_reinstall_packages.clone(),
             configuration_step_ids: request.configuration_step_ids.clone(),
+            active_locale: request.active_locale.clone(),
         },
         progress,
     )
@@ -2510,7 +2514,8 @@ fn localized_configuration_message(
 /// isn't in the manifest (forward-compat for unknown ids loaded from
 /// an older receipt).
 fn localized_configuration_step_name(localizer: Option<&Localizer>, step_id: &str) -> String {
-    let steps = frabbit_core::configuration::builtin_configuration_steps();
+    let locale = localizer.map(|l| l.active_locale()).unwrap_or("fr-FR");
+    let steps = frabbit_core::configuration::builtin_configuration_steps(locale);
     let display_key = steps
         .iter()
         .find(|step| step.id == step_id)
@@ -2711,7 +2716,7 @@ pub fn configuration_rows(
         .map(|row| (row.package_id.as_str(), package_row_will_land_on_disk(row)))
         .collect();
 
-    frabbit_core::configuration::builtin_configuration_steps()
+    frabbit_core::configuration::builtin_configuration_steps(localizer.active_locale())
         .into_iter()
         .map(|step| {
             let display_name = localizer.text(&step.display_name_key).value;
@@ -2880,7 +2885,7 @@ pub fn recompute_configuration_row_availability(
         .iter()
         .map(|row| (row.package_id.as_str(), package_row_will_land_on_disk(row)))
         .collect();
-    let steps = frabbit_core::configuration::builtin_configuration_steps();
+    let steps = frabbit_core::configuration::builtin_configuration_steps(localizer.active_locale());
     for row in configuration_rows.iter_mut() {
         let Some(step) = steps.iter().find(|step| step.id == row.step_id) else {
             continue;
@@ -4768,6 +4773,7 @@ mod tests {
             cache_dir: PathBuf::from("C:/cache"),
             force_reinstall_packages: Vec::new(),
             configuration_step_ids: Vec::new(),
+            active_locale: "fr-FR".to_string(),
         }
     }
 }

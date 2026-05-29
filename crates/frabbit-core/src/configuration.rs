@@ -27,10 +27,13 @@ pub const CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE: &str =
 
 /// Display name to write into `reapack.ini`'s `remote<N>=<name>|...`
 /// entry. ReaPack shows this in its Manage Repositories UI.
-const REAPER_ACCESSIBILITY_REPACK_NAME: &str = "REAPER Accessibility";
-/// Repository index URL.
-const REAPER_ACCESSIBILITY_REPACK_URL: &str =
-    "https://github.com/Timtam/reapack/raw/master/index.xml";
+const REAPER_ACCESSIBLE_REPACK_NAME_FR: &str = "ReaperAccessible FR";
+const REAPER_ACCESSIBLE_REPACK_NAME_EN: &str = "ReaperAccessible EN";
+/// Repository index URLs per language.
+const REAPER_ACCESSIBLE_REPACK_URL_FR: &str =
+    "https://github.com/reaperaccessible/rap_fr/raw/main/index.xml";
+const REAPER_ACCESSIBLE_REPACK_URL_EN: &str =
+    "https://github.com/reaperaccessible/rap_en/raw/main/index.xml";
 
 /// One unit of post-install configuration work the wizard / CLI can
 /// offer to the user. Steps are declarative — `kind` carries the data
@@ -123,9 +126,16 @@ pub enum ConfigurationStatus {
     DryRun,
 }
 
-/// All configuration steps FRABBIT knows how to run. Hardcoded today;
-/// can move to JSON later if/when the catalogue grows.
-pub fn builtin_configuration_steps() -> Vec<ConfigurationStep> {
+/// All configuration steps FRABBIT knows how to run. The ReaPack
+/// repository URL is selected based on the active locale: French users
+/// get the French resources, everyone else gets the English ones.
+pub fn builtin_configuration_steps(active_locale: &str) -> Vec<ConfigurationStep> {
+    let (name, url) = if active_locale.starts_with("fr") {
+        (REAPER_ACCESSIBLE_REPACK_NAME_FR, REAPER_ACCESSIBLE_REPACK_URL_FR)
+    } else {
+        (REAPER_ACCESSIBLE_REPACK_NAME_EN, REAPER_ACCESSIBLE_REPACK_URL_EN)
+    };
+
     vec![ConfigurationStep {
         id: CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE.to_string(),
         display_name_key: "config-reapack-reaper-accessibility-name".to_string(),
@@ -133,8 +143,8 @@ pub fn builtin_configuration_steps() -> Vec<ConfigurationStep> {
         recommended: true,
         requires_package_id: Some(PACKAGE_REAPACK.to_string()),
         kind: ConfigurationStepKind::AddReapackRemote {
-            name: REAPER_ACCESSIBILITY_REPACK_NAME.to_string(),
-            url: REAPER_ACCESSIBILITY_REPACK_URL.to_string(),
+            name: name.to_string(),
+            url: url.to_string(),
         },
     }]
 }
@@ -276,20 +286,38 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn builtin_steps_include_reaper_accessibility_repack_remote() {
-        let steps = builtin_configuration_steps();
+    fn builtin_steps_use_french_repo_for_french_locale() {
+        let steps = builtin_configuration_steps("fr-FR");
         let step = steps
             .iter()
             .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
-            .expect("REAPER Accessibility ReaPack remote step is missing");
+            .expect("ReaperAccessible ReaPack remote step is missing");
         assert!(step.recommended);
         assert_eq!(step.requires_package_id.as_deref(), Some(PACKAGE_REAPACK));
         match &step.kind {
             ConfigurationStepKind::AddReapackRemote { name, url } => {
-                assert_eq!(name, "REAPER Accessibility");
+                assert_eq!(name, "ReaperAccessible FR");
                 assert_eq!(
                     url,
-                    "https://github.com/Timtam/reapack/raw/master/index.xml"
+                    "https://github.com/reaperaccessible/rap_fr/raw/main/index.xml"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn builtin_steps_use_english_repo_for_english_locale() {
+        let steps = builtin_configuration_steps("en-US");
+        let step = steps
+            .iter()
+            .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
+            .unwrap();
+        match &step.kind {
+            ConfigurationStepKind::AddReapackRemote { name, url } => {
+                assert_eq!(name, "ReaperAccessible EN");
+                assert_eq!(
+                    url,
+                    "https://github.com/reaperaccessible/rap_en/raw/main/index.xml"
                 );
             }
         }
@@ -298,7 +326,7 @@ mod tests {
     #[test]
     fn apply_writes_reapack_ini_when_not_dry_run() {
         let dir = tempdir().unwrap();
-        let steps = builtin_configuration_steps();
+        let steps = builtin_configuration_steps("fr-FR");
         let step = steps
             .iter()
             .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
@@ -316,7 +344,7 @@ mod tests {
     #[test]
     fn apply_does_not_touch_disk_when_dry_run() {
         let dir = tempdir().unwrap();
-        let steps = builtin_configuration_steps();
+        let steps = builtin_configuration_steps("fr-FR");
         let step = steps
             .iter()
             .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
@@ -334,7 +362,7 @@ mod tests {
     #[test]
     fn is_applied_reports_false_when_remote_missing_then_true_after_apply() {
         let dir = tempdir().unwrap();
-        let steps = builtin_configuration_steps();
+        let steps = builtin_configuration_steps("fr-FR");
         let step = steps
             .iter()
             .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
@@ -348,7 +376,7 @@ mod tests {
     #[test]
     fn apply_is_idempotent_across_repeat_runs() {
         let dir = tempdir().unwrap();
-        let steps = builtin_configuration_steps();
+        let steps = builtin_configuration_steps("fr-FR");
         let step = steps
             .iter()
             .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
@@ -356,8 +384,6 @@ mod tests {
 
         apply_configuration_step(dir.path(), step, false).unwrap();
         let second = apply_configuration_step(dir.path(), step, false).unwrap();
-        // Idempotent: still reports Applied, but the message records the
-        // already-configured state so reports stay accurate.
         assert_eq!(second.status, ConfigurationStatus::Applied);
         assert!(second.message.contains("already configured"));
     }

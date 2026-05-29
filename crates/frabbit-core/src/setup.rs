@@ -41,6 +41,13 @@ pub struct SetupOptions {
     /// the setup.
     #[serde(default)]
     pub configuration_step_ids: Vec<String>,
+    /// Active locale used to select the correct ReaPack repository.
+    #[serde(default = "default_locale")]
+    pub active_locale: String,
+}
+
+fn default_locale() -> String {
+    crate::localization::DEFAULT_LOCALE.to_string()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -129,6 +136,7 @@ pub fn execute_setup_operation_with_progress(
         &options.configuration_step_ids,
         &installed_or_pending,
         options.dry_run,
+        &options.active_locale,
         progress,
     )?;
 
@@ -208,6 +216,7 @@ pub fn execute_resolved_setup_operation_with_progress(
         &options.configuration_step_ids,
         &installed_or_pending,
         options.dry_run,
+        &options.active_locale,
         progress,
     )?;
 
@@ -250,10 +259,11 @@ fn run_configuration_steps(
     selected_ids: &[String],
     installed_or_pending: &BTreeSet<String>,
     dry_run: bool,
+    active_locale: &str,
     progress: &ProgressReporter,
 ) -> Result<Vec<ConfigurationStepReport>> {
     let selected: BTreeSet<&str> = selected_ids.iter().map(String::as_str).collect();
-    let steps = builtin_configuration_steps();
+    let steps = builtin_configuration_steps(active_locale);
     let mut reports = Vec::with_capacity(steps.len());
     for step in &steps {
         if !selected.contains(step.id.as_str()) {
@@ -321,6 +331,7 @@ mod tests {
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
+                active_locale: "fr-FR".to_string(),
             },
         )
         .unwrap();
@@ -356,6 +367,7 @@ mod tests {
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
+                active_locale: "fr-FR".to_string(),
             },
         )
         .unwrap();
@@ -407,6 +419,7 @@ mod tests {
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
+                active_locale: "fr-FR".to_string(),
             },
         )
         .unwrap();
