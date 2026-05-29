@@ -1,0 +1,11 @@
+[package]
+name = "frabbit-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clap.workspace = true
+frabbit-core = { path = "../frabbit-core" }
+serde.workspace = true
+serde_json.workspace = true

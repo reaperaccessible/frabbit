@@ -1,0 +1,1715 @@
+use std::env;
+use std::fs;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
+
+use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::error::{IoPathContext, FrabbitError, Result};
+use crate::hash::sha256_file;
+use crate::hfs::{fetch_file_list, file_url as hfs_file_url};
+use crate::latest::{
+    FFMPEG_GYAN_VERSION_URL, FFMPEG_GYAN_X64_ARCHIVE_URL, FFMPEG_SUPPORTED_MAJOR,
+    FFMPEG_TORDONA_ARM64_RELEASES_URL, JAWS_FOR_REAPER_HFS_BASE, JAWS_FOR_REAPER_HFS_FOLDER,
+    OSARA_UPDATE_URL, REAKONTROL_GITHUB_LATEST_URL, REAPACK_GITHUB_LATEST_URL, REAPER_DOWNLOAD_URL,
+    SURGE_XT_NIGHTLY_URL, SWS_HOME_URL, parse_ffmpeg_gyan_release_version,
+    parse_github_latest_release_json, parse_osara_update_json, parse_reaper_latest_version,
+    parse_sws_latest_version, pick_ffmpeg_tordona_release, pick_jaws_for_reaper_version,
+    reakontrol_version_from_asset_name, surge_xt_version_from_macos_asset,
+    surge_xt_version_from_windows_asset,
+};
+use crate::model::{Architecture, Platform};
+use crate::package::{
+    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
+    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
+};
+use crate::progress::{ProgressEvent, ProgressReporter};
+use crate::version::Version;
+
+/// Chunk size for the streaming download loop. 64 KiB is a comfortable
+/// trade-off between syscall overhead (smaller chunks → more `read`s and
+/// more `write`s) and event latency (larger chunks → the UI sees the
+/// progress bar jump in coarser steps). At a realistic 30 MB REAPER dmg
+/// this gives ~480 read/write iterations.
+const DOWNLOAD_CHUNK_SIZE: usize = 64 * 1024;
+
+/// Minimum wall-clock spacing between `DownloadProgress` events for the
+/// same download. The wxdragon UI thread updates the gauge once per
+/// event; keeping the rate below ~5 Hz prevents the UI from getting
+/// flooded on a fast network where chunked reads return constantly.
+const DOWNLOAD_PROGRESS_MIN_INTERVAL: Duration = Duration::from_millis(200);
+
+/// Minimum byte-count delta between `DownloadProgress` events. Ensures a
+/// fast-enough download still emits enough events to feel smooth even
+/// when the interval throttle doesn't fire — e.g. a fast LAN delivering
+/// 30 MB in well under a second still produces ~15 progress ticks.
+const DOWNLOAD_PROGRESS_MIN_BYTES: u64 = 256 * 1024;
+
+const USER_AGENT: &str = "FRABBIT/0.1 (+https://github.com/ReaperAccessible/frabbit)";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ArtifactKind {
+    Installer,
+    Archive,
+    /// `.7z` archive — used by the FFmpeg shared builds we ship from
+    /// Gyan.dev (x64) and `tordona/ffmpeg-win-arm64` (ARM64). Both
+    /// upstreams ship `.7z` exclusively for the shared variant; the
+    /// install pipeline dispatches to a dedicated 7z extractor since
+    /// the `zip` crate can't read these.
+    SevenZipArchive,
+    DiskImage,
+    ExtensionBinary,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArtifactDescriptor {
+    pub package_id: String,
+    pub version: Version,
+    pub platform: Platform,
+    pub architecture: Architecture,
+    pub kind: ArtifactKind,
+    pub url: String,
+    pub file_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CachedArtifact {
+    pub descriptor: ArtifactDescriptor,
+    pub path: PathBuf,
+    pub size: u64,
+    pub sha256: String,
+    pub reused_existing_file: bool,
+}
+
+pub fn resolve_latest_artifacts(
+    package_ids: &[String],
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<Vec<ArtifactDescriptor>> {
+    let client = http_client()?;
+    let mut artifacts = Vec::new();
+    let architecture = canonicalize_dispatch_arch(architecture);
+
+    for package_id in package_ids {
+        let artifact = match package_id.as_str() {
+            PACKAGE_REAPER => resolve_reaper_artifact(&client, platform, architecture)?,
+            PACKAGE_OSARA => resolve_osara_artifact(&client, platform, architecture)?,
+            PACKAGE_SWS => resolve_sws_artifact(&client, platform, architecture)?,
+            PACKAGE_REAPACK => resolve_reapack_artifact(&client, platform, architecture)?,
+            PACKAGE_REAKONTROL => resolve_reakontrol_artifact(&client, platform, architecture)?,
+            PACKAGE_JAWS_SCRIPTS => resolve_jaws_scripts_artifact(&client, platform, architecture)?,
+            PACKAGE_FFMPEG => resolve_ffmpeg_artifact(&client, platform, architecture)?,
+            PACKAGE_SURGE_XT => resolve_surge_xt_artifact(&client, platform, architecture)?,
+            _ => {
+                return Err(FrabbitError::NoArtifactFound {
+                    package_id: package_id.clone(),
+                    platform,
+                    architecture,
+                });
+            }
+        };
+        artifacts.push(artifact);
+    }
+
+    Ok(artifacts)
+}
+
+pub fn expected_artifact_kind(
+    package_id: &str,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactKind> {
+    let architecture = canonicalize_dispatch_arch(architecture);
+    match package_id {
+        PACKAGE_REAPER => expected_reaper_artifact_kind(platform, architecture),
+        PACKAGE_OSARA => expected_osara_artifact_kind(platform),
+        PACKAGE_SWS => expected_sws_artifact_kind(platform, architecture),
+        PACKAGE_REAPACK => expected_reapack_artifact_kind(platform, architecture),
+        PACKAGE_REAKONTROL => expected_reakontrol_artifact_kind(platform),
+        PACKAGE_JAWS_SCRIPTS => Ok(ArtifactKind::Installer),
+        PACKAGE_FFMPEG => expected_ffmpeg_artifact_kind(platform, architecture),
+        PACKAGE_SURGE_XT => Ok(expected_surge_xt_artifact_kind(platform)),
+        _ => Err(FrabbitError::NoArtifactFound {
+            package_id: package_id.to_string(),
+            platform,
+            architecture,
+        }),
+    }
+}
+
+/// Collapse dispatch-time architecture sentinels (`Universal`, `Unknown`) to a
+/// concrete host slice so per-arch resolvers (SWS's per-arch `.dmg`, ReaPack's
+/// per-arch `.dylib` / `.dll`) pick a slice REAPER will actually load. Targets
+/// shipping a single universal artifact (REAPER's `_universal.dmg`, OSARA,
+/// ReaKontrol) ignore the rewrite because their resolvers map every arch to
+/// the same file.
+///
+/// Both sentinels collapse for the same reason: we don't know — or don't need
+/// to know — the target's per-arch slice, so the host arch is the safe answer.
+/// - `Universal` shows up when REAPER's binary is a Mach-O fat binary (every
+///   modern macOS REAPER).
+/// - `Unknown` shows up when the binary probe failed — most commonly a fresh
+///   first-time install where `/Applications/REAPER.app` doesn't yet exist,
+///   but also corrupt or unreadable binaries. Falling back to the host arch
+///   matches what the upcoming install will land (REAPER's macOS dmg is
+///   universal; the Windows installer is host-arch).
+///
+/// Strategy:
+/// - When FRABBIT is running under Rosetta on an Apple Silicon host, force
+///   `Arm64` regardless of `Architecture::current()`. `current()` reads
+///   `target_arch` and would report `X64` (the slice Rosetta is translating),
+///   but REAPER launched normally on the same host runs as `arm64` natively
+///   — so the plug-in slice has to match REAPER's runtime arch, not FRABBIT's.
+///   `is_running_under_rosetta()` is a no-op on non-macOS hosts.
+/// - Otherwise return `Architecture::current()`. On a universal FRABBIT
+///   binary, Apple Silicon hosts run the `arm64` slice and Intel hosts run
+///   `x86_64`, which already matches what REAPER will load.
+fn canonicalize_dispatch_arch(architecture: Architecture) -> Architecture {
+    if matches!(
+        architecture,
+        Architecture::Universal | Architecture::Unknown
+    ) {
+        if frabbit_platform::is_running_under_rosetta() {
+            return Architecture::Arm64;
+        }
+        return Architecture::current();
+    }
+    architecture
+}
+
+/// Ephemeral artifact-download cache directory. Defaults to a stable path
+/// under the OS temp directory (`%TEMP%\frabbit-cache` on Windows,
+/// `$TMPDIR/frabbit-cache` on macOS). Reusing the same temp path across runs
+/// keeps `download_artifacts` cheap when the user retries the wizard
+/// within the same session, but the OS temp dir is cleaned periodically
+/// — FRABBIT no longer leaves persistent caches under
+/// `%LOCALAPPDATA%\FRABBIT\cache\` or `~/Library/Caches/FRABBIT/`. Callers who
+/// want stricter ephemeral semantics (e.g. a single-process lifetime)
+/// can pass their own `tempfile::TempDir::path()` instead.
+pub fn default_cache_dir() -> PathBuf {
+    env::temp_dir().join("frabbit-cache")
+}
+
+pub fn download_artifacts(
+    artifacts: &[ArtifactDescriptor],
+    cache_dir: &Path,
+) -> Result<Vec<CachedArtifact>> {
+    download_artifacts_with_progress(artifacts, cache_dir, &ProgressReporter::noop())
+}
+
+/// Like [`download_artifacts`] but emits per-artifact and per-chunk
+/// [`ProgressEvent`]s through `progress`. The no-op overload above
+/// exists so callers that don't want progress can keep their existing
+/// call signature.
+pub fn download_artifacts_with_progress(
+    artifacts: &[ArtifactDescriptor],
+    cache_dir: &Path,
+    progress: &ProgressReporter,
+) -> Result<Vec<CachedArtifact>> {
+    let client = http_client()?;
+    let mut cached = Vec::new();
+
+    for artifact in artifacts {
+        cached.push(download_artifact(&client, artifact, cache_dir, progress)?);
+    }
+
+    Ok(cached)
+}
+
+fn download_artifact(
+    client: &Client,
+    artifact: &ArtifactDescriptor,
+    cache_dir: &Path,
+    progress: &ProgressReporter,
+) -> Result<CachedArtifact> {
+    let package_dir = cache_dir
+        .join(&artifact.package_id)
+        .join(artifact.version.raw().replace(',', "_"));
+    fs::create_dir_all(&package_dir).with_path(&package_dir)?;
+
+    let target_path = package_dir.join(&artifact.file_name);
+    if target_path.is_file() {
+        // Cache hit: tell the UI both that the download "started" and
+        // immediately completed, with no bytes-progress events in
+        // between. The bracketing pair keeps state machines on the
+        // consumer side simple — every package emits the same shape
+        // regardless of cache state.
+        progress.report(ProgressEvent::DownloadStarted {
+            package_id: artifact.package_id.clone(),
+            bytes_total: None,
+        });
+        progress.report(ProgressEvent::DownloadCompleted {
+            package_id: artifact.package_id.clone(),
+        });
+        return cached_artifact(artifact, target_path, true);
+    }
+
+    if let Some(source_path) = local_artifact_source_path(&artifact.url)? {
+        progress.report(ProgressEvent::DownloadStarted {
+            package_id: artifact.package_id.clone(),
+            bytes_total: None,
+        });
+        copy_local_artifact(artifact, &source_path, &target_path)?;
+        progress.report(ProgressEvent::DownloadCompleted {
+            package_id: artifact.package_id.clone(),
+        });
+        return cached_artifact(artifact, target_path, false);
+    }
+
+    validate_remote_artifact_url(&artifact.url)?;
+
+    let part_path = target_path.with_extension(format!(
+        "{}.part",
+        target_path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("download")
+    ));
+
+    let response = client
+        .get(&artifact.url)
+        .send()
+        .and_then(|response| response.error_for_status())
+        .map_err(|source| FrabbitError::Http {
+            url: artifact.url.clone(),
+            source,
+        })?;
+
+    // Prefer the explicit content_length() helper over manual header
+    // parsing — it normalizes the `Content-Length` header and returns
+    // `None` for chunked / unknown-size responses without a string round-
+    // trip. For mirrors that omit the header entirely we still get
+    // start/complete pairs and tick events, the UI just has to render an
+    // indeterminate (bytes-only) progress hint.
+    let bytes_total = response.content_length();
+    progress.report(ProgressEvent::DownloadStarted {
+        package_id: artifact.package_id.clone(),
+        bytes_total,
+    });
+
+    let mut file = fs::File::create(&part_path).with_path(&part_path)?;
+    stream_response_to_file(
+        response,
+        &mut file,
+        &part_path,
+        &artifact.package_id,
+        bytes_total,
+        progress,
+    )?;
+    file.flush().with_path(&part_path)?;
+    drop(file);
+
+    fs::rename(&part_path, &target_path).with_path(&target_path)?;
+    progress.report(ProgressEvent::DownloadCompleted {
+        package_id: artifact.package_id.clone(),
+    });
+    cached_artifact(artifact, target_path, false)
+}
+
+/// Chunked replacement for `std::io::copy` that fires
+/// [`ProgressEvent::DownloadProgress`] as bytes accumulate. Throttles
+/// events to one per `DOWNLOAD_PROGRESS_MIN_INTERVAL` or per
+/// `DOWNLOAD_PROGRESS_MIN_BYTES`, whichever fires second, so the UI
+/// thread never gets flooded on a fast network. Always emits a final
+/// event at the end so the bar lands exactly at `bytes_total` even when
+/// the last chunk was below the byte-threshold.
+fn stream_response_to_file(
+    mut response: reqwest::blocking::Response,
+    file: &mut fs::File,
+    part_path: &Path,
+    package_id: &str,
+    bytes_total: Option<u64>,
+    progress: &ProgressReporter,
+) -> Result<()> {
+    let mut buffer = vec![0u8; DOWNLOAD_CHUNK_SIZE];
+    let mut bytes_downloaded: u64 = 0;
+    let mut bytes_at_last_event: u64 = 0;
+    let mut last_event_at = Instant::now();
+
+    loop {
+        let read_bytes = response.read(&mut buffer).with_path(part_path)?;
+        if read_bytes == 0 {
+            break;
+        }
+        file.write_all(&buffer[..read_bytes]).with_path(part_path)?;
+        bytes_downloaded += read_bytes as u64;
+
+        let bytes_since_last = bytes_downloaded - bytes_at_last_event;
+        let interval_elapsed = last_event_at.elapsed() >= DOWNLOAD_PROGRESS_MIN_INTERVAL;
+        if interval_elapsed && bytes_since_last >= DOWNLOAD_PROGRESS_MIN_BYTES {
+            progress.report(ProgressEvent::DownloadProgress {
+                package_id: package_id.to_string(),
+                bytes_downloaded,
+                bytes_total,
+            });
+            bytes_at_last_event = bytes_downloaded;
+            last_event_at = Instant::now();
+        }
+    }
+
+    // Final tick so the gauge always lands on the actual byte count
+    // even if the last chunk was small enough to skip the throttle.
+    // The trailing `DownloadCompleted` is what tells the UI "we're
+    // done"; this event exists purely to settle the bytes display at
+    // its final value.
+    if bytes_downloaded > bytes_at_last_event {
+        progress.report(ProgressEvent::DownloadProgress {
+            package_id: package_id.to_string(),
+            bytes_downloaded,
+            bytes_total,
+        });
+    }
+
+    Ok(())
+}
+
+fn copy_local_artifact(
+    artifact: &ArtifactDescriptor,
+    source_path: &Path,
+    target_path: &Path,
+) -> Result<()> {
+    let part_path = target_path.with_extension(format!(
+        "{}.part",
+        target_path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("download")
+    ));
+
+    fs::copy(source_path, &part_path).with_path(source_path)?;
+    fs::rename(&part_path, target_path).with_path(target_path)?;
+    if !target_path.is_file() {
+        return Err(FrabbitError::RemoteData {
+            url: artifact.url.clone(),
+            message: "local artifact copy did not produce a cache file".to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn cached_artifact(
+    descriptor: &ArtifactDescriptor,
+    path: PathBuf,
+    reused_existing_file: bool,
+) -> Result<CachedArtifact> {
+    let metadata = fs::metadata(&path).with_path(&path)?;
+    let sha256 = sha256_file(&path)?;
+
+    Ok(CachedArtifact {
+        descriptor: descriptor.clone(),
+        path,
+        size: metadata.len(),
+        sha256,
+        reused_existing_file,
+    })
+}
+
+fn resolve_reaper_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, REAPER_DOWNLOAD_URL)?;
+    let version = parse_reaper_latest_version(&body, REAPER_DOWNLOAD_URL)?;
+    let (fragment, kind, selected_architecture) = match (platform, architecture) {
+        (Platform::Windows, Architecture::X86) => {
+            ("-install.exe", ArtifactKind::Installer, Architecture::X86)
+        }
+        (
+            Platform::Windows,
+            Architecture::X64 | Architecture::Universal | Architecture::Unknown,
+        ) => (
+            "_x64-install.exe",
+            ArtifactKind::Installer,
+            Architecture::X64,
+        ),
+        (Platform::Windows, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            ("arm64ec", ArtifactKind::Installer, Architecture::Arm64Ec)
+        }
+        (Platform::MacOs, Architecture::X86) => {
+            ("_i386.dmg", ArtifactKind::DiskImage, Architecture::X86)
+        }
+        (
+            Platform::MacOs,
+            Architecture::X64
+            | Architecture::Arm64
+            | Architecture::Arm64Ec
+            | Architecture::Universal
+            | Architecture::Unknown,
+        ) => (
+            "_universal.dmg",
+            ArtifactKind::DiskImage,
+            Architecture::Universal,
+        ),
+    };
+
+    let href =
+        find_href_containing(&body, fragment).ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: PACKAGE_REAPER.to_string(),
+            platform,
+            architecture,
+        })?;
+    artifact_from_href(
+        PACKAGE_REAPER,
+        version,
+        platform,
+        selected_architecture,
+        kind,
+        "https://www.reaper.fm/",
+        &href,
+    )
+}
+
+fn expected_reaper_artifact_kind(
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactKind> {
+    match (platform, architecture) {
+        (Platform::Windows, Architecture::X86)
+        | (
+            Platform::Windows,
+            Architecture::X64 | Architecture::Universal | Architecture::Unknown,
+        )
+        | (Platform::Windows, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            Ok(ArtifactKind::Installer)
+        }
+        (Platform::MacOs, Architecture::X86)
+        | (
+            Platform::MacOs,
+            Architecture::X64
+            | Architecture::Arm64
+            | Architecture::Arm64Ec
+            | Architecture::Universal
+            | Architecture::Unknown,
+        ) => Ok(ArtifactKind::DiskImage),
+    }
+}
+
+fn resolve_osara_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let update_body = http_get_text(client, OSARA_UPDATE_URL)?;
+    let version = parse_osara_update_json(&update_body, OSARA_UPDATE_URL)?;
+    let snapshot_body = http_get_text(client, "https://osara.reaperaccessibility.com/snapshots/")?;
+
+    let (fragment, kind) = match platform {
+        Platform::Windows => (".exe", ArtifactKind::Installer),
+        Platform::MacOs => (".zip", ArtifactKind::Archive),
+    };
+    let href = find_href_with(&snapshot_body, |href, _context| {
+        href.contains("/jcsteh/osara/releases/download/snapshots/osara_")
+            && href.ends_with(fragment)
+    })
+    .ok_or_else(|| FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_OSARA.to_string(),
+        platform,
+        architecture,
+    })?;
+
+    artifact_from_href(
+        PACKAGE_OSARA,
+        version,
+        platform,
+        Architecture::Universal,
+        kind,
+        "https://osara.reaperaccessibility.com/snapshots/",
+        &href,
+    )
+}
+
+fn expected_osara_artifact_kind(platform: Platform) -> Result<ArtifactKind> {
+    match platform {
+        Platform::Windows => Ok(ArtifactKind::Installer),
+        Platform::MacOs => Ok(ArtifactKind::Archive),
+    }
+}
+
+fn resolve_sws_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, SWS_HOME_URL)?;
+    let version = parse_sws_latest_version(&body, SWS_HOME_URL)?;
+    let (fragment, kind, selected_architecture) = match (platform, architecture) {
+        (Platform::Windows, Architecture::X86) => (
+            "Windows-x86.exe",
+            ArtifactKind::Installer,
+            Architecture::X86,
+        ),
+        (Platform::Windows, Architecture::X64 | Architecture::Unknown) => (
+            "Windows-x64.exe",
+            ArtifactKind::Installer,
+            Architecture::X64,
+        ),
+        (Platform::MacOs, Architecture::X86) => (
+            "Darwin-i386.dmg",
+            ArtifactKind::DiskImage,
+            Architecture::X86,
+        ),
+        (Platform::MacOs, Architecture::X64 | Architecture::Unknown) => (
+            "Darwin-x86_64.dmg",
+            ArtifactKind::DiskImage,
+            Architecture::X64,
+        ),
+        (Platform::MacOs, Architecture::Arm64) => (
+            "Darwin-arm64.dmg",
+            ArtifactKind::DiskImage,
+            Architecture::Arm64,
+        ),
+        _ => {
+            return Err(FrabbitError::NoArtifactFound {
+                package_id: PACKAGE_SWS.to_string(),
+                platform,
+                architecture,
+            });
+        }
+    };
+
+    let href =
+        find_href_containing(&body, fragment).ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: PACKAGE_SWS.to_string(),
+            platform,
+            architecture,
+        })?;
+    artifact_from_href(
+        PACKAGE_SWS,
+        version,
+        platform,
+        selected_architecture,
+        kind,
+        "https://sws-extension.org/",
+        &href,
+    )
+}
+
+fn expected_sws_artifact_kind(
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactKind> {
+    match (platform, architecture) {
+        (Platform::Windows, Architecture::X86)
+        | (Platform::Windows, Architecture::X64 | Architecture::Unknown) => {
+            Ok(ArtifactKind::Installer)
+        }
+        (Platform::MacOs, Architecture::X86)
+        | (Platform::MacOs, Architecture::X64 | Architecture::Unknown)
+        | (Platform::MacOs, Architecture::Arm64) => Ok(ArtifactKind::DiskImage),
+        _ => Err(FrabbitError::NoArtifactFound {
+            package_id: PACKAGE_SWS.to_string(),
+            platform,
+            architecture,
+        }),
+    }
+}
+
+fn resolve_reapack_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, REAPACK_GITHUB_LATEST_URL)?;
+    let version = parse_github_latest_release_json(&body, REAPACK_GITHUB_LATEST_URL)?;
+    let (asset_name, selected_architecture) = match (platform, architecture) {
+        (Platform::Windows, Architecture::X86) => ("reaper_reapack-x86.dll", Architecture::X86),
+        (
+            Platform::Windows,
+            Architecture::X64 | Architecture::Universal | Architecture::Unknown,
+        ) => ("reaper_reapack-x64.dll", Architecture::X64),
+        (Platform::Windows, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            ("reaper_reapack-arm64ec.dll", Architecture::Arm64Ec)
+        }
+        (Platform::MacOs, Architecture::X86) => ("reaper_reapack-i386.dylib", Architecture::X86),
+        (Platform::MacOs, Architecture::X64 | Architecture::Unknown) => {
+            ("reaper_reapack-x86_64.dylib", Architecture::X64)
+        }
+        (Platform::MacOs, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            ("reaper_reapack-arm64.dylib", Architecture::Arm64)
+        }
+        // Unreachable when invoked through `resolve_latest_artifacts` —
+        // `canonicalize_dispatch_arch` rewrites `Universal` to the host
+        // slice before dispatch, which avoids the wrong-slice mis-install
+        // this arm would otherwise cause on Intel hosts. The arm is here
+        // only to keep the match exhaustive over the `Architecture` enum.
+        (Platform::MacOs, Architecture::Universal) => {
+            return Err(FrabbitError::NoArtifactFound {
+                package_id: PACKAGE_REAPACK.to_string(),
+                platform,
+                architecture,
+            });
+        }
+    };
+
+    let value: Value = serde_json::from_str(&body).map_err(|source| FrabbitError::RemoteData {
+        url: REAPACK_GITHUB_LATEST_URL.to_string(),
+        message: source.to_string(),
+    })?;
+    let assets = value
+        .get("assets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| FrabbitError::RemoteData {
+            url: REAPACK_GITHUB_LATEST_URL.to_string(),
+            message: "missing array field: assets".to_string(),
+        })?;
+
+    for asset in assets {
+        let name = asset.get("name").and_then(Value::as_str);
+        let download_url = asset.get("browser_download_url").and_then(Value::as_str);
+        if name == Some(asset_name) {
+            let Some(url) = download_url else {
+                break;
+            };
+            return Ok(ArtifactDescriptor {
+                package_id: PACKAGE_REAPACK.to_string(),
+                version,
+                platform,
+                architecture: selected_architecture,
+                kind: ArtifactKind::ExtensionBinary,
+                url: url.to_string(),
+                file_name: asset_name.to_string(),
+            });
+        }
+    }
+
+    Err(FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_REAPACK.to_string(),
+        platform,
+        architecture,
+    })
+}
+
+fn expected_reapack_artifact_kind(
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactKind> {
+    match (platform, architecture) {
+        (Platform::Windows, Architecture::X86)
+        | (
+            Platform::Windows,
+            Architecture::X64
+            | Architecture::Universal
+            | Architecture::Unknown
+            | Architecture::Arm64
+            | Architecture::Arm64Ec,
+        )
+        | (Platform::MacOs, Architecture::X86)
+        | (
+            Platform::MacOs,
+            Architecture::X64
+            | Architecture::Unknown
+            | Architecture::Arm64
+            | Architecture::Arm64Ec
+            | Architecture::Universal,
+        ) => Ok(ArtifactKind::ExtensionBinary),
+    }
+}
+
+fn resolve_reakontrol_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, REAKONTROL_GITHUB_LATEST_URL)?;
+    resolve_reakontrol_artifact_from_release_body(&body, platform, architecture)
+}
+
+fn resolve_reakontrol_artifact_from_release_body(
+    body: &str,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let value: Value = serde_json::from_str(body).map_err(|source| FrabbitError::RemoteData {
+        url: REAKONTROL_GITHUB_LATEST_URL.to_string(),
+        message: source.to_string(),
+    })?;
+    let assets = value
+        .get("assets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| FrabbitError::RemoteData {
+            url: REAKONTROL_GITHUB_LATEST_URL.to_string(),
+            message: "missing array field: assets".to_string(),
+        })?;
+
+    let platform_token = match platform {
+        Platform::Windows => "reaKontrol_windows_",
+        Platform::MacOs => "reaKontrol_mac_",
+    };
+
+    let mut best: Option<(crate::version::Version, String, String)> = None;
+    for asset in assets {
+        let Some(name) = asset.get("name").and_then(Value::as_str) else {
+            continue;
+        };
+        if !name.starts_with(platform_token) || !name.ends_with(".zip") {
+            continue;
+        }
+        let Some(url) = asset.get("browser_download_url").and_then(Value::as_str) else {
+            continue;
+        };
+        let Some(version) = reakontrol_version_from_asset_name(name) else {
+            continue;
+        };
+        best = Some(match best {
+            Some((current_version, current_name, current_url))
+                if current_version.cmp_lenient(&version).is_ge() =>
+            {
+                (current_version, current_name, current_url)
+            }
+            _ => (version, name.to_string(), url.to_string()),
+        });
+    }
+
+    let (version, file_name, url) = best.ok_or_else(|| FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_REAKONTROL.to_string(),
+        platform,
+        architecture,
+    })?;
+
+    Ok(ArtifactDescriptor {
+        package_id: PACKAGE_REAKONTROL.to_string(),
+        version,
+        platform,
+        architecture: Architecture::Universal,
+        kind: ArtifactKind::Archive,
+        url,
+        file_name,
+    })
+}
+
+fn expected_reakontrol_artifact_kind(_platform: Platform) -> Result<ArtifactKind> {
+    Ok(ArtifactKind::Archive)
+}
+
+/// Resolve the per-platform Surge XT nightly artifact. Both Windows and
+/// macOS hosts pull from the same `surge-synthesizer/surge` release tag
+/// `Nightly`; the resolver walks `assets[]` and picks the canonical
+/// `win64 setup.exe` or `macOS .dmg` filename. No per-arch fan-out:
+/// upstream nightlies only ship one Windows installer (win64, x64), so
+/// arm64 and arm64-ec REAPER hosts get the same `setup.exe` and rely on
+/// Windows-on-arm x64 emulation. macOS ships a universal `.dmg` that
+/// handles every Mach-O slice itself.
+fn resolve_surge_xt_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, SURGE_XT_NIGHTLY_URL)?;
+    resolve_surge_xt_artifact_from_release_body(&body, platform, architecture)
+}
+
+fn resolve_surge_xt_artifact_from_release_body(
+    body: &str,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let value: Value = serde_json::from_str(body).map_err(|source| FrabbitError::RemoteData {
+        url: SURGE_XT_NIGHTLY_URL.to_string(),
+        message: source.to_string(),
+    })?;
+    let assets = value
+        .get("assets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| FrabbitError::RemoteData {
+            url: SURGE_XT_NIGHTLY_URL.to_string(),
+            message: "missing array field: assets".to_string(),
+        })?;
+
+    let (kind, asset_version_for) = match platform {
+        Platform::Windows => (
+            ArtifactKind::Installer,
+            surge_xt_version_from_windows_asset as fn(&str) -> Option<crate::version::Version>,
+        ),
+        Platform::MacOs => (
+            ArtifactKind::DiskImage,
+            surge_xt_version_from_macos_asset as fn(&str) -> Option<crate::version::Version>,
+        ),
+    };
+
+    for asset in assets {
+        let Some(name) = asset.get("name").and_then(Value::as_str) else {
+            continue;
+        };
+        let Some(version) = asset_version_for(name) else {
+            continue;
+        };
+        let Some(url) = asset.get("browser_download_url").and_then(Value::as_str) else {
+            continue;
+        };
+        return Ok(ArtifactDescriptor {
+            package_id: PACKAGE_SURGE_XT.to_string(),
+            version,
+            platform,
+            architecture: Architecture::Universal,
+            kind,
+            url: url.to_string(),
+            file_name: name.to_string(),
+        });
+    }
+
+    Err(FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_SURGE_XT.to_string(),
+        platform,
+        architecture,
+    })
+}
+
+fn expected_surge_xt_artifact_kind(platform: Platform) -> ArtifactKind {
+    match platform {
+        Platform::Windows => ArtifactKind::Installer,
+        Platform::MacOs => ArtifactKind::DiskImage,
+    }
+}
+
+/// Resolve FFmpeg's shared Windows build for the user's REAPER target
+/// arch. Fans out to two upstreams that each ship a `.7z`:
+/// - **x64**: Gyan.dev's `ffmpeg-release-full-shared.7z`, with the
+///   version pulled from the sibling `*.ver` plain-text endpoint.
+/// - **ARM64 / ARM64-EC**: the highest stable matching tag from
+///   `github.com/tordona/ffmpeg-win-arm64`, with the
+///   `ffmpeg-<ver>-full-shared-win-arm64.7z` asset selected from that
+///   tag.
+///
+/// macOS is intentionally unsupported pending an OSXExperts.net path,
+/// and x86 isn't shipped by either upstream.
+fn resolve_ffmpeg_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    match (platform, architecture) {
+        (
+            Platform::Windows,
+            Architecture::X64 | Architecture::Universal | Architecture::Unknown,
+        ) => resolve_ffmpeg_gyan_x64_artifact(client),
+        (Platform::Windows, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            resolve_ffmpeg_tordona_arm64_artifact(client, architecture)
+        }
+        (Platform::Windows, Architecture::X86) | (Platform::MacOs, _) => {
+            Err(FrabbitError::NoArtifactFound {
+                package_id: PACKAGE_FFMPEG.to_string(),
+                platform,
+                architecture,
+            })
+        }
+    }
+}
+
+fn resolve_ffmpeg_gyan_x64_artifact(client: &Client) -> Result<ArtifactDescriptor> {
+    let version_body = http_get_text(client, FFMPEG_GYAN_VERSION_URL)?;
+    let version = parse_ffmpeg_gyan_release_version(&version_body, FFMPEG_GYAN_VERSION_URL)?;
+    // The Gyan URL is a stable redirector; `file_name_from_url` returns
+    // the basename if the redirector is intact. Fall back to a fixed
+    // basename so the cache layout stays predictable if Gyan ever
+    // restructures the URL.
+    let file_name = file_name_from_url(FFMPEG_GYAN_X64_ARCHIVE_URL)
+        .unwrap_or_else(|| "ffmpeg-release-full-shared.7z".to_string());
+    Ok(ArtifactDescriptor {
+        package_id: PACKAGE_FFMPEG.to_string(),
+        version,
+        platform: Platform::Windows,
+        architecture: Architecture::X64,
+        kind: ArtifactKind::SevenZipArchive,
+        url: FFMPEG_GYAN_X64_ARCHIVE_URL.to_string(),
+        file_name,
+    })
+}
+
+fn resolve_ffmpeg_tordona_arm64_artifact(
+    client: &Client,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let body = http_get_text(client, FFMPEG_TORDONA_ARM64_RELEASES_URL)?;
+    resolve_ffmpeg_tordona_arm64_artifact_from_release_body(&body, architecture)
+}
+
+fn resolve_ffmpeg_tordona_arm64_artifact_from_release_body(
+    body: &str,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let release = pick_ffmpeg_tordona_release(
+        body,
+        FFMPEG_TORDONA_ARM64_RELEASES_URL,
+        FFMPEG_SUPPORTED_MAJOR,
+    )?
+    .ok_or_else(|| FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_FFMPEG.to_string(),
+        platform: Platform::Windows,
+        architecture,
+    })?;
+
+    // tordona ships `ffmpeg-<ver>-{essentials,full}-{shared,static}-win-arm64.7z`.
+    // We want the `full-shared` variant — full feature set, shared
+    // libraries (DLLs) so REAPER's video decoder can load them.
+    let asset = release
+        .assets
+        .iter()
+        .find(|asset| asset.name.contains("-full-shared-win-arm64") && asset.name.ends_with(".7z"))
+        .ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: PACKAGE_FFMPEG.to_string(),
+            platform: Platform::Windows,
+            architecture,
+        })?;
+
+    Ok(ArtifactDescriptor {
+        package_id: PACKAGE_FFMPEG.to_string(),
+        version: release.version,
+        platform: Platform::Windows,
+        architecture: Architecture::Arm64,
+        kind: ArtifactKind::SevenZipArchive,
+        url: asset.url.clone(),
+        file_name: asset.name.clone(),
+    })
+}
+
+fn expected_ffmpeg_artifact_kind(
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactKind> {
+    match (platform, architecture) {
+        (
+            Platform::Windows,
+            Architecture::X64 | Architecture::Universal | Architecture::Unknown,
+        )
+        | (Platform::Windows, Architecture::Arm64 | Architecture::Arm64Ec) => {
+            Ok(ArtifactKind::SevenZipArchive)
+        }
+        (Platform::Windows, Architecture::X86) | (Platform::MacOs, _) => {
+            Err(FrabbitError::NoArtifactFound {
+                package_id: PACKAGE_FFMPEG.to_string(),
+                platform,
+                architecture,
+            })
+        }
+    }
+}
+
+fn resolve_jaws_scripts_artifact(
+    client: &Client,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let entries = fetch_file_list(client, JAWS_FOR_REAPER_HFS_BASE, JAWS_FOR_REAPER_HFS_FOLDER)?;
+    let (version, file_name) =
+        pick_jaws_for_reaper_version(&entries).ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: PACKAGE_JAWS_SCRIPTS.to_string(),
+            platform,
+            architecture,
+        })?;
+    let url = hfs_file_url(
+        JAWS_FOR_REAPER_HFS_BASE,
+        JAWS_FOR_REAPER_HFS_FOLDER,
+        &file_name,
+    );
+    Ok(ArtifactDescriptor {
+        package_id: PACKAGE_JAWS_SCRIPTS.to_string(),
+        version,
+        platform,
+        architecture: Architecture::Universal,
+        kind: ArtifactKind::Installer,
+        url,
+        file_name,
+    })
+}
+
+fn artifact_from_href(
+    package_id: &str,
+    version: Version,
+    platform: Platform,
+    architecture: Architecture,
+    kind: ArtifactKind,
+    base_url: &str,
+    href: &str,
+) -> Result<ArtifactDescriptor> {
+    let url = absolute_url(base_url, href);
+    let file_name = file_name_from_url(&url).ok_or_else(|| FrabbitError::RemoteData {
+        url: url.clone(),
+        message: "artifact URL does not contain a file name".to_string(),
+    })?;
+
+    Ok(ArtifactDescriptor {
+        package_id: package_id.to_string(),
+        version,
+        platform,
+        architecture,
+        kind,
+        url,
+        file_name,
+    })
+}
+
+fn http_client() -> Result<Client> {
+    Client::builder()
+        .user_agent(USER_AGENT)
+        .build()
+        .map_err(|source| FrabbitError::Http {
+            url: "client-builder".to_string(),
+            source,
+        })
+}
+
+fn http_get_text(client: &Client, url: &str) -> Result<String> {
+    let request = crate::http::maybe_apply_github_auth(client.get(url), url);
+    let response = request
+        .send()
+        .and_then(|response| response.error_for_status())
+        .map_err(|source| FrabbitError::Http {
+            url: url.to_string(),
+            source,
+        })?;
+
+    response.text().map_err(|source| FrabbitError::Http {
+        url: url.to_string(),
+        source,
+    })
+}
+
+fn find_href_containing(body: &str, fragment: &str) -> Option<String> {
+    find_href_with(body, |href, _context| href.contains(fragment))
+}
+
+fn find_href_with(body: &str, predicate: impl Fn(&str, &str) -> bool) -> Option<String> {
+    let mut offset = 0;
+    while let Some(relative_start) = body[offset..].find("href=") {
+        let href_start = offset + relative_start + "href=".len();
+        let quote = body.as_bytes().get(href_start).copied()?;
+        if quote != b'\'' && quote != b'"' {
+            offset = href_start;
+            continue;
+        }
+
+        let value_start = href_start + 1;
+        let value_end = body[value_start..]
+            .find(quote as char)
+            .map(|relative_end| value_start + relative_end)?;
+        let href = &body[value_start..value_end];
+        let context_end = body.len().min(value_end + 400);
+        let context = &body[value_end..context_end];
+
+        if predicate(href, context) {
+            return Some(decode_basic_entities(href));
+        }
+
+        offset = value_end + 1;
+    }
+
+    None
+}
+
+fn absolute_url(base_url: &str, href: &str) -> String {
+    if href.starts_with("http://") || href.starts_with("https://") {
+        href.to_string()
+    } else {
+        format!(
+            "{}/{}",
+            base_url.trim_end_matches('/'),
+            href.trim_start_matches('/')
+        )
+    }
+}
+
+fn file_name_from_url(url: &str) -> Option<String> {
+    let without_query = url.split_once('?').map_or(url, |(path, _query)| path);
+    without_query
+        .rsplit('/')
+        .next()
+        .filter(|name| !name.is_empty())
+        .map(ToString::to_string)
+}
+
+fn decode_basic_entities(input: &str) -> String {
+    input
+        .replace("&amp;", "&")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+}
+
+fn local_artifact_source_path(url_or_path: &str) -> Result<Option<PathBuf>> {
+    if let Some(rest) = url_or_path.strip_prefix("file://") {
+        return file_url_path(rest).map(Some);
+    }
+
+    let path = PathBuf::from(url_or_path);
+    if path.is_file() {
+        Ok(Some(path))
+    } else {
+        Ok(None)
+    }
+}
+
+fn validate_remote_artifact_url(url: &str) -> Result<()> {
+    if url.starts_with("https://") {
+        return Ok(());
+    }
+
+    let message = if url.contains("://") {
+        "remote artifact downloads must use HTTPS"
+    } else {
+        "artifact URL is neither an existing local file nor an HTTPS URL"
+    };
+    Err(FrabbitError::InvalidArtifactUrl {
+        url: url.to_string(),
+        message: message.to_string(),
+    })
+}
+
+fn file_url_path(rest: &str) -> Result<PathBuf> {
+    let without_host = rest.strip_prefix("localhost/").unwrap_or(rest);
+    let decoded = percent_decode_file_url_path(without_host)?;
+    let path = if cfg!(windows) {
+        let windows_path = decoded
+            .strip_prefix('/')
+            .filter(|path| path.as_bytes().get(1) == Some(&b':'))
+            .unwrap_or(&decoded);
+        PathBuf::from(windows_path.replace('/', "\\"))
+    } else {
+        PathBuf::from(format!("/{}", decoded.trim_start_matches('/')))
+    };
+    Ok(path)
+}
+
+fn percent_decode_file_url_path(input: &str) -> Result<String> {
+    let bytes = input.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            let Some(hex) = bytes.get(index + 1..index + 3) else {
+                return Err(invalid_file_url(input));
+            };
+            let hex = std::str::from_utf8(hex).map_err(|_| invalid_file_url(input))?;
+            let value = u8::from_str_radix(hex, 16).map_err(|_| invalid_file_url(input))?;
+            output.push(value);
+            index += 3;
+        } else {
+            output.push(bytes[index]);
+            index += 1;
+        }
+    }
+
+    String::from_utf8(output).map_err(|_| invalid_file_url(input))
+}
+
+fn invalid_file_url(input: &str) -> FrabbitError {
+    FrabbitError::RemoteData {
+        url: format!("file://{input}"),
+        message: "invalid file URL path encoding".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use crate::artifact::{
+        absolute_url, expected_artifact_kind, file_name_from_url, find_href_containing,
+        resolve_ffmpeg_tordona_arm64_artifact_from_release_body,
+        resolve_reakontrol_artifact_from_release_body, resolve_reapack_asset_from_fixture,
+    };
+    use crate::package::{
+        PACKAGE_FFMPEG, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK, PACKAGE_REAPER,
+        PACKAGE_SWS,
+    };
+    use tempfile::tempdir;
+
+    use super::*;
+
+    #[test]
+    fn finds_href_by_fragment() {
+        let body = r#"<a href="download/featured/sws-2.14.0.7-Windows-x64.exe">Download</a>"#;
+        let href = find_href_containing(body, "Windows-x64.exe").unwrap();
+        assert_eq!(href, "download/featured/sws-2.14.0.7-Windows-x64.exe");
+    }
+
+    #[test]
+    fn resolves_relative_urls() {
+        assert_eq!(
+            absolute_url("https://sws-extension.org/", "download/file.exe"),
+            "https://sws-extension.org/download/file.exe"
+        );
+    }
+
+    #[test]
+    fn extracts_file_names_from_urls() {
+        assert_eq!(
+            file_name_from_url("https://example.test/files/reaper.exe?download=1").unwrap(),
+            "reaper.exe"
+        );
+    }
+
+    #[test]
+    fn resolves_reapack_asset_from_json_fixture() {
+        let body = r#"{
+            "tag_name": "v1.2.6",
+            "assets": [
+                {
+                    "name": "reaper_reapack-x64.dll",
+                    "browser_download_url": "https://github.com/cfillion/reapack/releases/download/v1.2.6/reaper_reapack-x64.dll"
+                }
+            ]
+        }"#;
+        let artifact =
+            resolve_reapack_asset_from_fixture(body, Platform::Windows, Architecture::X64).unwrap();
+
+        assert_eq!(artifact.file_name, "reaper_reapack-x64.dll");
+        assert_eq!(artifact.version.raw(), "1.2.6");
+    }
+
+    #[test]
+    fn caches_existing_local_path_artifact() {
+        let source_dir = tempdir().unwrap();
+        let source_path = source_dir.path().join("osara-test.exe");
+        fs::write(&source_path, b"local installer bytes").unwrap();
+
+        let cache_dir = tempdir().unwrap();
+        let artifact = ArtifactDescriptor {
+            package_id: PACKAGE_OSARA.to_string(),
+            version: Version::parse("1.2.3").unwrap(),
+            platform: Platform::Windows,
+            architecture: Architecture::X64,
+            kind: ArtifactKind::Installer,
+            url: source_path.display().to_string(),
+            file_name: "osara-test.exe".to_string(),
+        };
+
+        let cached = download_artifacts(std::slice::from_ref(&artifact), cache_dir.path()).unwrap();
+        assert_eq!(cached.len(), 1);
+        assert!(!cached[0].reused_existing_file);
+        assert_eq!(fs::read(&cached[0].path).unwrap(), b"local installer bytes");
+
+        let cached_again = download_artifacts(&[artifact], cache_dir.path()).unwrap();
+        assert!(cached_again[0].reused_existing_file);
+    }
+
+    #[test]
+    fn caches_file_url_artifact() {
+        let source_dir = tempdir().unwrap();
+        let source_path = source_dir.path().join("osara test.exe");
+        fs::write(&source_path, b"file url installer bytes").unwrap();
+
+        let cache_dir = tempdir().unwrap();
+        let artifact = ArtifactDescriptor {
+            package_id: PACKAGE_OSARA.to_string(),
+            version: Version::parse("1.2.3").unwrap(),
+            platform: Platform::Windows,
+            architecture: Architecture::X64,
+            kind: ArtifactKind::Installer,
+            url: file_url_for_test(&source_path),
+            file_name: "osara-test.exe".to_string(),
+        };
+
+        let cached = download_artifacts(&[artifact], cache_dir.path()).unwrap();
+        assert_eq!(
+            fs::read(&cached[0].path).unwrap(),
+            b"file url installer bytes"
+        );
+    }
+
+    #[test]
+    fn rejects_non_https_remote_artifacts() {
+        let cache_dir = tempdir().unwrap();
+        let artifact = ArtifactDescriptor {
+            package_id: PACKAGE_OSARA.to_string(),
+            version: Version::parse("1.2.3").unwrap(),
+            platform: Platform::Windows,
+            architecture: Architecture::X64,
+            kind: ArtifactKind::Installer,
+            url: "http://example.test/osara-test.exe".to_string(),
+            file_name: "osara-test.exe".to_string(),
+        };
+
+        let error = download_artifacts(&[artifact], cache_dir.path()).unwrap_err();
+        assert!(error.to_string().contains("HTTPS"));
+    }
+
+    #[test]
+    fn macos_universal_arch_canonicalizes_to_disk_image_kinds_for_per_arch_packages() {
+        // Regression: a universal REAPER install on macOS used to surface
+        // `Architecture::Universal` to per-arch resolvers (SWS, ReaPack)
+        // that didn't list a Universal arm, producing
+        // "no artifact found for sws on MacOs/Universal". The dispatch
+        // canonicalizes Universal to the host slice so the per-arch arms
+        // match. Asserting `DiskImage` / `ExtensionBinary` (rather than a
+        // specific architecture) keeps the test platform-agnostic — the
+        // host slice differs between Apple Silicon and Intel, but the
+        // artifact kind doesn't.
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_SWS, Platform::MacOs, Architecture::Universal).unwrap(),
+            ArtifactKind::DiskImage
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_REAPACK, Platform::MacOs, Architecture::Universal)
+                .unwrap(),
+            ArtifactKind::ExtensionBinary
+        );
+    }
+
+    #[test]
+    fn dispatch_arch_canonicalizes_unknown_to_host_slice() {
+        // Regression for the macOS bug where a fresh first-time install
+        // (no REAPER.app on disk yet → probe returns Unknown) routed SWS
+        // and ReaPack through their `Unknown → X64` fallback arms, producing
+        // x86_64 artifacts on Apple Silicon hosts where REAPER would run as
+        // arm64. Same pattern existed on Windows-on-ARM. The dispatch now
+        // collapses Unknown to the host slice for every platform, matching
+        // what the upcoming install will actually land.
+        let host = canonicalize_dispatch_arch(Architecture::Unknown);
+        assert_ne!(
+            host,
+            Architecture::Unknown,
+            "Unknown must be rewritten before per-arch resolvers see it"
+        );
+        assert_ne!(
+            host,
+            Architecture::Universal,
+            "Universal is itself a sentinel — must collapse further"
+        );
+        // Identical canonicalization for the Universal sentinel keeps
+        // the two paths in lockstep.
+        assert_eq!(
+            host,
+            canonicalize_dispatch_arch(Architecture::Universal),
+            "Unknown and Universal must canonicalize identically"
+        );
+    }
+
+    #[test]
+    fn reports_expected_artifact_kind_for_builtin_packages() {
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_REAPER, Platform::Windows, Architecture::X64).unwrap(),
+            ArtifactKind::Installer
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_OSARA, Platform::MacOs, Architecture::Arm64).unwrap(),
+            ArtifactKind::Archive
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_SWS, Platform::MacOs, Architecture::X64).unwrap(),
+            ArtifactKind::DiskImage
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_REAPACK, Platform::Windows, Architecture::X64).unwrap(),
+            ArtifactKind::ExtensionBinary
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_REAKONTROL, Platform::Windows, Architecture::X64)
+                .unwrap(),
+            ArtifactKind::Archive
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_REAKONTROL, Platform::MacOs, Architecture::Arm64)
+                .unwrap(),
+            ArtifactKind::Archive
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_FFMPEG, Platform::Windows, Architecture::X64).unwrap(),
+            ArtifactKind::SevenZipArchive
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_FFMPEG, Platform::Windows, Architecture::Arm64).unwrap(),
+            ArtifactKind::SevenZipArchive
+        );
+        assert!(matches!(
+            expected_artifact_kind(PACKAGE_FFMPEG, Platform::MacOs, Architecture::Arm64),
+            Err(FrabbitError::NoArtifactFound { .. })
+        ));
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_SURGE_XT, Platform::Windows, Architecture::X64).unwrap(),
+            ArtifactKind::Installer
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_SURGE_XT, Platform::Windows, Architecture::Arm64)
+                .unwrap(),
+            ArtifactKind::Installer
+        );
+        assert_eq!(
+            expected_artifact_kind(PACKAGE_SURGE_XT, Platform::MacOs, Architecture::Arm64).unwrap(),
+            ArtifactKind::DiskImage
+        );
+    }
+
+    #[test]
+    fn resolves_surge_xt_nightly_installer_for_platform() {
+        let body = r#"{
+            "tag_name": "Nightly",
+            "assets": [
+                {
+                    "name": "surge-xt-linux-arm64-NIGHTLY-2026-05-05-a87bdb7.tar.gz",
+                    "browser_download_url": "https://github.com/surge-synthesizer/surge/releases/download/Nightly/surge-xt-linux-arm64-NIGHTLY-2026-05-05-a87bdb7.tar.gz"
+                },
+                {
+                    "name": "surge-xt-win64-NIGHTLY-2026-05-05-a87bdb7-pluginsonly.zip",
+                    "browser_download_url": "https://github.com/surge-synthesizer/surge/releases/download/Nightly/surge-xt-win64-NIGHTLY-2026-05-05-a87bdb7-pluginsonly.zip"
+                },
+                {
+                    "name": "surge-xt-win64-NIGHTLY-2026-05-05-a87bdb7-setup.exe",
+                    "browser_download_url": "https://github.com/surge-synthesizer/surge/releases/download/Nightly/surge-xt-win64-NIGHTLY-2026-05-05-a87bdb7-setup.exe"
+                },
+                {
+                    "name": "surge-xt-macOS-NIGHTLY-2026-05-05-a87bdb7.dmg",
+                    "browser_download_url": "https://github.com/surge-synthesizer/surge/releases/download/Nightly/surge-xt-macOS-NIGHTLY-2026-05-05-a87bdb7.dmg"
+                }
+            ]
+        }"#;
+
+        let windows =
+            resolve_surge_xt_artifact_from_release_body(body, Platform::Windows, Architecture::X64)
+                .unwrap();
+        assert_eq!(windows.package_id, PACKAGE_SURGE_XT);
+        assert_eq!(windows.kind, ArtifactKind::Installer);
+        assert_eq!(windows.version.raw(), "NIGHTLY-2026-05-05-a87bdb7");
+        assert_eq!(
+            windows.file_name,
+            "surge-xt-win64-NIGHTLY-2026-05-05-a87bdb7-setup.exe"
+        );
+        assert!(windows.url.ends_with("-setup.exe"));
+        assert_eq!(windows.architecture, Architecture::Universal);
+
+        // arm64 / arm64-ec REAPER hosts route through the same x64 setup
+        // (Windows-on-arm runs the x64 installer under emulation; the
+        // resolver intentionally ignores architecture for Surge XT).
+        let arm64 = resolve_surge_xt_artifact_from_release_body(
+            body,
+            Platform::Windows,
+            Architecture::Arm64,
+        )
+        .unwrap();
+        assert_eq!(arm64.file_name, windows.file_name);
+
+        let mac =
+            resolve_surge_xt_artifact_from_release_body(body, Platform::MacOs, Architecture::Arm64)
+                .unwrap();
+        assert_eq!(mac.kind, ArtifactKind::DiskImage);
+        assert_eq!(
+            mac.file_name,
+            "surge-xt-macOS-NIGHTLY-2026-05-05-a87bdb7.dmg"
+        );
+        assert!(mac.url.ends_with(".dmg"));
+    }
+
+    #[test]
+    fn rejects_surge_xt_release_without_platform_asset() {
+        let body = r#"{
+            "tag_name": "Nightly",
+            "assets": [
+                {"name": "surge-xt-linux-x86_64-NIGHTLY-2026-05-05-a87bdb7.tar.gz"}
+            ]
+        }"#;
+        let error =
+            resolve_surge_xt_artifact_from_release_body(body, Platform::Windows, Architecture::X64)
+                .unwrap_err();
+        assert!(matches!(error, FrabbitError::NoArtifactFound { .. }));
+    }
+
+    #[test]
+    fn resolves_reakontrol_archive_for_platform() {
+        let body = r#"{
+            "tag_name": "snapshots",
+            "assets": [
+                {
+                    "name": "reaKontrol_windows_2025.6.6.7.bfbe7606.zip",
+                    "browser_download_url": "https://github.com/jcsteh/reaKontrol/releases/download/snapshots/reaKontrol_windows_2025.6.6.7.bfbe7606.zip"
+                },
+                {
+                    "name": "reaKontrol_windows_2026.2.16.100.cafef00d.zip",
+                    "browser_download_url": "https://github.com/jcsteh/reaKontrol/releases/download/snapshots/reaKontrol_windows_2026.2.16.100.cafef00d.zip"
+                },
+                {
+                    "name": "reaKontrol_mac_2026.2.16.100.cafef00d.zip",
+                    "browser_download_url": "https://github.com/jcsteh/reaKontrol/releases/download/snapshots/reaKontrol_mac_2026.2.16.100.cafef00d.zip"
+                }
+            ]
+        }"#;
+
+        let windows = resolve_reakontrol_artifact_from_release_body(
+            body,
+            Platform::Windows,
+            Architecture::X64,
+        )
+        .unwrap();
+        assert_eq!(windows.kind, ArtifactKind::Archive);
+        assert_eq!(windows.version.raw(), "2026.2.16.100");
+        assert_eq!(
+            windows.file_name,
+            "reaKontrol_windows_2026.2.16.100.cafef00d.zip"
+        );
+        assert!(
+            windows
+                .url
+                .starts_with("https://github.com/jcsteh/reaKontrol/")
+        );
+        assert_eq!(windows.architecture, Architecture::Universal);
+
+        let mac = resolve_reakontrol_artifact_from_release_body(
+            body,
+            Platform::MacOs,
+            Architecture::Arm64,
+        )
+        .unwrap();
+        assert_eq!(mac.file_name, "reaKontrol_mac_2026.2.16.100.cafef00d.zip");
+    }
+
+    #[test]
+    fn resolves_ffmpeg_arm64_asset_from_tordona_releases() {
+        let body = r#"[
+            {
+                "tag_name": "daily-autobuild-2026.05.06.0",
+                "prerelease": false,
+                "assets": [
+                    {
+                        "name": "ffmpeg-master-latest-full-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-master-latest-full-shared-win-arm64.7z"
+                    }
+                ]
+            },
+            {
+                "tag_name": "8.1.1",
+                "prerelease": false,
+                "assets": [
+                    {
+                        "name": "ffmpeg-8.1.1-essentials-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-8.1.1-essentials-shared-win-arm64.7z"
+                    },
+                    {
+                        "name": "ffmpeg-8.1.1-full-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-8.1.1-full-shared-win-arm64.7z"
+                    },
+                    {
+                        "name": "ffmpeg-8.1.1-full-static-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-8.1.1-full-static-win-arm64.7z"
+                    }
+                ]
+            },
+            {
+                "tag_name": "8.0.2",
+                "prerelease": false,
+                "assets": [
+                    {
+                        "name": "ffmpeg-8.0.2-full-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-8.0.2-full-shared-win-arm64.7z"
+                    }
+                ]
+            },
+            {
+                "tag_name": "7.1.4",
+                "prerelease": false,
+                "assets": [
+                    {
+                        "name": "ffmpeg-7.1.4-full-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-7.1.4-full-shared-win-arm64.7z"
+                    }
+                ]
+            }
+        ]"#;
+
+        let arm64 =
+            resolve_ffmpeg_tordona_arm64_artifact_from_release_body(body, Architecture::Arm64)
+                .unwrap();
+        assert_eq!(arm64.package_id, PACKAGE_FFMPEG);
+        assert_eq!(arm64.kind, ArtifactKind::SevenZipArchive);
+        assert_eq!(arm64.version.raw(), "8.1.1");
+        assert_eq!(arm64.file_name, "ffmpeg-8.1.1-full-shared-win-arm64.7z");
+        assert_eq!(arm64.architecture, Architecture::Arm64);
+
+        // Same body with no n8 stable tags must surface NoArtifactFound
+        // rather than silently picking the autobuild.
+        let only_autobuild_body = r#"[
+            {
+                "tag_name": "daily-autobuild-2026.05.06.0",
+                "prerelease": false,
+                "assets": [
+                    {
+                        "name": "ffmpeg-master-latest-full-shared-win-arm64.7z",
+                        "browser_download_url": "https://example.test/ffmpeg-master-latest-full-shared-win-arm64.7z"
+                    }
+                ]
+            }
+        ]"#;
+        let error = resolve_ffmpeg_tordona_arm64_artifact_from_release_body(
+            only_autobuild_body,
+            Architecture::Arm64,
+        )
+        .unwrap_err();
+        assert!(matches!(error, FrabbitError::NoArtifactFound { .. }));
+    }
+
+    #[test]
+    fn errors_when_reakontrol_release_has_no_matching_assets() {
+        let body = r#"{"tag_name": "snapshots", "assets": []}"#;
+        let error = resolve_reakontrol_artifact_from_release_body(
+            body,
+            Platform::Windows,
+            Architecture::X64,
+        )
+        .unwrap_err();
+        assert!(matches!(error, FrabbitError::NoArtifactFound { .. }));
+    }
+
+    fn file_url_for_test(path: &Path) -> String {
+        if cfg!(windows) {
+            format!(
+                "file:///{}",
+                path.display()
+                    .to_string()
+                    .replace('\\', "/")
+                    .replace(' ', "%20")
+            )
+        } else {
+            format!("file://{}", path.display().to_string().replace(' ', "%20"))
+        }
+    }
+}
+
+#[cfg(test)]
+fn resolve_reapack_asset_from_fixture(
+    body: &str,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let version = parse_github_latest_release_json(body, REAPACK_GITHUB_LATEST_URL)?;
+    let value: Value = serde_json::from_str(body).map_err(|source| FrabbitError::RemoteData {
+        url: REAPACK_GITHUB_LATEST_URL.to_string(),
+        message: source.to_string(),
+    })?;
+    let assets = value
+        .get("assets")
+        .and_then(Value::as_array)
+        .ok_or_else(|| FrabbitError::RemoteData {
+            url: REAPACK_GITHUB_LATEST_URL.to_string(),
+            message: "missing array field: assets".to_string(),
+        })?;
+
+    let asset_name = match (platform, architecture) {
+        (Platform::Windows, Architecture::X64) => "reaper_reapack-x64.dll",
+        _ => "unknown",
+    };
+
+    for asset in assets {
+        if asset.get("name").and_then(Value::as_str) == Some(asset_name) {
+            let url = asset
+                .get("browser_download_url")
+                .and_then(Value::as_str)
+                .unwrap();
+            return Ok(ArtifactDescriptor {
+                package_id: PACKAGE_REAPACK.to_string(),
+                version,
+                platform,
+                architecture,
+                kind: ArtifactKind::ExtensionBinary,
+                url: url.to_string(),
+                file_name: asset_name.to_string(),
+            });
+        }
+    }
+
+    Err(FrabbitError::NoArtifactFound {
+        package_id: PACKAGE_REAPACK.to_string(),
+        platform,
+        architecture,
+    })
+}

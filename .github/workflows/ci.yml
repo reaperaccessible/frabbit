@@ -1,0 +1,199 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Test workspace
+        run: cargo test --workspace
+
+      - name: Build release frabbit binary (no GUI feature)
+        run: cargo build --release -p frabbit
+
+  artifacts:
+    name: Artifact (${{ matrix.platform_id }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform_id: windows
+            extension: ".exe"
+          - os: windows-11-arm
+            platform_id: windows
+            extension: ".exe"
+          - os: macos-latest
+            platform_id: macos
+            extension: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Windows GUI build prerequisites (x64)
+        if: matrix.platform_id == 'windows' && runner.arch == 'X64'
+        shell: pwsh
+        run: |
+          choco install llvm ninja --yes --no-progress
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Windows GUI build prerequisites (arm64)
+        if: matrix.platform_id == 'windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        run: |
+          # Choco's llvm package is x86_64-only; bindgen rejects it for an
+          # aarch64 target ("invalid DLL (x86-64)"). Pull the woa64 LLVM
+          # installer and ARM64 Ninja straight from upstream releases.
+          $LlvmVersion = "19.1.7"
+          $LlvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LlvmVersion/LLVM-$LlvmVersion-woa64.exe"
+          Invoke-WebRequest -Uri $LlvmUrl -OutFile "$env:RUNNER_TEMP\llvm-installer.exe"
+          Start-Process -FilePath "$env:RUNNER_TEMP\llvm-installer.exe" -ArgumentList "/S" -Wait
+          $NinjaUrl = "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-winarm64.zip"
+          Invoke-WebRequest -Uri $NinjaUrl -OutFile "$env:RUNNER_TEMP\ninja.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\ninja.zip" -DestinationPath "C:\ninja" -Force
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\ninja" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install macOS GUI build prerequisites
+        if: matrix.platform_id == 'macos'
+        shell: bash
+        run: |
+          brew install llvm ninja
+          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          echo "LIBCLANG_PATH=$(brew --prefix llvm)/lib" >> "$GITHUB_ENV"
+          # GitHub-hosted Intel mac runners (macos-13) have very limited
+          # capacity and queue for hours, so we cross-build x86_64 from the
+          # Apple Silicon runner instead of using a separate matrix entry.
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Resolve version
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          # CI artifacts embed the workspace version + a short git sha so
+          # successive PR builds don't collide; release.yml uses the tag
+          # directly. Mirrors the release-time naming so users see the same
+          # filename pattern for snapshots and stable downloads.
+          BASE_VERSION="$(awk -F'\"' '/^version *= *\"/{print $2; exit}' Cargo.toml)"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "FRABBIT_VERSION=${BASE_VERSION}-${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build Windows release frabbit binary with GUI feature
+        if: matrix.platform_id == 'windows'
+        run: cargo build --release -p frabbit --features gui
+
+      - name: Resolve Windows artifact name
+        if: matrix.platform_id == 'windows'
+        shell: bash
+        env:
+          PLATFORM_ID: ${{ matrix.platform_id }}
+          RUNNER_ARCH: ${{ runner.arch }}
+          EXTENSION: ${{ matrix.extension }}
+        run: |
+          case "$RUNNER_ARCH" in
+            X64) ARCH="x86_64" ;;
+            ARM64) ARCH="aarch64" ;;
+            *) echo "unsupported windows runner arch: $RUNNER_ARCH" >&2; exit 1 ;;
+          esac
+          ARTIFACT_NAME="frabbit-${FRABBIT_VERSION}-${PLATFORM_ID}-${ARCH}${EXTENSION}"
+          echo "FRABBIT_ARCH=${ARCH}" >> "$GITHUB_ENV"
+          echo "FRABBIT_ARTIFACT_NAME=${ARTIFACT_NAME}" >> "$GITHUB_ENV"
+
+      - name: Stage Windows artifact
+        if: matrix.platform_id == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target\release\frabbit.exe "dist\$env:FRABBIT_ARTIFACT_NAME" -Force
+          $Hash = (Get-FileHash "dist\$env:FRABBIT_ARTIFACT_NAME" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "{0}  {1}" -f $Hash, $env:FRABBIT_ARTIFACT_NAME | Set-Content "dist\$env:FRABBIT_ARTIFACT_NAME.sha256"
+
+      - name: Build & stage macOS artifacts (both arches)
+        if: matrix.platform_id == 'macos'
+        shell: bash
+        run: |
+          # Build aarch64 (native) and x86_64 (cross) in one job. Apple
+          # Silicon runners have both SDKs via Xcode; the `cmake` Rust crate
+          # propagates Cargo's target arch into CMAKE_OSX_ARCHITECTURES, so
+          # wxdragon's C++ wrapper builds for the right arch automatically.
+          mkdir -p dist
+          for PAIR in "aarch64:aarch64-apple-darwin" "x86_64:x86_64-apple-darwin"; do
+            ARCH="${PAIR%%:*}"
+            TARGET="${PAIR##*:}"
+            cargo build --release --target "$TARGET" -p frabbit --features gui
+            ARTIFACT="frabbit-${FRABBIT_VERSION}-macos-${ARCH}"
+            cp "target/${TARGET}/release/frabbit" "dist/${ARTIFACT}"
+            chmod +x "dist/${ARTIFACT}"
+            shasum -a 256 "dist/${ARTIFACT}" | awk -v name="${ARTIFACT}" '{print tolower($1) "  " name}' > "dist/${ARTIFACT}.sha256"
+            # Snapshot bundle for Finder launches. The bare binary is still
+            # the self-update asset; this zip is the double-clickable
+            # alternative. Ad-hoc signing keeps Apple Silicon Macs from
+            # flagging the download as "damaged" — Developer ID signing
+            # only happens in release.yml when secrets are configured.
+            bash packaging/macos/build-bundle.sh \
+              --binary "target/${TARGET}/release/frabbit" \
+              --version "${FRABBIT_VERSION}" \
+              --out "dist" \
+              --zip-name "${ARTIFACT}.app.zip" \
+              --adhoc-sign
+          done
+
+      - name: Upload Windows artifact
+        if: matrix.platform_id == 'windows'
+        uses: actions/upload-artifact@v5
+        with:
+          name: frabbit-${{ matrix.platform_id }}-${{ env.FRABBIT_ARCH }}
+          path: |
+            dist/${{ env.FRABBIT_ARTIFACT_NAME }}
+            dist/${{ env.FRABBIT_ARTIFACT_NAME }}.sha256
+          if-no-files-found: error
+
+      - name: Upload macOS artifacts (both arches)
+        if: matrix.platform_id == 'macos'
+        uses: actions/upload-artifact@v5
+        with:
+          name: frabbit-macos
+          path: |
+            dist/frabbit-*-macos-*
+          if-no-files-found: error

@@ -1,0 +1,393 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build release bundle (${{ matrix.platform_id }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform_id: windows
+            extension: ".exe"
+          - os: windows-11-arm
+            platform_id: windows
+            extension: ".exe"
+          - os: macos-latest
+            platform_id: macos
+            extension: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # Intentionally NOT caching Rust dependencies on the release workflow:
+      # release builds run once per tag and never benefit from a hot cache,
+      # while the Swatinem/rust-cache save step on Windows is racy with
+      # lingering MSVC orphan processes (vctip / mspdbsrv) holding `target/`
+      # file locks. A failed cache save fails the whole job and skips the
+      # downstream `publish` job — i.e. it has blocked a release before.
+      # ci.yml keeps the cache because its repeated PR/push builds DO benefit.
+
+      - name: Install Windows GUI build prerequisites (x64)
+        if: matrix.platform_id == 'windows' && runner.arch == 'X64'
+        shell: pwsh
+        run: |
+          choco install llvm ninja --yes --no-progress
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Windows GUI build prerequisites (arm64)
+        if: matrix.platform_id == 'windows' && runner.arch == 'ARM64'
+        shell: pwsh
+        run: |
+          # Choco's llvm package is x86_64-only; bindgen rejects it for an
+          # aarch64 target ("invalid DLL (x86-64)"). Pull the woa64 LLVM
+          # installer and ARM64 Ninja straight from upstream releases.
+          $LlvmVersion = "19.1.7"
+          $LlvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LlvmVersion/LLVM-$LlvmVersion-woa64.exe"
+          Invoke-WebRequest -Uri $LlvmUrl -OutFile "$env:RUNNER_TEMP\llvm-installer.exe"
+          Start-Process -FilePath "$env:RUNNER_TEMP\llvm-installer.exe" -ArgumentList "/S" -Wait
+          $NinjaUrl = "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-winarm64.zip"
+          Invoke-WebRequest -Uri $NinjaUrl -OutFile "$env:RUNNER_TEMP\ninja.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\ninja.zip" -DestinationPath "C:\ninja" -Force
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\ninja" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install macOS GUI build prerequisites
+        if: matrix.platform_id == 'macos'
+        shell: bash
+        run: |
+          brew install llvm ninja
+          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+          echo "LIBCLANG_PATH=$(brew --prefix llvm)/lib" >> "$GITHUB_ENV"
+          # GitHub-hosted Intel mac runners (macos-13) have very limited
+          # capacity and queue for hours, so we cross-build x86_64 from the
+          # Apple Silicon runner instead of using a separate matrix entry.
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Run release validation
+        run: |
+          cargo fmt --all --check
+          cargo test --workspace
+
+      - name: Resolve version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          echo "FRABBIT_VERSION=${TAG_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Build Windows release frabbit binary with GUI feature
+        if: matrix.platform_id == 'windows'
+        run: cargo build --release -p frabbit --features gui
+
+      - name: Resolve Windows artifact name
+        if: matrix.platform_id == 'windows'
+        shell: bash
+        env:
+          PLATFORM_ID: ${{ matrix.platform_id }}
+          RUNNER_ARCH: ${{ runner.arch }}
+          EXTENSION: ${{ matrix.extension }}
+        run: |
+          case "$RUNNER_ARCH" in
+            X64) ARCH="x86_64" ;;
+            ARM64) ARCH="aarch64" ;;
+            *) echo "unsupported windows runner arch: $RUNNER_ARCH" >&2; exit 1 ;;
+          esac
+          ARTIFACT_NAME="frabbit-${FRABBIT_VERSION}-${PLATFORM_ID}-${ARCH}${EXTENSION}"
+          echo "FRABBIT_ARCH=${ARCH}" >> "$GITHUB_ENV"
+          echo "FRABBIT_ARTIFACT_NAME=${ARTIFACT_NAME}" >> "$GITHUB_ENV"
+
+      - name: Stage Windows release file
+        if: matrix.platform_id == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target\release\frabbit.exe "dist\$env:FRABBIT_ARTIFACT_NAME" -Force
+
+      - name: Sign Windows binaries (if certificate is configured)
+        if: matrix.platform_id == 'windows'
+        shell: pwsh
+        env:
+          WIN_CERT_B64: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
+          WIN_CERT_PWD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          if (-not $env:WIN_CERT_B64) {
+            Write-Host "WINDOWS_SIGNING_CERTIFICATE_BASE64 secret is not set; publishing unsigned Windows binaries."
+            exit 0
+          }
+          if (-not $env:WIN_CERT_PWD) {
+            Write-Error "WINDOWS_SIGNING_CERTIFICATE_BASE64 was set but WINDOWS_SIGNING_CERTIFICATE_PASSWORD is empty."
+            exit 1
+          }
+          $pfxPath = Join-Path $env:RUNNER_TEMP "frabbit-codesign.pfx"
+          [System.IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WIN_CERT_B64))
+          try {
+            $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+            if (-not $signtool) {
+              Write-Error "Could not locate signtool.exe under the Windows 10 SDK."
+              exit 1
+            }
+            Write-Host "Using $($signtool.FullName)"
+            & $signtool.FullName sign `
+              /f $pfxPath `
+              /p $env:WIN_CERT_PWD `
+              /tr "http://timestamp.digicert.com" `
+              /td SHA256 `
+              /fd SHA256 `
+              dist\${{ env.FRABBIT_ARTIFACT_NAME }}
+            if ($LASTEXITCODE -ne 0) { throw "signtool sign failed with exit $LASTEXITCODE" }
+            & $signtool.FullName verify /pa /q dist\${{ env.FRABBIT_ARTIFACT_NAME }}
+            if ($LASTEXITCODE -ne 0) { throw "signtool verify failed with exit $LASTEXITCODE" }
+          }
+          finally {
+            Remove-Item $pfxPath -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Hash Windows release file
+        if: matrix.platform_id == 'windows'
+        shell: pwsh
+        run: |
+          $Hash = (Get-FileHash dist\${{ env.FRABBIT_ARTIFACT_NAME }} -Algorithm SHA256).Hash.ToLowerInvariant()
+          "{0}  {1}" -f $Hash, "${{ env.FRABBIT_ARTIFACT_NAME }}" | Set-Content dist\${{ env.FRABBIT_ARTIFACT_NAME }}.sha256
+
+      - name: Build & stage macOS release artifacts (universal)
+        if: matrix.platform_id == 'macos'
+        shell: bash
+        run: |
+          # Build aarch64 (native) and x86_64 (cross) on the Apple Silicon
+          # runner, then `lipo -create` them into a single universal Mach-O
+          # so we ship one binary that runs natively on both Apple Silicon
+          # and Intel Macs. The `cmake` Rust crate propagates Cargo's target
+          # arch into CMAKE_OSX_ARCHITECTURES, so wxdragon's C++ wrapper
+          # builds the matching slice automatically.
+          # The .app bundle is ad-hoc signed (FRABBIT ships without a
+          # Developer ID) — the bundled "Open Me First.command" helper
+          # clears Gatekeeper on first launch.
+          mkdir -p dist
+          for TARGET in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --target "$TARGET" -p frabbit --features gui
+          done
+          ARTIFACT="frabbit-${FRABBIT_VERSION}-macos-universal"
+          lipo -create -output "dist/${ARTIFACT}" \
+            "target/aarch64-apple-darwin/release/frabbit" \
+            "target/x86_64-apple-darwin/release/frabbit"
+          chmod +x "dist/${ARTIFACT}"
+          # Ad-hoc sign the bare binary itself, separately from the .app
+          # bundle. Two reasons: (a) Apple Silicon's kernel refuses to
+          # exec unsigned Mach-Os, and `lipo -create` strips its inputs'
+          # signatures from the fused fat output — without this step the
+          # bare-binary download wouldn't run for CLI users; (b) when
+          # self-update copies this binary over the binary inside an
+          # existing `Frabbit.app`, the inner Mach-O has a valid embedded
+          # signature, which is a prerequisite for the post-swap bundle
+          # re-sign in `apply_self_update` to produce a valid bundle.
+          # Sign before sha256 so the manifest hashes the signed bytes.
+          codesign --force --sign - "dist/${ARTIFACT}"
+          shasum -a 256 "dist/${ARTIFACT}" | awk -v name="${ARTIFACT}" '{print tolower($1) "  " name}' > "dist/${ARTIFACT}.sha256"
+          bash packaging/macos/build-bundle.sh \
+            --binary "dist/${ARTIFACT}" \
+            --version "${FRABBIT_VERSION}" \
+            --out "dist" \
+            --zip-name "${ARTIFACT}.app.zip" \
+            --adhoc-sign
+
+      - name: Upload Windows release artifact
+        if: matrix.platform_id == 'windows'
+        uses: actions/upload-artifact@v5
+        with:
+          name: frabbit-${{ matrix.platform_id }}-${{ env.FRABBIT_ARCH }}
+          path: |
+            dist/${{ env.FRABBIT_ARTIFACT_NAME }}
+            dist/${{ env.FRABBIT_ARTIFACT_NAME }}.sha256
+          if-no-files-found: error
+
+      - name: Upload macOS release artifacts (both arches)
+        if: matrix.platform_id == 'macos'
+        uses: actions/upload-artifact@v5
+        with:
+          name: frabbit-macos
+          path: |
+            dist/frabbit-*-macos-*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: frabbit-*
+          merge-multiple: true
+          path: release
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          NOTES_PATH="release/RELEASE_NOTES.md"
+          bash scripts/extract-changelog.sh "$VERSION" CHANGELOG.md > "$NOTES_PATH"
+          echo "notes_path=$NOTES_PATH" >> "$GITHUB_OUTPUT"
+          echo "::group::Release notes"
+          cat "$NOTES_PATH"
+          echo "::endgroup::"
+
+      - name: Generate combined checksum file
+        shell: bash
+        run: |
+          cat release/*.sha256 > release/SHA256SUMS.txt
+
+      - name: Generate stable update manifest
+        shell: bash
+        env:
+          REPOSITORY: ${{ github.repository }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          PUBLISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          RELEASE_NOTES_URL="https://github.com/${REPOSITORY}/releases/tag/${TAG_NAME}"
+          DOWNLOAD_PREFIX="https://github.com/${REPOSITORY}/releases/download/${TAG_NAME}"
+
+          # Build the per-arch `platforms` map by scanning every bare-binary
+          # asset in release/. The bare binary is what the self-updater
+          # downloads (it copies bytes straight over the install target —
+          # no zip extraction). Frabbit.app.zip bundles ship alongside for
+          # Finder launches but are not self-update assets.
+          #
+          # The legacy top-level `windows` / `macos` fields are populated
+          # from the primary-arch entries (x86_64 on Windows, aarch64 on
+          # macOS) so FRABBIT clients predating the per-arch schema keep
+          # auto-updating. New clients prefer `platforms` and ignore the
+          # legacy fields.
+          PLATFORMS_JSON='{}'
+          add_platform() {
+            local key="$1" path="$2"
+            if [ -z "$path" ]; then
+              return 0
+            fi
+            local name sha url
+            name="$(basename "$path")"
+            sha="$(awk '{print $1}' "${path}.sha256")"
+            url="${DOWNLOAD_PREFIX}/${name}"
+            PLATFORMS_JSON="$(printf '%s' "$PLATFORMS_JSON" | jq \
+              --arg key "$key" --arg url "$url" --arg sha "$sha" \
+              '. + {($key): {url: $url, sha256: $sha}}')"
+          }
+          add_platform "windows-x86_64"  "$(find release -maxdepth 1 -type f -name 'frabbit-*-windows-x86_64.exe'  ! -name '*.sha256' | head -1)"
+          add_platform "windows-aarch64" "$(find release -maxdepth 1 -type f -name 'frabbit-*-windows-aarch64.exe' ! -name '*.sha256' | head -1)"
+          # macOS now ships as a single universal Mach-O, but the platforms
+          # map still has to expose `macos-aarch64` and `macos-x86_64` keys
+          # because FRABBIT clients <= 0.1.0 look up exactly those keys and
+          # error out if they're missing — there's no "fall through to a
+          # universal slot" in the legacy selector. We point both keys at
+          # the same universal artifact (URL + SHA), which silently
+          # retargets every previously-released client onto the new fat
+          # binary on its next self-update check.
+          MACOS_UNIVERSAL_PATH="$(find release -maxdepth 1 -type f -name 'frabbit-*-macos-universal' ! -name '*.sha256' ! -name '*.zip' | head -1)"
+          add_platform "macos-aarch64" "$MACOS_UNIVERSAL_PATH"
+          add_platform "macos-x86_64"  "$MACOS_UNIVERSAL_PATH"
+
+          WINDOWS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."windows-x86_64" // empty')"
+          MACOS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."macos-aarch64" // empty')"
+          if [ -z "$WINDOWS_LEGACY" ] || [ -z "$MACOS_LEGACY" ]; then
+            echo "expected primary-arch per-platform artifacts under release/ but found:" >&2
+            ls release/ >&2
+            exit 1
+          fi
+
+          jq -n \
+            --arg version "$VERSION" \
+            --arg channel "stable" \
+            --arg published_at "$PUBLISHED_AT" \
+            --arg release_notes_url "$RELEASE_NOTES_URL" \
+            --argjson windows "$WINDOWS_LEGACY" \
+            --argjson macos "$MACOS_LEGACY" \
+            --argjson platforms "$PLATFORMS_JSON" \
+            '{
+              version: $version,
+              channel: $channel,
+              published_at: $published_at,
+              release_notes_url: $release_notes_url,
+              minimum_supported_previous_version: null,
+              assets: {
+                windows: $windows,
+                macos: $macos,
+                platforms: $platforms
+              }
+            }' > release/frabbit-update-stable.json
+
+      - name: Stage version-less aliases for stable download URLs
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          # GitHub's `releases/latest/download/<filename>` URL resolves
+          # against whatever release is current, but the filename has to
+          # match exactly. Since our published assets bake the version
+          # into the name (`frabbit-0.1.0-windows-x86_64.exe`), a "latest"
+          # link tied to that name only works for the version it was
+          # picked at. So copy each artifact to a version-less alias
+          # alongside the versioned original; the alias makes
+          # `releases/latest/download/frabbit-windows-x86_64.exe` (and
+          # friends) permanently stable across releases.
+          #
+          # Per-asset `.sha256` files are intentionally NOT aliased: their
+          # content references the versioned filename, so a `sha256sum -c`
+          # against the alias would fail to find the file. Power users who
+          # want to verify a download should use the versioned filename
+          # alongside its `.sha256`. The combined `SHA256SUMS.txt` is
+          # already version-less and continues to cover the versioned
+          # entries.
+          VERSION="${TAG_NAME#v}"
+          shopt -s nullglob
+          for src in release/frabbit-"${VERSION}"-*; do
+            base="$(basename "$src")"
+            case "$base" in *.sha256) continue ;; esac
+            alias_name="${base/frabbit-${VERSION}-/frabbit-}"
+            if [ "$alias_name" = "$base" ]; then
+              continue
+            fi
+            cp "$src" "release/${alias_name}"
+            echo "aliased $base -> $alias_name"
+          done
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/frabbit-*
+            release/SHA256SUMS.txt
+            release/frabbit-update-stable.json
+          body_path: ${{ steps.notes.outputs.notes_path }}
