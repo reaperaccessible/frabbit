@@ -22,7 +22,9 @@ use frabbit_core::plan::{AvailablePackage, build_install_plan};
 use frabbit_core::portable::{PortabilityCheckStatus, PortabilityReport, check_portable_runtime};
 use frabbit_core::preflight::{PreflightOptions, PreflightReport, run_install_preflight};
 use frabbit_core::report::{default_report_path, save_json_and_text_reports};
-use frabbit_core::resource::{ResourceInitActionKind, ResourceInitReport, initialize_resource_path};
+use frabbit_core::resource::{
+    ResourceInitActionKind, ResourceInitReport, initialize_resource_path,
+};
 use frabbit_core::rollback::{
     BackupSet, RestoreBackupActionKind, RestoreBackupOptions, RestoreBackupReport,
     list_backup_sets, restore_backup_set,

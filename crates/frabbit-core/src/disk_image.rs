@@ -76,7 +76,9 @@ pub fn extract_user_plugin_from_disk_image(
         .map(|relative| relative.display().to_string())
         .unwrap_or_else(|_| source.display().to_string());
 
-    mount.detach().map_err(frabbit_error_from_disk_image_error)?;
+    mount
+        .detach()
+        .map_err(frabbit_error_from_disk_image_error)?;
 
     Ok(ExtractedUserPlugin {
         source_archive: image_path.to_path_buf(),

@@ -131,9 +131,15 @@ pub enum ConfigurationStatus {
 /// get the French resources, everyone else gets the English ones.
 pub fn builtin_configuration_steps(active_locale: &str) -> Vec<ConfigurationStep> {
     let (name, url) = if active_locale.starts_with("fr") {
-        (REAPER_ACCESSIBLE_REPACK_NAME_FR, REAPER_ACCESSIBLE_REPACK_URL_FR)
+        (
+            REAPER_ACCESSIBLE_REPACK_NAME_FR,
+            REAPER_ACCESSIBLE_REPACK_URL_FR,
+        )
     } else {
-        (REAPER_ACCESSIBLE_REPACK_NAME_EN, REAPER_ACCESSIBLE_REPACK_URL_EN)
+        (
+            REAPER_ACCESSIBLE_REPACK_NAME_EN,
+            REAPER_ACCESSIBLE_REPACK_URL_EN,
+        )
     };
 
     vec![ConfigurationStep {

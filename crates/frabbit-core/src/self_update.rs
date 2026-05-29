@@ -22,8 +22,7 @@ const USER_AGENT: &str = concat!(
     " (+https://github.com/ReaperAccessible/frabbit)"
 );
 
-pub const DEFAULT_SELF_UPDATE_MANIFEST_URL: &str =
-    "https://github.com/ReaperAccessible/frabbit/releases/latest/download/frabbit-update-stable.json";
+pub const DEFAULT_SELF_UPDATE_MANIFEST_URL: &str = "https://github.com/ReaperAccessible/frabbit/releases/latest/download/frabbit-update-stable.json";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SelfUpdateManifest {
@@ -759,13 +758,15 @@ fn select_asset_for_platform(
                     ),
                 })?;
         let key = format!("{}-{}", platform_token(platform), arch_token);
-        let asset = platforms.get(&key).ok_or_else(|| FrabbitError::RemoteData {
-            url: manifest_url.to_string(),
-            message: format!(
-                "manifest does not list a {key} asset; \
+        let asset = platforms
+            .get(&key)
+            .ok_or_else(|| FrabbitError::RemoteData {
+                url: manifest_url.to_string(),
+                message: format!(
+                    "manifest does not list a {key} asset; \
                  download the matching build from the GitHub releases page manually."
-            ),
-        })?;
+                ),
+            })?;
         return Ok(SelfUpdateAssetSelection {
             platform,
             url: asset.url.clone(),
@@ -820,10 +821,12 @@ fn platform_token(platform: Platform) -> &'static str {
 /// Unknown shapes are rejected at parse time so downstream lookup logic
 /// can stay simple.
 fn validate_platform_key(key: &str, manifest_url: &str) -> Result<()> {
-    let (os, arch) = key.split_once('-').ok_or_else(|| FrabbitError::RemoteData {
-        url: manifest_url.to_string(),
-        message: format!("manifest platforms key '{key}' must be '<os>-<arch>'"),
-    })?;
+    let (os, arch) = key
+        .split_once('-')
+        .ok_or_else(|| FrabbitError::RemoteData {
+            url: manifest_url.to_string(),
+            message: format!("manifest platforms key '{key}' must be '<os>-<arch>'"),
+        })?;
     let os_ok = matches!(os, "windows" | "macos");
     let arch_ok = matches!(arch, "x86_64" | "aarch64" | "i686" | "armv7");
     if !os_ok || !arch_ok {
@@ -1529,7 +1532,11 @@ mod tests {
         fs::create_dir_all(staged_binary_path.parent().unwrap()).unwrap();
         write_test_release_binary(&staged_binary_path, b"new-frabbit-binary");
 
-        fs::write(install_root.path().join("FRABBIT.exe"), b"old-frabbit-binary").unwrap();
+        fs::write(
+            install_root.path().join("FRABBIT.exe"),
+            b"old-frabbit-binary",
+        )
+        .unwrap();
 
         let stage = staged_report_for_binary(&staged_binary_path, staging_root.path());
         let report = apply_self_update(
@@ -1597,7 +1604,11 @@ mod tests {
         fs::create_dir_all(staged_binary_path.parent().unwrap()).unwrap();
         write_test_release_binary(&staged_binary_path, b"new-frabbit-binary");
 
-        fs::write(install_root.path().join("FRABBIT.exe"), b"old-frabbit-binary").unwrap();
+        fs::write(
+            install_root.path().join("FRABBIT.exe"),
+            b"old-frabbit-binary",
+        )
+        .unwrap();
 
         let mut stage = staged_report_for_binary(&staged_binary_path, staging_root.path());
         stage.check.asset.sha256 =
@@ -1650,7 +1661,10 @@ mod tests {
         )
         .unwrap_err();
 
-        assert!(matches!(error, FrabbitError::InvalidPlannedExecution { .. }));
+        assert!(matches!(
+            error,
+            FrabbitError::InvalidPlannedExecution { .. }
+        ));
     }
 
     // (`apply_self_update_refuses_when_package_install_lock_is_held`
