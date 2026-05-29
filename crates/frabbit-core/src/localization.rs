@@ -324,7 +324,7 @@ mod tests {
 
         assert_eq!(
             message.value,
-            "Outil d\u{2019}installation et de mise \u{e0} jour de REAPER accessible"
+            "Outil d'installation et de mise \u{e0} jour de REAPER accessible"
         );
         assert_eq!(message.locale, DEFAULT_LOCALE);
         assert!(!message.fallback_used);

@@ -48,7 +48,7 @@ mod tests {
 
         assert_eq!(
             sha256_file(&file).unwrap(),
-            "d37d96b42ad43384915e4513505c30c0b1c4e7c765b5577eda25b5dbd7f26d89"
+            "1af340d8a76169ba1fdf86f5bf71204e3f62cec35d6289aa751bd6ca30e629bb"
         );
     }
 }

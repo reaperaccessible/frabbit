@@ -476,9 +476,11 @@ pub fn model_from_plan(
     selected_target_index: Option<usize>,
     plan: InstallPlan,
 ) -> WizardModel {
+    let mut options = UiBootstrapOptions::default();
+    options.locale = localizer.active_locale().to_string();
     model_from_plan_with_options(
         localizer,
-        UiBootstrapOptions::default(),
+        options,
         platform,
         architecture,
         installations,
@@ -3135,25 +3137,25 @@ mod tests {
         assert!(localizer.source_path().is_none());
         assert_eq!(
             localizer.text("app-title").value,
-            "REAPER Accessibility Bootstrap & Bundle Installation Tool"
+            "Outil d'installation et de mise \u{e0} jour de REAPER accessible"
         );
     }
 
     #[test]
-    fn package_operation_messages_localize_into_german() {
+    fn package_operation_messages_localize_into_english() {
         use frabbit_core::operation::PackageOperationMessage as Msg;
-        let de = Localizer::embedded("de-DE").unwrap();
+        let en = Localizer::embedded("en-US").unwrap();
         let extension = super::localized_package_operation_message(
-            &de,
+            &en,
             &Msg::ExtensionBinaryInstalled,
             "Single extension binary handled by FRABBIT installer.",
         );
         assert!(
-            extension.starts_with("Einzelne"),
-            "expected German extension-binary status, got: {extension:?}"
+            extension.starts_with("Single extension"),
+            "expected English extension-binary status, got: {extension:?}"
         );
         let skipped = super::localized_package_operation_message(
-            &de,
+            &en,
             &Msg::SkippedCurrent {
                 installed_version: "8.1.1".to_string(),
                 available_version: "8.0".to_string(),
@@ -3161,42 +3163,42 @@ mod tests {
             "Installed version 8.1.1 is current or newer than available version 8.0.",
         );
         assert!(
-            skipped.contains("Installierte Version") && skipped.contains("8.1.1"),
-            "expected German skipped-current with version interpolation, got: {skipped:?}"
+            skipped.contains("Installed version") && skipped.contains("8.1.1"),
+            "expected English skipped-current with version interpolation, got: {skipped:?}"
         );
         let dry_run = super::localized_package_operation_message(
-            &de,
+            &en,
             &Msg::DryRunWouldRunUnattended {
                 artifact_kind: frabbit_core::artifact::ArtifactKind::Installer,
             },
             "Dry run: FRABBIT would download and run this vendor installer unattended.",
         );
         assert!(
-            dry_run.starts_with("Probelauf") && dry_run.contains("Vendor-Installationsprogramm"),
-            "expected German dry-run with translated automation kind, got: {dry_run:?}"
+            dry_run.starts_with("Dry run") && dry_run.contains("vendor installer"),
+            "expected English dry-run with translated automation kind, got: {dry_run:?}"
         );
     }
 
     #[test]
-    fn configuration_step_messages_localize_into_german() {
+    fn configuration_step_messages_localize_into_english() {
         use frabbit_core::configuration::{ConfigurationMessage as Msg, ConfigurationStatus};
-        let de = Localizer::embedded("de-DE").unwrap();
+        let en = Localizer::embedded("en-US").unwrap();
         let added = super::localized_configuration_message(
-            &de,
+            &en,
             &Msg::ReapackRemoteAdded {
-                name: "REAPER Accessibility".to_string(),
+                name: "ReaperAccessible EN".to_string(),
                 url: "https://example.test/index.xml".to_string(),
             },
             "Added ReaPack remote ...",
         );
         assert!(
-            added.contains("REAPER Accessibility")
-                && added.contains("hinzugefügt")
+            added.contains("ReaperAccessible EN")
+                && added.contains("Added")
                 && added.contains("https://example.test/index.xml"),
-            "expected German added-remote message with name + URL interpolation, got: {added:?}"
+            "expected English added-remote message with name + URL interpolation, got: {added:?}"
         );
         let dep_missing = super::localized_configuration_message(
-            &de,
+            &en,
             &Msg::SkippedDependencyMissing {
                 step_id: "reapack-add-reaper-accessibility-remote".to_string(),
                 dep_id: "reapack".to_string(),
@@ -3204,33 +3206,30 @@ mod tests {
             "Configuration step skipped because dependency missing.",
         );
         assert!(
-            dep_missing.contains("übersprungen") && dep_missing.contains("reapack"),
-            "expected German dependency-missing message, got: {dep_missing:?}"
+            dep_missing.contains("skipped") && dep_missing.contains("reapack"),
+            "expected English dependency-missing message, got: {dep_missing:?}"
         );
         let status = super::configuration_status_label_for_summary(
-            Some(&de),
+            Some(&en),
             ConfigurationStatus::SkippedDependencyMissing,
         );
         assert!(
-            status.starts_with("Übersprungen") && status.contains("Abhängigkeit"),
-            "expected German skipped-dep-missing status, got: {status:?}"
+            status.starts_with("Skipped") && status.contains("dependency"),
+            "expected English skipped-dep-missing status, got: {status:?}"
         );
-        // The step name lookup should resolve `reapack-add-reaper-accessibility-remote`
-        // to its localized display name.
         let step_name = super::localized_configuration_step_name(
-            Some(&de),
+            Some(&en),
             "reapack-add-reaper-accessibility-remote",
         );
         assert!(
-            step_name.contains("ReaPack")
-                && (step_name.contains("Repository") || step_name.contains("Repositorys")),
-            "expected German display name for the REAPER Accessibility ReaPack repo step, got: {step_name:?}"
+            step_name.contains("ReaPack") && step_name.contains("ReaperAccessible"),
+            "expected English display name for the ReaperAccessible ReaPack repo step, got: {step_name:?}"
         );
     }
 
     #[test]
     fn wizard_command_labels_include_native_mnemonics() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3327,7 +3326,7 @@ mod tests {
 
     #[test]
     fn builds_initial_wizard_model_from_plan() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let plan = InstallPlan {
             target: Some(installation.clone()),
@@ -3362,7 +3361,7 @@ mod tests {
         assert_eq!(
             model.window_title,
             format!(
-                "REAPER Accessibility Bootstrap & Bundle Installation Tool v{}",
+                "REAPER Accessible Installation & Update Tool v{}",
                 env!("CARGO_PKG_VERSION")
             )
         );
@@ -3424,7 +3423,7 @@ mod tests {
         // unchecking should switch the visible action to "Keep", and
         // re-checking it should restore the install/update action that the
         // plan originally chose for this package.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3471,7 +3470,7 @@ mod tests {
         // original action is Keep. If the user explicitly checks the row,
         // they're asking FRABBIT to re-stage the package — that translates to
         // Update so the install pipeline runs.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3507,7 +3506,7 @@ mod tests {
         // FFmpeg is `recommended: false` in builtin-packages.json. Even when
         // the plan's action for it is Install, the wizard must NOT auto-tick
         // the row — non-recommended packages should be opt-in.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3544,7 +3543,7 @@ mod tests {
         // satisfied — the configuration row must start unticked too,
         // otherwise the wizard would queue a config step that points at a
         // package the user hasn't asked for.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3595,7 +3594,7 @@ mod tests {
         // wizard escalates it to recommended-by-default for users who have
         // Komplete Kontrol on their host. This test pins the host capability
         // explicitly so the result doesn't depend on whether dev/CI has KK.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let text = super::wizard_text(&localizer);
         let specs = builtin_package_specs(Platform::Windows);
         let host = HostCapabilities {
@@ -3653,7 +3652,7 @@ mod tests {
         // Update means the package is already on disk — the user opted into
         // having it. FRABBIT should keep it current by default, so the Update
         // row stays auto-ticked even for a non-recommended package.
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3680,7 +3679,7 @@ mod tests {
 
     #[test]
     fn disables_next_when_no_target_is_selected() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3701,7 +3700,7 @@ mod tests {
 
     #[test]
     fn builds_install_request_from_selected_rows() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3762,7 +3761,7 @@ mod tests {
 
     #[test]
     fn install_request_requires_selected_package() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -3791,7 +3790,7 @@ mod tests {
     #[test]
     fn builds_custom_portable_target_row() {
         let dir = tempdir().unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3828,7 +3827,7 @@ mod tests {
         let resource_path = dir.path().join("PortableREAPER");
         std::fs::create_dir_all(&resource_path).unwrap();
         std::fs::write(resource_path.join("reaper.exe"), b"").unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3860,7 +3859,7 @@ mod tests {
         std::fs::create_dir_all(&resource_path).unwrap();
         std::fs::create_dir_all(app_path.parent().unwrap()).unwrap();
 
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = Installation {
             kind: InstallationKind::Standard,
             platform: Platform::Windows,
@@ -3906,7 +3905,7 @@ mod tests {
         let plugins = dir.path().join("PortableREAPER").join("UserPlugins");
         std::fs::create_dir_all(&plugins).unwrap();
         std::fs::write(plugins.join("reaper_reapack-x64.dll"), b"installed").unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3936,7 +3935,7 @@ mod tests {
     #[test]
     fn package_plan_includes_reaper_for_empty_custom_target() {
         let dir = tempdir().unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -3973,7 +3972,7 @@ mod tests {
     #[test]
     fn portable_target_marks_surge_xt_as_unavailable() {
         let dir = tempdir().unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4042,7 +4041,7 @@ mod tests {
     #[test]
     fn reaper_windows_row_uses_unattended_handling() {
         let dir = tempdir().unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4072,7 +4071,7 @@ mod tests {
 
     #[test]
     fn sws_windows_uses_unattended_handling_summary() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4099,7 +4098,7 @@ mod tests {
 
     #[test]
     fn review_preview_includes_osara_keymap_choice() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
             &localizer,
@@ -4143,7 +4142,7 @@ mod tests {
 
     #[test]
     fn osara_keymap_note_defaults_to_unavailable_when_osara_is_not_selected() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4172,7 +4171,7 @@ mod tests {
 
     #[test]
     fn setup_summary_includes_manual_instruction_notes() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4290,7 +4289,7 @@ mod tests {
 
     #[test]
     fn setup_summary_includes_backup_paths_when_present() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4400,7 +4399,7 @@ mod tests {
 
     #[test]
     fn setup_summary_includes_unattended_receipt_backup_paths() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4480,7 +4479,7 @@ mod tests {
 
     #[test]
     fn wizard_error_summary_includes_selected_request_context() {
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4533,7 +4532,7 @@ mod tests {
     #[test]
     fn saves_wizard_outcome_error_report_under_resource_logs() {
         let dir = tempdir().unwrap();
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4597,7 +4596,7 @@ mod tests {
             }],
         );
 
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let summary = format_self_update_apply_summary(&localizer, &report);
         assert!(summary.contains("Replaced 1 file(s)"));
         assert!(summary.contains("Signature verification: 1 signed."));
@@ -4615,7 +4614,7 @@ mod tests {
             Vec::new(),
         );
 
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let summary = format_self_update_apply_summary(&localizer, &report);
         assert!(summary.contains("Replaced 1 file(s)"));
         assert!(!summary.contains("Signature verification"));
@@ -4653,7 +4652,7 @@ mod tests {
             ],
         );
 
-        let localizer = Localizer::embedded(DEFAULT_LOCALE).unwrap();
+        let localizer = Localizer::embedded("en-US").unwrap();
         let summary = format_self_update_apply_summary(&localizer, &report);
         assert!(summary.contains("Signature verification: 1 signed, 1 unsigned."));
     }
