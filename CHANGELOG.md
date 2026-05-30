@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.0] - 2026-05-30
+
+- KeyMap decoupled: installable independently of OSARA update
+- Resume affiche le KeyMap selectionne avec son nom
+
 ## [1.3.0] - 2026-05-30
 
 - Textes ameliores: actions claires, review simplifie, dropdown KeyMaps

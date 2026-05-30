@@ -140,6 +140,10 @@ pub fn execute_setup_operation_with_progress(
         progress,
     )?;
 
+    if !options.dry_run && options.keymap_choice.replaces_keymap() {
+        apply_keymap_step(resource_path, options.keymap_choice)?;
+    }
+
     Ok(SetupReport {
         resource_path: resource_path.to_path_buf(),
         dry_run: options.dry_run,
@@ -220,6 +224,10 @@ pub fn execute_resolved_setup_operation_with_progress(
         progress,
     )?;
 
+    if !options.dry_run && options.keymap_choice.replaces_keymap() {
+        apply_keymap_step(resource_path, options.keymap_choice)?;
+    }
+
     Ok(SetupReport {
         resource_path: resource_path.to_path_buf(),
         dry_run: options.dry_run,
@@ -227,6 +235,25 @@ pub fn execute_resolved_setup_operation_with_progress(
         package_operation,
         configuration_steps,
     })
+}
+
+fn apply_keymap_step(resource_path: &Path, keymap_choice: KeymapChoice) -> Result<()> {
+    use crate::operation::osara::{
+        apply_keymap_from_bytes, apply_osara_keymap_replacement, embedded_keymap_bytes,
+    };
+
+    match keymap_choice {
+        KeymapChoice::Osara => {
+            apply_osara_keymap_replacement(resource_path)?;
+        }
+        choice if choice.is_reaper_accessible() => {
+            if let Some(bytes) = embedded_keymap_bytes(choice) {
+                apply_keymap_from_bytes(resource_path, bytes)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 /// Build the "package considered satisfied for configuration-step

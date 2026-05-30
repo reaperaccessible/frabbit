@@ -1,5 +1,5 @@
 mod jaws_scripts;
-mod osara;
+pub(crate) mod osara;
 mod reaper;
 mod surge_xt;
 mod sws;
@@ -2100,8 +2100,9 @@ mod tests {
             PackageOperationStatus::PlannedUnattended
         );
         assert!(report.items[0].manual_instruction.is_none());
+        // Keymap is now decoupled — verification_paths no longer includes reaper-kb.ini
         assert!(
-            report.items[0]
+            !report.items[0]
                 .planned_execution
                 .as_ref()
                 .unwrap()
@@ -2322,7 +2323,7 @@ mod tests {
 
     #[cfg(target_os = "windows")]
     #[test]
-    fn executes_osara_windows_installer_unattended_and_replaces_keymap_with_backup() {
+    fn executes_osara_windows_installer_unattended_without_touching_keymap() {
         let dir = tempdir().unwrap();
         let cache = tempdir().unwrap();
         let source_path = dir.path().join("osara-installer.cmd");
@@ -2356,27 +2357,17 @@ mod tests {
             report.items[0].status,
             PackageOperationStatus::InstalledOrChecked
         );
+        // Keymap is now decoupled — OSARA post-install does NOT replace reaper-kb.ini
         assert_eq!(
             std::fs::read_to_string(resource_path.join("reaper-kb.ini")).unwrap(),
-            "osara keymap\r\n"
-        );
-        assert_eq!(report.items[0].backup_paths.len(), 1);
-        assert_eq!(
-            std::fs::read(&report.items[0].backup_paths[0]).unwrap(),
-            b"old keymap"
-        );
-        assert!(report.items[0].backup_manifest_path.is_some());
-        assert!(
-            report.items[0]
-                .message
-                .contains("applied the key map replacement")
+            "old keymap"
         );
         assert!(!resource_path.join("osara").join("uninstall.exe").exists());
     }
 
     #[cfg(target_os = "windows")]
     #[test]
-    fn executes_osara_windows_installer_unattended_and_creates_keymap_for_new_portable_target() {
+    fn executes_osara_windows_installer_unattended_for_new_portable_without_keymap() {
         let dir = tempdir().unwrap();
         let cache = tempdir().unwrap();
         let source_path = dir.path().join("osara-installer.cmd");
@@ -2408,10 +2399,8 @@ mod tests {
             report.items[0].status,
             PackageOperationStatus::InstalledOrChecked
         );
-        assert_eq!(
-            std::fs::read_to_string(resource_path.join("reaper-kb.ini")).unwrap(),
-            "osara keymap\r\n"
-        );
+        // Keymap decoupled — reaper-kb.ini not touched during OSARA post-install
+        assert!(!resource_path.join("reaper-kb.ini").exists());
         assert!(report.items[0].backup_paths.is_empty());
         assert!(report.items[0].backup_manifest_path.is_none());
         assert!(

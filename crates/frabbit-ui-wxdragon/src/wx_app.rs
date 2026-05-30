@@ -4818,12 +4818,15 @@ fn progress_details_for_start(
         }
     }
 
-    if osara_selected_for_rows(package_rows, selected_package_indices) {
-        lines.push(model.text.review_keymap_heading.clone());
-        lines.push(match keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
-            _ => model.text.review_keymap_replace.clone(),
-        });
+    lines.push(model.text.review_keymap_heading.clone());
+    if keymap_choice.replaces_keymap() {
+        lines.push(format!(
+            "{} ({})",
+            model.text.review_keymap_replace,
+            keymap_choice_label(model, keymap_choice)
+        ));
+    } else {
+        lines.push(model.text.review_keymap_preserve.clone());
     }
 
     if let Some(cache_dir) = cache_dir {

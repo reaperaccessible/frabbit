@@ -21,7 +21,7 @@ const RA_WIN_FRF: &[u8] =
 const RA_WIN_FRC: &[u8] =
     include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap");
 
-pub(super) fn embedded_keymap_bytes(choice: KeymapChoice) -> Option<&'static [u8]> {
+pub(crate) fn embedded_keymap_bytes(choice: KeymapChoice) -> Option<&'static [u8]> {
     match choice {
         KeymapChoice::ReaperAccessibleWinUsa => Some(RA_WIN_USA),
         KeymapChoice::ReaperAccessibleWinFrf => Some(RA_WIN_FRF),
@@ -116,15 +116,15 @@ pub(super) fn receipt_paths(resource_path: &Path, keymap_choice: KeymapChoice) -
 }
 
 /// Post-install fixups specific to OSARA: clean up the portable
-/// uninstaller stub on Windows and apply the key-map replacement when the
-/// user opted into it.
+/// uninstaller stub on Windows. Keymap replacement is now handled
+/// independently in setup.rs after all packages are installed.
 pub(super) fn post_install_unattended(
     resource_path: &Path,
     platform: Platform,
     target_app_path: Option<&Path>,
-    keymap_choice: KeymapChoice,
+    _keymap_choice: KeymapChoice,
 ) -> Result<UnattendedPostInstallReport> {
-    let mut report = UnattendedPostInstallReport::default();
+    let report = UnattendedPostInstallReport::default();
     if matches!(platform, Platform::Windows)
         && target_likely_portable(resource_path, target_app_path)
     {
@@ -133,33 +133,18 @@ pub(super) fn post_install_unattended(
             std::fs::remove_file(&uninstall_path).with_path(&uninstall_path)?;
         }
     }
-    match keymap_choice {
-        KeymapChoice::Osara => {
-            report = apply_osara_keymap_replacement(resource_path)?;
-        }
-        choice if choice.is_reaper_accessible() => {
-            if let Some(bytes) = embedded_keymap_bytes(choice) {
-                report = apply_keymap_from_bytes(resource_path, bytes)?;
-            }
-        }
-        _ => {}
-    }
     Ok(report)
 }
 
 pub(super) fn verification_paths(
     resource_path: &Path,
-    keymap_choice: KeymapChoice,
+    _keymap_choice: KeymapChoice,
 ) -> Vec<PathBuf> {
-    let mut paths = vec![
+    vec![
         resource_path.join("UserPlugins"),
         resource_path.join("KeyMaps").join("OSARA.ReaperKeyMap"),
         resource_path.join("osara"),
-    ];
-    if keymap_choice.replaces_keymap() {
-        paths.push(resource_path.join("reaper-kb.ini"));
-    }
-    paths
+    ]
 }
 
 pub(super) fn installer_arguments(
@@ -231,7 +216,7 @@ pub(super) fn osara_manual_steps(
     steps
 }
 
-pub(super) fn apply_osara_keymap_replacement(
+pub(crate) fn apply_osara_keymap_replacement(
     resource_path: &Path,
 ) -> Result<UnattendedPostInstallReport> {
     let replacement_source = resource_path.join("KeyMaps").join("OSARA.ReaperKeyMap");
@@ -275,7 +260,7 @@ pub(super) fn apply_osara_keymap_replacement(
     Ok(report)
 }
 
-pub(super) fn apply_keymap_from_bytes(
+pub(crate) fn apply_keymap_from_bytes(
     resource_path: &Path,
     keymap_bytes: &[u8],
 ) -> Result<UnattendedPostInstallReport> {
