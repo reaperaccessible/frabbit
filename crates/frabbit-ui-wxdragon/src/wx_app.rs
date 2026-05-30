@@ -3030,7 +3030,7 @@ fn build_packages_page(
     keymap_note.set_can_focus(false);
     sizer.add(&keymap_note, 0, SizerFlag::All | SizerFlag::Expand, 6);
 
-    sync_osara_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
+    sync_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
 
     // Selection-change updates the package details text. The event fires
     // when the focused row changes via mouse or arrow keys; we use the
@@ -3042,8 +3042,8 @@ fn build_packages_page(
         let package_items = Rc::clone(&package_items);
         let model_text = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_selection_changed(move |event| {
             if let Some(item) = event.get_item() {
                 match classify_leaf(&package_items.borrow(), &item) {
@@ -3060,11 +3060,11 @@ fn build_packages_page(
                     None => {}
                 }
             }
-            sync_osara_keymap_widgets(
+            sync_keymap_widgets(
                 &model_text,
                 &package_rows.borrow(),
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
             );
         });
     }
@@ -3083,8 +3083,8 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.bind_internal(EventType::TREE_STATE_IMAGE_CLICK, move |event| {
             handle_native_checkbox_toggle(
                 &tree_widget,
@@ -3094,8 +3094,8 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
                 TreeEventData::new(event).get_item(),
             );
         });
@@ -3167,8 +3167,8 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_mouse_left_up(move |event| {
             if let WindowEventData::MouseButton(mb) = &event {
                 if let Some(pos) = mb.get_position() {
@@ -3180,8 +3180,8 @@ fn build_packages_page(
                         &can_install,
                         &wizard_model,
                         &details,
-                        &osara_checkbox,
-                        &osara_note,
+                        &keymap_replace,
+                        &keymap_note,
                         pos,
                     );
                 }
@@ -3205,8 +3205,8 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_key_down(move |event| {
             let key_code = if let WindowEventData::Keyboard(kbd) = &event {
                 kbd.get_key_code()
@@ -3266,8 +3266,8 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
             );
             // Consume the event so the native control doesn't *also*
             // toggle the parent's state image after us.
@@ -3293,8 +3293,8 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_key_up(move |event| {
             let key_code = if let WindowEventData::Keyboard(kbd) = &event {
                 kbd.get_key_code()
@@ -3365,8 +3365,8 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
             );
         });
     }
@@ -3392,8 +3392,8 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_item_activated(move |event| {
             let Some(item) = event.get_item() else {
                 return;
@@ -3417,8 +3417,8 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
             );
         });
     }
@@ -3426,10 +3426,10 @@ fn build_packages_page(
     {
         let model_text = model.clone();
         let rows = Rc::clone(&package_rows);
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         keymap_replace.on_toggled(move |_| {
-            sync_osara_keymap_widgets(&model_text, &rows.borrow(), &osara_checkbox, &osara_note);
+            sync_keymap_widgets(&model_text, &rows.borrow(), &keymap_replace, &keymap_note);
         });
     }
 
@@ -3558,8 +3558,8 @@ fn handle_native_checkbox_toggle(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    osara_checkbox: &CheckBox,
-    osara_note: &TextCtrl,
+    keymap_replace: &CheckBox,
+    keymap_note: &TextCtrl,
     item: Option<TreeItemId>,
 ) {
     let Some(item) = item else {
@@ -3618,8 +3618,8 @@ fn handle_native_checkbox_toggle(
         can_install,
         wizard_model,
         details,
-        osara_checkbox,
-        osara_note,
+        keymap_replace,
+        keymap_note,
     );
 }
 
@@ -3644,8 +3644,8 @@ fn handle_packages_left_up(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    osara_checkbox: &CheckBox,
-    osara_note: &TextCtrl,
+    keymap_replace: &CheckBox,
+    keymap_note: &TextCtrl,
     pos: Point,
 ) {
     let hwnd = tree.get_handle();
@@ -3696,8 +3696,8 @@ fn handle_packages_left_up(
         can_install,
         wizard_model,
         details,
-        osara_checkbox,
-        osara_note,
+        keymap_replace,
+        keymap_note,
     );
 }
 
@@ -3718,8 +3718,8 @@ fn refresh_after_packages_toggle(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    osara_checkbox: &CheckBox,
-    osara_note: &TextCtrl,
+    keymap_replace: &CheckBox,
+    keymap_note: &TextCtrl,
 ) {
     // Configuration rows depend on the package plan (e.g. ReaPack must
     // be installed/queued for the REAPER Accessibility step). Re-evaluate
@@ -3788,11 +3788,11 @@ fn refresh_after_packages_toggle(
         }
     }
 
-    sync_osara_keymap_widgets(
+    sync_keymap_widgets(
         wizard_model,
         &package_rows.borrow(),
-        osara_checkbox,
-        osara_note,
+        keymap_replace,
+        keymap_note,
     );
 }
 
@@ -4024,14 +4024,14 @@ fn build_packages_page(
     keymap_note.set_can_focus(false);
     sizer.add(&keymap_note, 0, SizerFlag::All | SizerFlag::Expand, 6);
 
-    sync_osara_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
+    sync_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
 
     {
         let package_rows = Rc::clone(&package_rows);
         let model_text = model.clone();
         let details = details;
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         tree.on_selection_changed(move |event| {
             if let Some(item) = event.get_item() {
                 if let Some(node_ptr) = item.get_id::<Node>() {
@@ -4049,11 +4049,11 @@ fn build_packages_page(
                     }
                 }
             }
-            sync_osara_keymap_widgets(
+            sync_keymap_widgets(
                 &model_text,
                 &package_rows.borrow(),
-                &osara_checkbox,
-                &osara_note,
+                &keymap_replace,
+                &keymap_note,
             );
         });
     }
@@ -4061,10 +4061,10 @@ fn build_packages_page(
     {
         let model_text = model.clone();
         let rows = Rc::clone(&package_rows);
-        let osara_checkbox = keymap_replace;
-        let osara_note = keymap_note;
+        let keymap_replace = keymap_replace;
+        let keymap_note = keymap_note;
         keymap_replace.on_toggled(move |_| {
-            sync_osara_keymap_widgets(&model_text, &rows.borrow(), &osara_checkbox, &osara_note);
+            sync_keymap_widgets(&model_text, &rows.borrow(), &keymap_replace, &keymap_note);
         });
     }
 
@@ -4456,7 +4456,7 @@ fn refresh_package_checklist(
 ) {
     rebuild_packages_tree_model(tree, package_items, model, rows, configuration_rows);
     details.set_value(&rows.first().map(package_details).unwrap_or_default());
-    sync_osara_keymap_widgets(model, rows, keymap_replace, keymap_note);
+    sync_keymap_widgets(model, rows, keymap_replace, keymap_note);
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -4824,7 +4824,7 @@ fn progress_details_for_start(
     if osara_selected_for_rows(package_rows, selected_package_indices) {
         lines.push(model.text.review_keymap_heading.clone());
         lines.push(match keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
+            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
             KeymapChoice::Osara => model.text.review_keymap_replace.clone(),
         });
     }
@@ -4924,10 +4924,10 @@ fn refresh_package_checklist(
 ) {
     populate_packages_tree(tree, package_items, model, rows, configuration_rows);
     details.set_value(&rows.first().map(package_details).unwrap_or_default());
-    sync_osara_keymap_widgets(model, rows, keymap_replace, keymap_note);
+    sync_keymap_widgets(model, rows, keymap_replace, keymap_note);
 }
 
-fn sync_osara_keymap_widgets(
+fn sync_keymap_widgets(
     model: &WizardModel,
     rows: &[crate::PackageRow],
     checkbox: &CheckBox,

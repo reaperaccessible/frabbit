@@ -128,11 +128,11 @@ pub struct WizardText {
     pub version_check_progress_label: String,
     pub version_check_error_heading: String,
     pub package_details_label: String,
-    pub packages_osara_keymap_heading: String,
-    pub packages_osara_keymap_replace_label: String,
-    pub packages_osara_keymap_unavailable_note: String,
-    pub packages_osara_keymap_preserve_note: String,
-    pub packages_osara_keymap_replace_note: String,
+    pub packages_keymap_heading: String,
+    pub packages_keymap_replace_label: String,
+    pub packages_keymap_unavailable_note: String,
+    pub packages_keymap_preserve_note: String,
+    pub packages_keymap_replace_note: String,
     pub package_details_handling_prefix: String,
     pub package_handling_automatic: String,
     pub package_handling_unattended: String,
@@ -142,9 +142,9 @@ pub struct WizardText {
     pub review_heading: String,
     pub review_target_prefix: String,
     pub review_package_heading: String,
-    pub review_osara_keymap_heading: String,
-    pub review_osara_keymap_preserve: String,
-    pub review_osara_keymap_replace: String,
+    pub review_keymap_heading: String,
+    pub review_keymap_preserve: String,
+    pub review_keymap_replace: String,
     pub review_notes_heading: String,
     pub review_preflight_prefix: String,
     pub review_no_target: String,
@@ -638,17 +638,17 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         version_check_progress_label: localizer.text("wizard-version-check-progress-label").value,
         version_check_error_heading: localizer.text("wizard-version-check-error-heading").value,
         package_details_label: localizer.text("wizard-package-details-label").value,
-        packages_osara_keymap_heading: localizer.text("wizard-packages-osara-keymap-heading").value,
-        packages_osara_keymap_replace_label: localizer
+        packages_keymap_heading: localizer.text("wizard-packages-osara-keymap-heading").value,
+        packages_keymap_replace_label: localizer
             .text("wizard-packages-osara-keymap-replace-label")
             .value,
-        packages_osara_keymap_unavailable_note: localizer
+        packages_keymap_unavailable_note: localizer
             .text("wizard-packages-osara-keymap-unavailable-note")
             .value,
-        packages_osara_keymap_preserve_note: localizer
+        packages_keymap_preserve_note: localizer
             .text("wizard-packages-osara-keymap-preserve-note")
             .value,
-        packages_osara_keymap_replace_note: localizer
+        packages_keymap_replace_note: localizer
             .text("wizard-packages-osara-keymap-replace-note")
             .value,
         package_details_handling_prefix: localizer
@@ -662,9 +662,9 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         review_heading: localizer.text("wizard-review-heading").value,
         review_target_prefix: localizer.text("wizard-review-target-prefix").value,
         review_package_heading: localizer.text("wizard-review-package-heading").value,
-        review_osara_keymap_heading: localizer.text("wizard-review-osara-keymap-heading").value,
-        review_osara_keymap_preserve: localizer.text("wizard-review-osara-keymap-preserve").value,
-        review_osara_keymap_replace: localizer.text("wizard-review-osara-keymap-replace").value,
+        review_keymap_heading: localizer.text("wizard-review-osara-keymap-heading").value,
+        review_keymap_preserve: localizer.text("wizard-review-osara-keymap-preserve").value,
+        review_keymap_replace: localizer.text("wizard-review-osara-keymap-replace").value,
         review_notes_heading: localizer.text("wizard-review-notes-heading").value,
         review_preflight_prefix: localizer.text("wizard-review-preflight-prefix").value,
         review_no_target: localizer.text("wizard-review-no-target").value,
@@ -1010,13 +1010,13 @@ pub fn reapack_selected_for_install_or_update(
 
 pub fn keymap_note(model: &WizardModel, osara_selected: bool, choice: KeymapChoice) -> String {
     if !osara_selected {
-        return model.text.packages_osara_keymap_unavailable_note.clone();
+        return model.text.packages_keymap_unavailable_note.clone();
     }
 
     match choice {
-        KeymapChoice::PreserveCurrent => model.text.packages_osara_keymap_preserve_note.clone(),
-        KeymapChoice::Osara => model.text.packages_osara_keymap_replace_note.clone(),
-        _ => model.text.packages_osara_keymap_replace_note.clone(),
+        KeymapChoice::PreserveCurrent => model.text.packages_keymap_preserve_note.clone(),
+        KeymapChoice::Osara => model.text.packages_keymap_replace_note.clone(),
+        _ => model.text.packages_keymap_replace_note.clone(),
     }
 }
 
@@ -1149,10 +1149,10 @@ pub fn build_review_preview_for_package_rows(
 
     if osara_selected_for_rows(package_rows, selected_package_indices) {
         lines.push(String::new());
-        lines.push(model.text.review_osara_keymap_heading.clone());
+        lines.push(model.text.review_keymap_heading.clone());
         lines.push(match keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
-            _ => model.text.review_osara_keymap_replace.clone(),
+            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
+            _ => model.text.review_keymap_replace.clone(),
         });
     }
 
@@ -1838,10 +1838,10 @@ pub fn summarize_wizard_error(
         .iter()
         .any(|package_id| package_id == PACKAGE_OSARA)
     {
-        detail_lines.push(model.text.review_osara_keymap_heading.clone());
+        detail_lines.push(model.text.review_keymap_heading.clone());
         detail_lines.push(match request.keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
-            _ => model.text.review_osara_keymap_replace.clone(),
+            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
+            _ => model.text.review_keymap_replace.clone(),
         });
     }
 
@@ -3271,7 +3271,7 @@ mod tests {
             "FRABBIT is designed to run this package's installer or setup routine itself and finish the installation unattended, but this build still reports the steps instead of executing them."
         );
         assert_eq!(
-            model.text.packages_osara_keymap_replace_label,
+            model.text.packages_keymap_replace_label,
             "Replace your current key map with latest OSARA key map"
         );
     }
