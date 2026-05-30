@@ -148,6 +148,12 @@ pub fn execute_setup_operation_with_progress(
     }
 
     if !options.dry_run && options.install_csi {
+        // Add CSI ReaPack repo for script updates
+        let _ = crate::reapack::upsert_remote(
+            resource_path,
+            crate::csi::csi_reapack_repo_name(),
+            crate::csi::csi_reapack_repo_url(),
+        );
         crate::csi::install_csi(resource_path)?;
     }
 
@@ -236,6 +242,12 @@ pub fn execute_resolved_setup_operation_with_progress(
     }
 
     if !options.dry_run && options.install_csi {
+        // Add CSI ReaPack repo for script updates
+        let _ = crate::reapack::upsert_remote(
+            resource_path,
+            crate::csi::csi_reapack_repo_name(),
+            crate::csi::csi_reapack_repo_url(),
+        );
         crate::csi::install_csi(resource_path)?;
     }
 
