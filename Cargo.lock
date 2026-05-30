@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "frabbit-cli",
  "frabbit-ui-wxdragon",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-cli"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "clap",
  "frabbit-core",
@@ -515,7 +515,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-core"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "fluent-bundle",
  "frabbit-platform",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-platform"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "plist",
  "serde",
@@ -546,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-ui-wxdragon"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "frabbit-core",
  "serde",
@@ -2698,9 +2698,9 @@ checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
 
 [[package]]
 name = "wxdragon"
-version = "0.9.15"
+version = "0.9.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb85b9bcd9edfda4ff1a497349de6b72d9b670eb6b8fa23a0b855f83ab22af09"
+checksum = "5314fa5626f7ead856ffb8cc2b1b903c1d3febc17fc4d72656a62a97480fa417"
 dependencies = [
  "bitflags",
  "log",
@@ -2711,9 +2711,9 @@ dependencies = [
 
 [[package]]
 name = "wxdragon-macros"
-version = "0.9.15"
+version = "0.9.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15b3e27739b897c50f6b08388e26d9d760ecd40c4a32cabe19512438027dbc89"
+checksum = "acbe229e79c65da245de0550e3891300965845d050fa2a08b8cee28748679913"
 dependencies = [
  "proc-macro2",
  "quick-xml 0.38.4",
@@ -2723,9 +2723,9 @@ dependencies = [
 
 [[package]]
 name = "wxdragon-sys"
-version = "0.9.15"
+version = "0.9.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bf0030810f98e9ad07e87a5a524156b0a2a9be7bb64c672f503c9e1c3cf0c3a"
+checksum = "0668184cb66ed040a36c984a7c7e502c737635079af69af32c7804871caeea94"
 dependencies = [
  "bindgen",
  "cmake",
