@@ -1008,11 +1008,7 @@ pub fn reapack_selected_for_install_or_update(
         })
 }
 
-pub fn osara_keymap_note(
-    model: &WizardModel,
-    osara_selected: bool,
-    choice: KeymapChoice,
-) -> String {
+pub fn keymap_note(model: &WizardModel, osara_selected: bool, choice: KeymapChoice) -> String {
     if !osara_selected {
         return model.text.packages_osara_keymap_unavailable_note.clone();
     }
@@ -4144,7 +4140,7 @@ mod tests {
             },
         );
 
-        let note = super::osara_keymap_note(&model, false, KeymapChoice::PreserveCurrent);
+        let note = super::keymap_note(&model, false, KeymapChoice::PreserveCurrent);
 
         assert!(note.contains("Select OSARA"));
     }
