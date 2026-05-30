@@ -1,0 +1,35 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: TDR Kotelnikov (Tokyo Dawn Labs)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: TDR Kotelnikov (Tokyo Dawn Labs)" "TDR_Kotelnikov"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+// NB. Due to a bug in the plugin itself, the screenreader will usually announce the opposite setting when a toggle pushbutton is pressed.
+	Fader1 				FXParam 				"0"			"Threshold"
+	Rotary1 				FXParam 				"1"			"Peak Crest"
+	Fader2 				FXParam 				"2"			"Soft Knee"
+	Fader3 				FXParam 				"3"			"Ratio"
+	Fader4 			FXParam 				"4" 		"Attack"
+	Fader5 			FXParam 				"5" 		"Release Peak"
+	Fader6 			FXParam 				"6" 		"Release RMS"
+	Fader7 			FXParam 				"7" 		"Makeup"
+	RotaryPush7 			FXParam 				"7" 		[ 0.5 ]	"Makeup"
+	Fader8 			FXParam 				"8" 		"Dry Mix"
+	Shift+Fader8 			FXParam 				"9" 		"Dry Wet"
+	Mute8 			FXParam 				"10" 		[ 0.0 1.0 ]	"Dry Mix Mode"
+	MasterFader 			FXParam 				"11" 		"Out Gain"
+	Rotary2 			FXParam 				"12" 		"SC HP Freq"
+	Rotary3 			FXParam 				"13" 		"SC HP Slope"
+	Shift+Fader1 			FXParam 				"14" 		"SC Stereo Diff"
+	Rotary4 			FXParam 				"18" 		"Mode"
+	Shift+Fader2 			FXParam 				"19" 		"GR Disp Scale"
+	Shift+Fader3 			FXParam 				"20" 		"GR Disp Mode"
+	RecordArm7 			FXParam 				"23" 		[ 0.0 1.0 ]	"GR Disp Mode"
+ZoneEnd
+                                   

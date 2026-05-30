@@ -1,0 +1,86 @@
+Zone "VST: ValhallaDelay (Valhalla DSP, LLC) 01-03"
+// Page 1 Section 3
+// page : ""
+// section : "Section 3"
+  Rotary1  FXParam 19 "Age"
+  Rotary2  NoAction
+  Rotary3  NoAction
+  Rotary4  NoAction
+  Rotary5  NoAction
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  NoAction
+  Mute2  NoAction
+  Mute3  NoAction
+  Mute4  NoAction
+  Mute5  NoAction
+  Mute6  NoAction
+  Mute7  NoAction
+  Mute8  NoAction
+  Fader1  FXParam 20 "Diffusion"
+  Fader2  FXParam 22 "LowCut"
+  Fader3  FXParam 23 "HighCut"
+  Fader4  FXParam 24 "ModRate"
+  Fader5  FXParam 25 "ModDepth"
+  Fader6  FXParam 26 "Wow"
+  Fader7  FXParam 27 "Flutter"
+  Fader8  FXParam 34 "Ducking"
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  Marker  Speak "Page 1"
+  Nudge  Speak "Section 3"
+  Cycle  Speak "VST: ValhallaDelay (Valhalla DSP, LLC)"
+  Up    NoAction
+  Down  NoAction
+  Left  Speak "Section 2"
+  Left  GoSubZone "VST: ValhallaDelay (Valhalla DSP, LLC) 01-02"
+  Right NoAction
+  GlobalView  GoSubZone "VST: ValhallaDelay (Valhalla DSP, LLC) 01-03 Help"
+ZoneEnd

@@ -1,0 +1,40 @@
+Zone : VST3i: Ample Bass P (Ample Sound)
+Version : 1.0
+Creation date : 2024-05-02 10:22
+Creator name : Armando
+Generator version : 4.0
+
+Details
+Page 1 :
+    - Section 1 : 14 paramètres
+    - Section 2 : 3 paramètres
+    - Section 3 : 14 paramètres
+Page 2 :
+    - Section 1 : 12 paramètres
+Page 3 :
+    - Section 1 : 34 paramètres
+    - Section 2 : 8 paramètres
+    - Section 3 : 8 paramètres
+Page 4 :
+    - Section 1 : 8 paramètres
+    - Section 2 : 7 paramètres
+    - Section 3 : 15 paramètres
+    - Section 4 : 10 paramètres
+    - Section 5 : 10 paramètres
+    - Section 6 : 9 paramètres
+Page 5 :
+    - Section 1 : 6 paramètres
+    - Section 2 : 3 paramètres
+    - Section 3 : 4 paramètres
+    - Section 4 : 4 paramètres
+Page 6 :
+    - Section 1 : 4 paramètres
+    - Section 2 : 10 paramètres
+    - Section 3 : 10 paramètres
+    - Section 4 : 10 paramètres
+    - Section 5 : 10 paramètres
+    - Section 6 : 10 paramètres
+    - Section 7 : 10 paramètres
+Page 7 :
+    - Section 1 : 10 paramètres
+7 pages, 25 sections, 243 paramètres

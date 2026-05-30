@@ -1,0 +1,6 @@
+Zone: VST3: Abbey Road Plates Mono (Waves)
+Version: 2.0
+Date: 2025-08-14 20:13
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

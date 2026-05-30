@@ -1,0 +1,127 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: Pro-Q 3 (FabFilter)
+// by Paul Warner
+// 15 May 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: Pro-Q 3 (FabFilter)" "FabFilter_ProQ3"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Fader1 				FXParam 				"3"			"Band 1 Gain"
+// following sets Band 1 Gain to 0dB
+	RotaryPush1 				FXParam 				"3"			[ 0.5 ]	"Band 1 Gain"
+	Shift+Fader1 				FXParam 				"4"			"Band 1 Dynamic Range"
+// following sets Band 1 Dynamic Range to 0dB
+	Shift+RotaryPush1 				FXParam 				"4"			[ 0.5 ]	"Band 1 Dynamic Range"
+	Control+Fader1 				FXParam 				"6"			"Band 1 Threshold"
+	Rotary1 				FXParam 				"2"			"Band 1 Frequency"
+	Shift+Rotary1 				FXParam 				"7"			"Band 1 Q"
+	Control+Rotary1 				FXParam 				"8"			"Band 1 Shape"
+	Option+Rotary1 				FXParam 				"9"			"Band 1 Slope"
+	Shift+Mute1 				FXParam 				"10"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 1 Stereo Placement"
+	Mute1 			FXParam 				"0" 		[ 0.0 1.0 ]	"Band 1 Used"
+	Select1 			FXParam 				"12" 		[ 0.0 1.0 ]	"Band 1 Solo"
+	Fader2 				FXParam 				"16"			"Band 2 Gain"
+// following sets Band 2 Gain to 0dB
+	RotaryPush2 				FXParam 				"16"			[ 0.5 ]	"Band 2 Gain"
+	Shift+Fader2 				FXParam 				"17"			"Band 2 Dynamic Range"
+// following sets Band 2 Dynamic Range to 0dB
+	Shift+RotaryPush2 				FXParam 				"17"			[ 0.5 ]	"Band 2 Dynamic Range"
+	Control+Fader2 				FXParam 				"19"			"Band 2 Threshold"
+	Rotary2 				FXParam 				"15"			"Band 2 Frequency"
+	Shift+Rotary2 				FXParam 				"20"			"Band 2 Q"
+	Control+Rotary2 				FXParam 				"21"			"Band 2 Shape"
+	Option+Rotary2 				FXParam 				"22"			"Band 2 Slope"
+	Shift+Mute2 				FXParam 				"23"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 2 Stereo Placement"
+	Mute2 			FXParam 				"13" 		[ 0.0 1.0 ]	"Band 2 Used"
+	Select2 			FXParam 				"25" 		[ 0.0 1.0 ]	"Band 2 Solo"
+	Fader3 				FXParam 				"29"			"Band 3 Gain"
+// following sets Band 3 Gain to 0dB
+	RotaryPush3 				FXParam 				"29"			[ 0.5 ]	"Band 3 Gain"
+	Shift+Fader3 				FXParam 				"30"			"Band 3 Dynamic Range"
+// following sets Band 3 Dynamic Range to 0dB
+	Shift+RotaryPush3 				FXParam 				"30"			[ 0.5 ]	"Band 3 Dynamic Range"
+	Control+Fader3 				FXParam 				"32"			"Band 3 Threshold"
+	Rotary3 				FXParam 				"28"			"Band 3 Frequency"
+	Shift+Rotary3 				FXParam 				"33"			"Band 3 Q"
+	Control+Rotary3 				FXParam 				"34"			"Band 3 Shape"
+	Option+Rotary3 				FXParam 				"35"			"Band 3 Slope"
+	Shift+Mute3 				FXParam 				"36"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 3 Stereo Placement"
+	Mute3 			FXParam 				"26" 		[ 0.0 1.0 ]	"Band 3 Used"
+	Select3 			FXParam 				"38" 		[ 0.0 1.0 ]	"Band 3 Solo"
+	Fader4 				FXParam 				"42"			"Band 4 Gain"
+// following sets Band 4 Gain to 0dB
+	RotaryPush4 				FXParam 				"42"			[ 0.5 ]	"Band 4 Gain"
+	Shift+Fader4 				FXParam 				"43"			"Band 4 Dynamic Range"
+// following sets Band 4 Dynamic Range to 0dB
+	Shift+RotaryPush4 				FXParam 				"43"			[ 0.5 ]	"Band 4 Dynamic Range"
+	Control+Fader4 				FXParam 				"45"			"Band 4 Threshold"
+	Rotary4 				FXParam 				"41"			"Band 4 Frequency"
+	Shift+Rotary4 				FXParam 				"46"			"Band 4 Q"
+	Control+Rotary4 				FXParam 				"47"			"Band 4 Shape"
+	Option+Rotary4 				FXParam 				"48"			"Band 4 Slope"
+	Shift+Mute4 				FXParam 				"49"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 4 Stereo Placement"
+	Mute4 			FXParam 				"39" 		[ 0.0 1.0 ]	"Band 4 Used"
+	Select4 			FXParam 				"51" 		[ 0.0 1.0 ]	"Band 4 Solo"
+	Fader5 				FXParam 				"55"			"Band 5 Gain"
+// following sets Band 5 Gain to 0dB
+	RotaryPush5 				FXParam 				"55"			[ 0.5 ]	"Band 5 Gain"
+	Shift+Fader5 				FXParam 				"56"			"Band 5 Dynamic Range"
+// following sets Band 5 Dynamic Range to 0dB
+	Shift+RotaryPush5 				FXParam 				"56"			[ 0.5 ]	"Band 5 Dynamic Range"
+	Control+Fader5 				FXParam 				"58"			"Band 5 Threshold"
+	Rotary5 				FXParam 				"54"			"Band 5 Frequency"
+	Shift+Rotary5 				FXParam 				"59"			"Band 5 Q"
+	Control+Rotary5 				FXParam 				"60"			"Band 5 Shape"
+	Option+Rotary5 				FXParam 				"61"			"Band 5 Slope"
+	Shift+Mute5 				FXParam 				"62"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 5 Stereo Placement"
+	Mute5 			FXParam 				"52" 		[ 0.0 1.0 ]	"Band 5 Used"
+	Select5 			FXParam 				"64" 		[ 0.0 1.0 ]	"Band 5 Solo"
+	Fader6 				FXParam 				"68"			"Band 6 Gain"
+// following sets Band 6 Gain to 0dB
+	RotaryPush6 				FXParam 				"68"			[ 0.5 ]	"Band 6 Gain"
+	Shift+Fader6 				FXParam 				"69"			"Band 6 Dynamic Range"
+// following sets Band 6 Dynamic Range to 0dB
+	Shift+RotaryPush6 				FXParam 				"69"			[ 0.5 ]	"Band 6 Dynamic Range"
+	Control+Fader6 				FXParam 				"71"			"Band 6 Threshold"
+	Rotary6 				FXParam 				"67"			"Band 6 Frequency"
+	Shift+Rotary6 				FXParam 				"72"			"Band 6 Q"
+	Control+Rotary6 				FXParam 				"73"			"Band 6 Shape"
+	Option+Rotary6 				FXParam 				"74"			"Band 6 Slope"
+	Shift+Mute6 				FXParam 				"75"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 6 Stereo Placement"
+	Mute6 			FXParam 				"65" 		[ 0.0 1.0 ]	"Band 6 Used"
+	Select6 			FXParam 				"77" 		[ 0.0 1.0 ]	"Band 6 Solo"
+	Fader7 				FXParam 				"81"			"Band 7 Gain"
+// following sets Band 7 Gain to 0dB
+	RotaryPush7 				FXParam 				"81"			[ 0.5 ]	"Band 7 Gain"
+	Shift+Fader7 				FXParam 				"82"			"Band 7 Dynamic Range"
+// following sets Band 7 Dynamic Range to 0dB
+	Shift+RotaryPush7 				FXParam 				"82"			[ 0.5 ]	"Band 7 Dynamic Range"
+	Control+Fader7 				FXParam 				"84"			"Band 7 Threshold"
+	Rotary7 				FXParam 				"80"			"Band 7 Frequency"
+	Shift+Rotary7 				FXParam 				"85"			"Band 7 Q"
+	Control+Rotary7 				FXParam 				"86"			"Band 7 Shape"
+	Option+Rotary7 				FXParam 				"87"			"Band 7 Slope"
+	Shift+Mute7 				FXParam 				"88"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 7 Stereo Placement"
+	Mute7 			FXParam 				"78" 		[ 0.0 1.0 ]	"Band 7 Used"
+	Select7 			FXParam 				"90" 		[ 0.0 1.0 ]	"Band 7 Solo"
+	Fader8 				FXParam 				"94"			"Band 8 Gain"
+// following sets Band 8 Gain to 0dB
+	RotaryPush8 				FXParam 				"94"			[ 0.5 ]	"Band 8 Gain"
+	Shift+Fader8 				FXParam 				"95"			"Band 8 Dynamic Range"
+// following sets Band 8 Dynamic Range to 0dB
+	Shift+RotaryPush8 				FXParam 				"95"			[ 0.5 ]	"Band 8 Dynamic Range"
+	Control+Fader8 				FXParam 				"97"			"Band 8 Threshold"
+	Rotary8 				FXParam 				"93"			"Band 8 Frequency"
+	Shift+Rotary8 				FXParam 				"98"			"Band 8 Q"
+	Control+Rotary8 				FXParam 				"99"			"Band 8 Shape"
+	Option+Rotary8 				FXParam 				"100"			"Band 8 Slope"
+	Shift+Mute8 				FXParam 				"101"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Band 8 Stereo Placement"
+	Mute8 			FXParam 				"91" 		[ 0.0 1.0 ]	"Band 8 Used"
+	Select8 			FXParam 				"103" 		[ 0.0 1.0 ]	"Band 8 Solo"
+	RecordArm7 			FXParam 				"494" 		[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

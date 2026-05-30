@@ -1,0 +1,97 @@
+Zone "VST3: EK Edstortion Rack (Nembrini Audio)"
+// Page 1 Section 1
+// page : ""
+// section : "Main"
+  Rotary1  FXParam 0 "Input"
+  Rotary2  FXParam 1 "Output"
+  Rotary3  FXParam 5 "Dry/Wet A"
+  Rotary4  FXParam 9 "Dry/Wet B"
+  Rotary5  FXParam 19 [ (1) 0.00 0.50 1.00 ] "Mode 1/2/3"
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  FXParam 10 [ 0.00 1.00 ] "Gain Link On/Off"
+  Mute2  FXParam 11 [ 0.00 1.00 ] "Tone Link On/Off"
+  Mute3  FXParam 12 [ 0.00 1.00 ] "Volume Link On/Off"
+  Mute4  FXParam 13 [ 0.00 1.00 ] "Dry/Wet Link On/Off"
+  Mute5  FXParam 17 [ 0.00 1.00 ] "Analog Link On/Off"
+  Mute6  FXParam 16 [ 0.00 1.00 ] "Mid/Side On/Off"
+  Mute7  FXParam 18 [ 0.00 1.00 ] "Phase 0/180"
+  Mute8  NoAction
+  Fader1  FXParam 2 "Gain A"
+  Fader2  FXParam 3 "Tone A"
+  Fader3  FXParam 4 "Volume A"
+  Fader4  FXParam 6 "Gain B"
+  Fader5  FXParam 7 "Tone B"
+  Fader6  FXParam 8 "Volume B"
+  Fader7  FXParam 15 "Extra Bass"
+  Fader8  FXParam 14 "Spread"
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  MasterFader  FXParam 23 "Wet"
+  Flip  ToggleFXBypass
+  Scrub  Reaper 42455 // Toggle delta solo for last focused FX
+  BankLeft  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  BankRight  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  Footswitch1  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  Footswitch2  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  
+  SubZones
+      "VST3: EK Edstortion Rack (Nembrini Audio) Help"
+  SubZonesEnd
+  Marker  Speak "Page 1"
+  Nudge  Speak "Main"
+  Cycle  Speak "VST3: EK Edstortion Rack (Nembrini Audio)"
+  Up    NoAction
+  Down  NoAction
+  Left  NoAction
+  Right NoAction
+  GlobalView  GoSubZone "VST3: EK Edstortion Rack (Nembrini Audio) Help"
+  OnZoneActivation  Speak "EK Edstortion Rack"
+ZoneEnd

@@ -1,0 +1,25 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: CLA-76 Mono (Waves)
+// by Paul Warner
+// 2 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: CLA-76 Mono (Waves)" "Waves_CLA76Mono"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Rotary1 				FXParam 				"1"			"Bank"
+	Fader1 				FXParam 				"2"			"Input"
+// following sets Input to default -30dB
+	RotaryPush1 				FXParam 				"2"			[ 0.375 ]	"Input"
+	Fader2 				FXParam 				"3"			"Output"
+	Rotary2 			FXParam 				"4"			"Attack"
+	Rotary3 			FXParam 				"5" 		"Release" 
+	Select1 			FXParam 				"6" 		[ 0.0 0.25 0.5 0.75 1.0 ]	"Ratio"
+	Mute1 			FXParam 				"8" 		[ 0.0 1.0 ]	"Revision"
+	Fader8 			FXParam 				"12" 		"Wet"
+	RecordArm7 			FXParam 				"13" 		[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

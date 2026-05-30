@@ -1,0 +1,37 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: PhoenixVerb (Exponential Audio)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: PhoenixVerb (Exponential Audio)" "Exponential_PhoenixVerb"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	MasterFader 				FXParam 				"0"			"Mix"
+	Shift+Fader1 				FXParam 				"1"			"Diffusn"
+	Shift+Rotary1 				FXParam 				"3"			"DiffSize"
+	RecordArm1 				FXParam 				"2"			[ 0.0 0.5 1.0 ]	"RevbType"
+	Fader1 				FXParam 				"4"			"Predelay"
+	Fader2 				FXParam 				"5"			"E Attack"
+	Fader3 				FXParam 				"6"			"ErlyTime"
+	Fader4 				FXParam 				"8"			"EnvAttak"
+	Fader5 				FXParam 				"9"			"EnvpTime"
+	Rotary6 				FXParam 				"11"			"Rvb Size"
+	Fader6 				FXParam 				"12"			"Rvb Time"
+	Shift+Fader2 				FXParam 				"14"			"LoMidBln"
+	Shift+Fader3 				FXParam 				"16"			"Damp X"
+	Fader7 				FXParam 				"17"			"EarlyLvl"
+	Fader8 				FXParam 				"18"			"RvbLevel"
+	Rotary1 				FXParam 				"7"			"ErlySlop"
+	Rotary2 				FXParam 				"10"			"EnvlSlop"
+	Rotary3 				FXParam 				"13"			"Xover Fc"
+	Shift+Fader1 				FXParam 				"15"			"Damp Fc"
+	Rotary4 				FXParam 				"19"			"Width"
+	RecordArm2 				FXParam 				"20"			[ 0.0 0.35 0.7 1.0 ]	"FiltType"
+	Rotary7 				FXParam 				"21"			"Out Freq"
+	Mute1 				FXParam 				"22"			[ 0.0 1.0 ]	"Zoom"
+ZoneEnd
+                                   

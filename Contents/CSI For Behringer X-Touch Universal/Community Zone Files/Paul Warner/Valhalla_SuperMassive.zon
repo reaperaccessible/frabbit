@@ -1,0 +1,28 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: ValhallaSupermassive (Valhalla DSP, LLC)
+// by Paul Warner
+// 14 May 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: ValhallaSupermassive (Valhalla DSP, LLC)" "Valhalla_SuperMassive"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Fader1 				FXParam 				"3"			"Delay_Ms"
+	Fader2 				FXParam 				"4"			"DelayWarp"
+	Fader3 			FXParam 				"6" 		"Feedback" 
+	Fader4 			FXParam 				"7" 		"Density"
+	Fader5 			FXParam 				"8" 		"Width"
+	Fader6 			FXParam 				"12" 		"ModDepth"
+	Fader8 			FXParam 				"0" 		"Mix"
+	Select1 				FXParam 				"1"			[ 0.0 0.5 0.8 1.0 ]	"DelaySync"
+	Rotary2 			FXParam 				"2"			"DelayNote"
+	Rotary3 			FXParam 				"9" 		"LowCut"
+	Rotary4 			FXParam 				"10" 		"HighCut"
+	Rotary5 			FXParam 				"11" 		"ModRate"
+	Rotary6 			FXParam 				"13" 		"Mode"
+	Mute1 			FXParam 				"5" 		[ 0.0 1.0 ]	"Clear"
+ZoneEnd
+                                   

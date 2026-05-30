@@ -1,0 +1,13 @@
+Zone "VST: UAD Brigade Chorus (Universal Audio, Inc.) (mono)"
+	FXParam 0 "Level"
+	FXParam 1 "Chorus"
+	FXParam 2 "Vib Depth"
+	FXParam 3 "Vib Rate"
+	FXParam 4 "Mod Select"
+	FXParam 5 "Enable"
+	FXParam 6 "Mode"
+	FXParam 7 "Power"
+	FXParam 8 "Bypass"
+	FXParam 9 "Wet"
+	FXParam 10 "Delta"
+ZoneEnd

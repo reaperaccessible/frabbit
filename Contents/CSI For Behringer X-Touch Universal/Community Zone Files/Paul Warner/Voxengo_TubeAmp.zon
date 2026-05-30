@@ -1,0 +1,67 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: Tube Amp (Voxengo)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: Tube Amp (Voxengo)" "Voxengo_TubeAmp"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Control+Rotary1 				FXParam 				"1"			"Oversmp"
+	Mute1 				FXParam 				"2"			[ 0.0 1.0 ]	"OutSat"
+	Fader1 				FXParam 				"3"			"Drive"
+	Shift+Fader1 				FXParam 				"4"			"Bias"
+	Rotary1 				FXParam 				"5"			"LPFreq"
+	Option+Fader1 				FXParam 				"6"			"OGain"
+	Shift+RecordArm1 				FXParam 				"7"			[ 0.0 0.5 1.0 ]	"Mode"
+	Fader2 				FXParam 				"8"			"Drive2"
+	Shift+Fader2 				FXParam 				"9"			"Bias2"
+	Rotary2 				FXParam 				"10"			"LPFreq2"
+	Option+Fader2 				FXParam 				"11"			"OGain2"
+	Shift+RecordArm2 				FXParam 				"12"			[ 0.0 0.5 1.0 ]	"Mode2"
+	Fader3 				FXParam 				"13"			"Drive3"
+	Shift+Fader3 				FXParam 				"14"			"Bias3"
+	Rotary3 				FXParam 				"15"			"LPFreq3"
+	Option+Fader3 				FXParam 				"16"			"OGain3"
+	Shift+RecordArm3 				FXParam 				"17"			[ 0.0 0.5 1.0 ]	"Mode3"
+	Fader4 				FXParam 				"18"			"Drive4"
+	Shift+Fader4 				FXParam 				"19"			"Bias4"
+	Rotary4 				FXParam 				"20"			"LPFreq4"
+	Option+Fader4 				FXParam 				"21"			"OGain4"
+	Shift+RecordArm4 				FXParam 				"22"			[ 0.0 0.5 1.0 ]	"Mode4"
+	Fader5 				FXParam 				"23"			"Drive5"
+	Shift+Fader5 				FXParam 				"24"			"Bias5"
+	Rotary5 				FXParam 				"25"			"LPFreq5"
+	Option+Fader5 				FXParam 				"26"			"OGain5"
+	Shift+RecordArm5 				FXParam 				"27"			[ 0.0 0.5 1.0 ]	"Mode5"
+	Fader6 				FXParam 				"28"			"Drive6"
+	Shift+Fader6 				FXParam 				"29"			"Bias6"
+	Rotary6 				FXParam 				"30"			"LPFreq6"
+	Option+Fader6 				FXParam 				"31"			"OGain6"
+	Shift+RecordArm6 				FXParam 				"32"			[ 0.0 0.5 1.0 ]	"Mode6"
+	Fader7 				FXParam 				"33"			"Drive7"
+	Shift+Fader7 				FXParam 				"34"			"Bias7"
+	Rotary7 				FXParam 				"35"			"LPFreq7"
+	Option+Fader7 				FXParam 				"36"			"OGain7"
+	Shift+RecordArm7 				FXParam 				"37"			[ 0.0 0.5 1.0 ]	"Mode7"
+	Fader8 				FXParam 				"38"			"Drive8"
+	Shift+Fader8 				FXParam 				"39"			"Bias8"
+	Rotary8 				FXParam 				"40"			"LPFreq8"
+	Option+Fader8 				FXParam 				"41"			"OGain8"
+	Shift+RecordArm8 				FXParam 				"42"			[ 0.0 0.5 1.0 ]	"Mode8"
+	Control+Fader1 				FXParam 				"43"			"DryMix"
+	Control+Fader2 				FXParam 				"44"			"DryMix2"
+	Control+Fader3 				FXParam 				"45"			"DryMix3"
+	Control+Fader4 				FXParam 				"46"			"DryMix4"
+	Control+Fader5 				FXParam 				"47"			"DryMix5"
+	Control+Fader6 				FXParam 				"48"			"DryMix6"
+	Control+Fader7 				FXParam 				"49"			"DryMix7"
+	Control+Fader8 				FXParam 				"50"			"DryMix8"
+	Shift+MasterFader 				FXParam 				"53"			"Wet"
+	Shift+Rotary1 				FXParam 				"51"			"Program"
+	RecordArm7 				FXParam 				"54"			[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

@@ -348,6 +348,8 @@ pub struct WizardInstallRequest {
     pub configuration_step_ids: Vec<String>,
     /// Active locale, used to select the correct ReaPack repository.
     pub active_locale: String,
+    /// Install CSI (Control Surface Integrator).
+    pub install_csi: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -955,6 +957,7 @@ pub fn install_request_from_target_and_rows(
         force_reinstall_packages,
         configuration_step_ids,
         active_locale: model.current_language.clone(),
+        install_csi: false,
     })
 }
 
@@ -1568,6 +1571,7 @@ pub fn execute_wizard_install_with_progress(
             force_reinstall_packages: request.force_reinstall_packages.clone(),
             configuration_step_ids: request.configuration_step_ids.clone(),
             active_locale: request.active_locale.clone(),
+            install_csi: request.install_csi,
         },
         progress,
     )
@@ -4742,6 +4746,7 @@ mod tests {
             force_reinstall_packages: Vec::new(),
             configuration_step_ids: Vec::new(),
             active_locale: "fr-FR".to_string(),
+            install_csi: false,
         }
     }
 }

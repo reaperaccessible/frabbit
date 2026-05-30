@@ -1,0 +1,8 @@
+Zone "VST: UAD Studio D Chorus (Universal Audio, Inc.)"
+	FXParam 0 "Mod Mode"
+	FXParam 1 "Input Mode"
+	FXParam 2 "Power"
+	FXParam 3 "Bypass"
+	FXParam 4 "Wet"
+	FXParam 5 "Delta"
+ZoneEnd

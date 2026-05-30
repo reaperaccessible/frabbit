@@ -1,0 +1,55 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: SSLChannel Stereo (Waves)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: SSLChannel Stereo (Waves)" "Waves_SSLChanStereo"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Fader1 				FXParam 				"19"			"LF Gain"
+// following sets LF Gain to 0dB
+	RotaryPush1 				FXParam 				"19"			[ 0.5 ]	"LF Gain"
+	Fader2 				FXParam 				"22"			"LMF Gain"
+// following sets LMF Gain to 0dB
+	RotaryPush2 				FXParam 				"22"			[ 0.5 ]	"LMF Gain"
+	Fader3 			FXParam 				"25" 		"HMF Gain" 
+// following sets HMF Gain to 0dB
+	RotaryPush3 			FXParam 				"25" 		[ 0.5 ]	"HMF Gain" 
+	Fader4 			FXParam 				"29" 		"HF Gain"
+// following sets HF Gain to 0dB
+	RotaryPush4 			FXParam 				"29" 		[ 0.5 ]	"HF Gain"
+	RecordArm2 			FXParam 				"7" 		[ 0.0 1.0 ]	"ExpAttack"
+	Fader5 			FXParam 				"8" 		"ExpRelease"
+	Fader6 			FXParam 				"9" 		"ExpThresh"
+	Fader7 			FXParam 				"10" 		"ExpRange"
+	MasterFader 			FXParam 				"31" 		"Gain"
+	Shift+MasterFader 			FXParam 				"34" 		"InputLevel"
+	Rotary1 			FXParam 				"20"			"LF Frq"
+	Shift+Rotary1 				FXParam 				"1"			"Bank"
+	RecordArm1 				FXParam 				"21"			[ 0.0 1.0 ]	"LF Type"
+	Rotary2 			FXParam 				"23"			"LMF Frq"
+	Shift+Rotary2 			FXParam 				"24"			"LMF Q"
+	Rotary3 			FXParam 				"26" 		"HMF Frq"
+	Shift+Rotary3 			FXParam 				"27" 		"HMF Q"
+	Rotary4 			FXParam 				"30" 		"HF Frq"
+	RecordArm4 			FXParam 				"28" 		[ 0.0 1.0 ]	"HF Type"
+	Rotary5 			FXParam 				"17" 		"HP Frq"
+	Rotary6 			FXParam 				"18" 		"LP Frq"
+	Rotary7 			FXParam 				"3" 		"CompThresh"
+	RotaryPush7 			FXParam 				"3" 		[ 0.333 ]	"CompThresh"
+	Shift+Rotary7 			FXParam 				"6" 		"CompRelease"
+	Rotary8 			FXParam 				"4" 		"CompRatio"
+	Mute1 			FXParam 				"5" 		[ 0.0 1.0 ]	"CompFast"
+	Select1 			FXParam 				"11" 		[ 0.0 1.0 ]	"ExpGate"
+	Mute2 			FXParam 				"12" 		[ 0.0 1.0 ]	"EQBypass"
+	Select2 			FXParam 				"13" 		[ 0.0 1.0 ]	"EQDynamic"
+	Mute3 			FXParam 				"14" 		[ 0.0 1.0 ]	"DynamicBypass"
+	Select3 			FXParam 				"15" 		[ 0.0 1.0 ]	"DynaminCHOut"
+	Mute4 			FXParam 				"16" 		[ 0.0 1.0 ]	"FilterSplit"
+	RecordArm7 			FXParam 				"37" 		[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

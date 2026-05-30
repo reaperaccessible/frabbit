@@ -1,0 +1,14 @@
+Zone "VST: UAD Fairchild 660 (Universal Audio, Inc.)" "Fair660"
+	FXParams		9      1     2      3     6    7      0     8
+ 	FXParamNames		HdRoom Input Thresh Ratio Knee Output Meter WetDry
+	FXValueWidgets  	Rotary|
+    	FXParamNameDisplays  	DisplayUpper|
+    	FXParamValueDisplays 	DisplayLower|
+
+	FXParams		5	 -1    	-1 	-1 	-1 	-1 	-1 	4
+ 	FXParamNames		"DC Bal" "" 	"" 	"" 	"" 	"" 	"" 	SidChn
+	FXValueWidgets  	Rotary|
+    	FXParamNameDisplays  	DisplayUpper|
+    	FXParamValueDisplays 	DisplayLower|
+	FXWidgetModifiers	Shift
+oneEnd

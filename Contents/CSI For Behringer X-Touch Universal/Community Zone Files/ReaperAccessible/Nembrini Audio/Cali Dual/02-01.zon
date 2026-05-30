@@ -1,0 +1,87 @@
+Zone "VST3: NA Cali Dual (Nembrini Audio) 02-01"
+// Page 2 Section 1
+// page : ""
+// section : "Microphone 1"
+  Rotary1  FXParam 34 [ (1) 0.00 0.34 0.67 1.00 ] "Mic1 Type"
+  Rotary2  NoAction
+  Rotary3  NoAction
+  Rotary4  NoAction
+  Rotary5  NoAction
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  FXParam 45 [ 0.00 1.00 ] "Mic1 Mute"
+  Mute2  FXParam 48 [ 0.00 1.00 ] "Mic1 Solo"
+  Mute3  NoAction
+  Mute4  NoAction
+  Mute5  NoAction
+  Mute6  NoAction
+  Mute7  NoAction
+  Mute8  NoAction
+  Fader1  FXParam 36 "Mic1 Off Axis"
+  Fader2  FXParam 38 "Mic1 Position"
+  Fader3  FXParam 40 "Mic1 Distance"    
+  Fader4  FXParam 42 "Mic1 Gain"
+  Fader5  FXParam 51 "Mic1 Phase"
+  Fader6  FXParam 54 "Mic1 Pan"
+  Fader7  NoAction
+  Fader8  NoAction
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  Marker  Speak "Page 2"
+  Nudge  Speak "Microphone 1"
+  Cycle  Speak "VST3: NA Cali Dual (Nembrini Audio)"
+  Up    Speak "Page 1"
+  Up    GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 01-01"
+  Down  NoAction
+  Left  NoAction
+  Right Speak "Microphone 2"
+  Right GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 02-02"
+  GlobalView  GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 02-01 Help"
+ZoneEnd

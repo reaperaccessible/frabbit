@@ -1,0 +1,73 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: LinMB Stereo (Waves)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: LinMB Stereo (Waves)" "Waves_LinMBStereo"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Rotary1 				FXParam 				"1"			"Bank "
+	Shift+RotaryPush1 				FXParam 				"2"			[ 0.0 1.0 ]	"Makeup Mode"
+	Rotary2 				FXParam 				"3"			"Adaptivity Level"
+	Fader1 				FXParam 				"4"			"Band 1 Gain"
+// following sets band 1 gain to 0dB
+	RotaryPush1 				FXParam 				"4"			[ 0.5 ]	"Band 1 Gain"
+	Shift+Fader1 				FXParam 				"5"			"Band 1 Range"
+	Control+Fader1 				FXParam 				"6"			"Band 1 Attack"
+	Option+Fader1 				FXParam 				"7"			"Band 1 Release"
+	Select1 				FXParam 				"8"			[ 0.0 1.0 ]	"Band 1 Solo"
+	Mute1			FXParam 				"9" 		[ 0.0 1.0 ]	"Band 1 Bypass"
+	Alt+Fader1			FXParam 				"10" 		"Band 1 Thresh"
+	Fader2 				FXParam 				"11"			"Band 2 Gain"
+// following sets band 2 gain to 0dB
+	RotaryPush2 				FXParam 				"11"			[ 0.5 ]	"Band 2 Gain"
+	Shift+Fader2 				FXParam 				"12"			"Band 2 Range"
+	Control+Fader2 				FXParam 				"13"			"Band 2 Attack"
+	Option+Fader2 				FXParam 				"14"			"Band 2 Release"
+	Select2 				FXParam 				"15"			[ 0.0 1.0 ]	"Band 2 Solo"
+	Mute2			FXParam 				"16" 		[ 0.0 1.0 ]	"Band 2 Bypass"
+	Alt+Fader2			FXParam 				"17" 		"Band 2 Thresh"
+	Fader3 				FXParam 				"18"			"Band 3 Gain"
+// following sets band 3 gain to 0dB
+	RotaryPush3 				FXParam 				"18"			[ 0.5 ]	"Band 3 Gain"
+	Shift+Fader3 				FXParam 				"19"			"Band 3 Range"
+	Control+Fader3 				FXParam 				"20"			"Band 3 Attack"
+	Option+Fader3 				FXParam 				"21"			"Band 3 Release"
+	Select3 				FXParam 				"22"			[ 0.0 1.0 ]	"Band 3 Solo"
+	Mute3			FXParam 				"23" 		[ 0.0 1.0 ]	"Band 3 Bypass"
+	Alt+Fader3			FXParam 				"24" 		"Band 3 Thresh"
+	Fader4 				FXParam 				"25"			"Band 4 Gain"
+// following sets band 4 gain to 0dB
+	RotaryPush4 				FXParam 				"25"			[ 0.5 ]	"Band 4 Gain"
+	Shift+Fader4 				FXParam 				"26"			"Band 4 Range"
+	Control+Fader4 				FXParam 				"27"			"Band 4 Attack"
+	Option+Fader4 				FXParam 				"28"			"Band 4 Release"
+	Select4 				FXParam 				"29"			[ 0.0 1.0 ]	"Band 4 Solo"
+	Mute4			FXParam 				"30" 		[ 0.0 1.0 ]	"Band 4 Bypass"
+	Alt+Fader4			FXParam 				"31" 		"Band 4 Thresh"
+	Fader5 				FXParam 				"32"			"Band 5 Gain"
+// following sets band 5 gain to 0dB
+	RotaryPush5 				FXParam 				"32"			[ 0.5 ]	"Band 5 Gain"
+	Shift+Fader5 				FXParam 				"33"			"Band 5 Range"
+	Control+Fader5 				FXParam 				"34"			"Band 5 Attack"
+	Option+Fader5 				FXParam 				"35"			"Band 5 Release"
+	Select5 				FXParam 				"36"			[ 0.0 1.0 ]	"Band 5 Solo"
+	Mute5			FXParam 				"37" 		[ 0.0 1.0 ]	"Band 5 Bypass"
+	Alt+Fader5			FXParam 				"38" 		"Band 5 Thresh"
+	Rotary3			FXParam 				"39" 		"Low Crossover"
+	Rotary4			FXParam 				"40" 		"LoMid Crossover"
+	Rotary5			FXParam 				"41" 		"HiMid Crossover"
+	Rotary6			FXParam 				"42" 		"High Crossover"
+	Shift+RotaryPush2			FXParam 				"43" 		[ 0.0 1.0 ]	"Dither Mode"
+	Shift+RotaryPush3			FXParam 				"44" 		[ 0.0 1.0 ]	"Release Mode"
+	Shift+RotaryPush4			FXParam 				"45" 		[ 0.0 1.0 ]	"Behavior"
+	Control+Alt+Fader5			FXParam 				"46" 		"Knee"
+	Fader6			FXParam 				"47" 		"Trim"
+	MasterFader			FXParam 				"48" 		"Output Gain"
+	RecordArm7			FXParam 				"51" 		[ 0.0 1.0 ]	"Output Gain"
+ZoneEnd
+                                   

@@ -1,0 +1,164 @@
+Zone "VST3i: SWAM Soprano Sax 3 (Audio Modeling)"
+// Page 1 Section 1
+// page : "Instrument"
+// section : "Basic"
+  Rotary1  FXParam 103 "Program" [ (1) 0 0.25 0.5 0.75 1 ]
+  Rotary2  FXParam 14 "Instrument" [ (1) 0 0.039 0.116 0.193 0.27 0.347 0.424 0.5 0.577 0.654 0.731 0.808 0.885 0.962 ]
+  Rotary3  FXParam 81 "KS Octave" [ (1) 0 0.25 0.5 0.75 1 ]
+  Rotary4  FXParam 74 "Attack Control" [ (1) 0 0.5 1 ]
+  Rotary5  NoAction
+  Rotary6  FXParam 85 "Panpot Type" [ (1) 0 0.3333 0.6666 1 ]
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  FXParam 13 "Fall Down"
+  Mute2  FXParam 8 "Legato Mode" [ 0 1 ]
+  Mute3  FXParam 10 "Alt. Fingering" [ 0 1 ]
+  Mute4  FXParam 5 "Pipe Model" [ 0 1 ]
+  Mute5  FXParam 12 "Overblow" [ 0 1 ]
+  Mute6  FXParam 95 "Sustain" [ 0 1 ]
+  Mute7  NoAction
+  Mute8  NoAction
+  Select1  NoAction
+  Select2  NoAction
+  Select3  NoAction
+  Select4  NoAction
+  Select5  NoAction
+  Select6  NoAction
+  Select7  NoAction
+  Select8  NoAction
+  Fader1  FXParam 0 "Expression" 
+  Fader2  FXParam 3 "Growl" 
+  Fader3  FXParam 4 "Flutter" 
+  Fader4  FXParam 9 "Key Noise" 
+  Fader5  FXParam 11 "Overblow Thresh" 
+  Fader6  FXParam 35 "Panpot" 
+  Fader7  FXParam 87 "Release Time" 
+  Fader8  FXParam 34 "Main Volume" 
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  Shift+Solo1  NoAction
+  Shift+Solo2  NoAction
+  Shift+Solo3  NoAction
+  Shift+Solo4  NoAction
+  Shift+Solo5  NoAction
+  Shift+Solo6  NoAction
+  Shift+Solo7  NoAction
+  Shift+Solo8  NoAction
+  Shift+Mute1  NoAction
+  Shift+Mute2  NoAction
+  Shift+Mute3  NoAction
+  Shift+Mute4  NoAction
+  Shift+Mute5  NoAction
+  Shift+Mute6  NoAction
+  Shift+Mute7  NoAction
+  Shift+Mute8  NoAction
+  Shift+Select1  NoAction
+  Shift+Select2  NoAction
+  Shift+Select3  NoAction
+  Shift+Select4  NoAction
+  Shift+Select5  NoAction
+  Shift+Select6  NoAction
+  Shift+Select7  NoAction
+  Shift+Select8  NoAction
+  Shift+Fader1  NoAction
+  Shift+Fader2  NoAction
+  Shift+Fader3  NoAction
+  Shift+Fader4  NoAction
+  Shift+Fader5  NoAction
+  Shift+Fader6  NoAction
+  Shift+Fader7  NoAction
+  Shift+Fader8  NoAction
+  MasterFader  FXParam 2185 "Wet" 
+  Flip  ToggleFXBypass
+  Scrub  Reaper 42455 // Toggle delta solo for last focused FX
+  BankLeft  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  BankRight  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  Footswitch1  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  Footswitch2  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  
+
+  SubZones
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-02"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-03"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-04"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-05"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-06"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-07"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 02-01"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 02-02"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 03-01"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-01"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-02"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-03"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-02 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-03 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-04 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-05 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-06 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-07 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 02-01 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 02-02 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 03-01 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-01 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-02 Help"
+      "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 04-03 Help"
+  SubZonesEnd
+  Marker  Speak "Instrument"
+  Nudge  Speak "Basic"
+  Cycle  Speak "VST3i: SWAM Soprano Sax 3 (Audio Modeling)"
+  Up    NoAction
+  Down  Speak "EQ and Compressor"
+  Down  GoSubZone "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 02-01"
+  Left  NoAction
+  Right Speak "Vibrato"
+  Right GoSubZone "VST3i: SWAM Soprano Sax 3 (Audio Modeling) 01-02"
+  GlobalView  GoSubZone "VST3i: SWAM Soprano Sax 3 (Audio Modeling) Help"
+  OnZoneActivation  Speak "SWAM_Soprano_Sax_3"
+ZoneEnd

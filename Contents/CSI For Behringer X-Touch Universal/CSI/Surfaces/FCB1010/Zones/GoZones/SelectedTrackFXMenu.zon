@@ -1,0 +1,1153 @@
+Zone SelectedTrackFXMenu
+  OnZoneActivation  Speak "Selected Track FX Menu View"
+
+// Bank 0
+
+ BK0Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK0Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK0Switch1 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+ BK0Switch1 Bank SelectedTrackFXMenu -1
+
+ BK0Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK0Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK0Switch2 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu -1
+ BK0Switch2 Bank SelectedTrackFXMenu 1
+
+ BK0Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK0Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK0Switch3 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu -1
+ BK0Switch3 Bank SelectedTrackFXMenu 1
+ BK0Switch3 Bank SelectedTrackFXMenu 1
+
+ BK0Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK0Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK0Switch4 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu -1
+ BK0Switch4 Bank SelectedTrackFXMenu 1
+ BK0Switch4 Bank SelectedTrackFXMenu 1
+ BK0Switch4 Bank SelectedTrackFXMenu 1
+
+ BK0Switch5 GoHome
+ BK0Switch5 Speak "Global View"
+
+ BK0Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK0Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK0Switch6 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu -1
+ BK0Switch6 Bank SelectedTrackFXMenu 1
+ BK0Switch6 Bank SelectedTrackFXMenu 1
+ BK0Switch6 Bank SelectedTrackFXMenu 1
+ BK0Switch6 Bank SelectedTrackFXMenu 1
+
+ BK0Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK0Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK0Switch7 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu -1
+ BK0Switch7 Bank SelectedTrackFXMenu 1
+ BK0Switch7 Bank SelectedTrackFXMenu 1
+ BK0Switch7 Bank SelectedTrackFXMenu 1
+ BK0Switch7 Bank SelectedTrackFXMenu 1
+ BK0Switch7 Bank SelectedTrackFXMenu 1
+
+ BK0Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK0Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK0Switch8 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu -1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+ BK0Switch8 Bank SelectedTrackFXMenu 1
+
+ BK0Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK0Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK0Switch9 Reaper _RS45b9810cb9fff75b3a8f13ed60fad777cd87f4a6 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu -1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+ BK0Switch9 Bank SelectedTrackFXMenu 1
+
+ BK0Switch10 GoFXSlot
+
+// Bank 1
+
+ BK1Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK1Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK1Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+ BK1Switch1 Bank SelectedTrackFXMenu -1
+
+ BK1Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK1Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK1Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu -1
+ BK1Switch2 Bank SelectedTrackFXMenu 1
+
+ BK1Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK1Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK1Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu -1
+ BK1Switch3 Bank SelectedTrackFXMenu 1
+ BK1Switch3 Bank SelectedTrackFXMenu 1
+
+ BK1Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK1Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK1Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu -1
+ BK1Switch4 Bank SelectedTrackFXMenu 1
+ BK1Switch4 Bank SelectedTrackFXMenu 1
+ BK1Switch4 Bank SelectedTrackFXMenu 1
+
+ BK1Switch5 GoHome
+ BK1Switch5 Speak "Global View"
+
+ BK1Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK1Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK1Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu -1
+ BK1Switch6 Bank SelectedTrackFXMenu 1
+ BK1Switch6 Bank SelectedTrackFXMenu 1
+ BK1Switch6 Bank SelectedTrackFXMenu 1
+ BK1Switch6 Bank SelectedTrackFXMenu 1
+
+ BK1Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK1Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK1Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu -1
+ BK1Switch7 Bank SelectedTrackFXMenu 1
+ BK1Switch7 Bank SelectedTrackFXMenu 1
+ BK1Switch7 Bank SelectedTrackFXMenu 1
+ BK1Switch7 Bank SelectedTrackFXMenu 1
+ BK1Switch7 Bank SelectedTrackFXMenu 1
+
+ BK1Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK1Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK1Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu -1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+ BK1Switch8 Bank SelectedTrackFXMenu 1
+
+ BK1Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK1Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK1Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu -1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+ BK1Switch9 Bank SelectedTrackFXMenu 1
+
+ BK1Switch10 GoFXSlot
+
+// Bank 2
+
+ BK2Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK2Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK2Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+ BK2Switch1 Bank SelectedTrackFXMenu -1
+
+ BK2Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK2Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK2Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu -1
+ BK2Switch2 Bank SelectedTrackFXMenu 1
+
+ BK2Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK2Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK2Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu -1
+ BK2Switch3 Bank SelectedTrackFXMenu 1
+ BK2Switch3 Bank SelectedTrackFXMenu 1
+
+ BK2Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK2Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK2Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu -1
+ BK2Switch4 Bank SelectedTrackFXMenu 1
+ BK2Switch4 Bank SelectedTrackFXMenu 1
+ BK2Switch4 Bank SelectedTrackFXMenu 1
+
+ BK2Switch5 GoHome
+ BK2Switch5 Speak "Global View"
+
+ BK2Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK2Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK2Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu -1
+ BK2Switch6 Bank SelectedTrackFXMenu 1
+ BK2Switch6 Bank SelectedTrackFXMenu 1
+ BK2Switch6 Bank SelectedTrackFXMenu 1
+ BK2Switch6 Bank SelectedTrackFXMenu 1
+
+ BK2Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK2Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK2Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu -1
+ BK2Switch7 Bank SelectedTrackFXMenu 1
+ BK2Switch7 Bank SelectedTrackFXMenu 1
+ BK2Switch7 Bank SelectedTrackFXMenu 1
+ BK2Switch7 Bank SelectedTrackFXMenu 1
+ BK2Switch7 Bank SelectedTrackFXMenu 1
+
+ BK2Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK2Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK2Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu -1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+ BK2Switch8 Bank SelectedTrackFXMenu 1
+
+ BK2Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK2Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK2Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu -1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+ BK2Switch9 Bank SelectedTrackFXMenu 1
+
+ BK2Switch10 GoFXSlot
+
+// Bank 3
+
+ BK3Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK3Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK3Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+ BK3Switch1 Bank SelectedTrackFXMenu -1
+
+ BK3Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK3Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK3Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu -1
+ BK3Switch2 Bank SelectedTrackFXMenu 1
+
+ BK3Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK3Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK3Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu -1
+ BK3Switch3 Bank SelectedTrackFXMenu 1
+ BK3Switch3 Bank SelectedTrackFXMenu 1
+
+ BK3Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK3Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK3Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu -1
+ BK3Switch4 Bank SelectedTrackFXMenu 1
+ BK3Switch4 Bank SelectedTrackFXMenu 1
+ BK3Switch4 Bank SelectedTrackFXMenu 1
+
+ BK3Switch5 GoHome
+ BK3Switch5 Speak "Global View"
+
+ BK3Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK3Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK3Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu -1
+ BK3Switch6 Bank SelectedTrackFXMenu 1
+ BK3Switch6 Bank SelectedTrackFXMenu 1
+ BK3Switch6 Bank SelectedTrackFXMenu 1
+ BK3Switch6 Bank SelectedTrackFXMenu 1
+
+ BK3Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK3Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK3Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu -1
+ BK3Switch7 Bank SelectedTrackFXMenu 1
+ BK3Switch7 Bank SelectedTrackFXMenu 1
+ BK3Switch7 Bank SelectedTrackFXMenu 1
+ BK3Switch7 Bank SelectedTrackFXMenu 1
+ BK3Switch7 Bank SelectedTrackFXMenu 1
+
+ BK3Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK3Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK3Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu -1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+ BK3Switch8 Bank SelectedTrackFXMenu 1
+
+ BK3Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK3Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK3Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu -1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+ BK3Switch9 Bank SelectedTrackFXMenu 1
+
+ BK3Switch10 GoFXSlot
+
+// Bank 4
+
+ BK4Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK4Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK4Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+ BK4Switch1 Bank SelectedTrackFXMenu -1
+
+ BK4Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK4Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK4Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu -1
+ BK4Switch2 Bank SelectedTrackFXMenu 1
+
+ BK4Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK4Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK4Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu -1
+ BK4Switch3 Bank SelectedTrackFXMenu 1
+ BK4Switch3 Bank SelectedTrackFXMenu 1
+
+ BK4Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK4Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK4Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu -1
+ BK4Switch4 Bank SelectedTrackFXMenu 1
+ BK4Switch4 Bank SelectedTrackFXMenu 1
+ BK4Switch4 Bank SelectedTrackFXMenu 1
+
+ BK4Switch5 GoHome
+ BK4Switch5 Speak "Global View"
+
+ BK4Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK4Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK4Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu -1
+ BK4Switch6 Bank SelectedTrackFXMenu 1
+ BK4Switch6 Bank SelectedTrackFXMenu 1
+ BK4Switch6 Bank SelectedTrackFXMenu 1
+ BK4Switch6 Bank SelectedTrackFXMenu 1
+
+ BK4Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK4Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK4Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu -1
+ BK4Switch7 Bank SelectedTrackFXMenu 1
+ BK4Switch7 Bank SelectedTrackFXMenu 1
+ BK4Switch7 Bank SelectedTrackFXMenu 1
+ BK4Switch7 Bank SelectedTrackFXMenu 1
+ BK4Switch7 Bank SelectedTrackFXMenu 1
+
+ BK4Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK4Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK4Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu -1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+ BK4Switch8 Bank SelectedTrackFXMenu 1
+
+ BK4Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK4Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK4Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu -1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+ BK4Switch9 Bank SelectedTrackFXMenu 1
+
+ BK4Switch10 GoFXSlot
+
+// Bank 5
+
+ BK5Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK5Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK5Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+ BK5Switch1 Bank SelectedTrackFXMenu -1
+
+ BK5Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK5Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK5Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu -1
+ BK5Switch2 Bank SelectedTrackFXMenu 1
+
+ BK5Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK5Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK5Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu -1
+ BK5Switch3 Bank SelectedTrackFXMenu 1
+ BK5Switch3 Bank SelectedTrackFXMenu 1
+
+ BK5Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK5Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK5Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu -1
+ BK5Switch4 Bank SelectedTrackFXMenu 1
+ BK5Switch4 Bank SelectedTrackFXMenu 1
+ BK5Switch4 Bank SelectedTrackFXMenu 1
+
+ BK5Switch5 GoHome
+ BK5Switch5 Speak "Global View"
+
+ BK5Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK5Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK5Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu -1
+ BK5Switch6 Bank SelectedTrackFXMenu 1
+ BK5Switch6 Bank SelectedTrackFXMenu 1
+ BK5Switch6 Bank SelectedTrackFXMenu 1
+ BK5Switch6 Bank SelectedTrackFXMenu 1
+
+ BK5Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK5Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK5Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu -1
+ BK5Switch7 Bank SelectedTrackFXMenu 1
+ BK5Switch7 Bank SelectedTrackFXMenu 1
+ BK5Switch7 Bank SelectedTrackFXMenu 1
+ BK5Switch7 Bank SelectedTrackFXMenu 1
+ BK5Switch7 Bank SelectedTrackFXMenu 1
+
+ BK5Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK5Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK5Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu -1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+ BK5Switch8 Bank SelectedTrackFXMenu 1
+
+ BK5Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK5Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK5Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu -1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+ BK5Switch9 Bank SelectedTrackFXMenu 1
+
+ BK5Switch10 GoFXSlot
+
+// Bank 6
+
+ BK6Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK6Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK6Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+ BK6Switch1 Bank SelectedTrackFXMenu -1
+
+ BK6Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK6Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK6Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu -1
+ BK6Switch2 Bank SelectedTrackFXMenu 1
+
+ BK6Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK6Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK6Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu -1
+ BK6Switch3 Bank SelectedTrackFXMenu 1
+ BK6Switch3 Bank SelectedTrackFXMenu 1
+
+ BK6Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK6Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK6Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu -1
+ BK6Switch4 Bank SelectedTrackFXMenu 1
+ BK6Switch4 Bank SelectedTrackFXMenu 1
+ BK6Switch4 Bank SelectedTrackFXMenu 1
+
+ BK6Switch5 GoHome
+ BK6Switch5 Speak "Global View"
+
+ BK6Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK6Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK6Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu -1
+ BK6Switch6 Bank SelectedTrackFXMenu 1
+ BK6Switch6 Bank SelectedTrackFXMenu 1
+ BK6Switch6 Bank SelectedTrackFXMenu 1
+ BK6Switch6 Bank SelectedTrackFXMenu 1
+
+ BK6Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK6Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK6Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu -1
+ BK6Switch7 Bank SelectedTrackFXMenu 1
+ BK6Switch7 Bank SelectedTrackFXMenu 1
+ BK6Switch7 Bank SelectedTrackFXMenu 1
+ BK6Switch7 Bank SelectedTrackFXMenu 1
+ BK6Switch7 Bank SelectedTrackFXMenu 1
+
+ BK6Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK6Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK6Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu -1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+ BK6Switch8 Bank SelectedTrackFXMenu 1
+
+ BK6Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK6Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK6Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu -1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+ BK6Switch9 Bank SelectedTrackFXMenu 1
+
+ BK6Switch10 GoFXSlot
+
+// Bank 7
+
+ BK7Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK7Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK7Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+ BK7Switch1 Bank SelectedTrackFXMenu -1
+
+ BK7Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK7Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK7Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu -1
+ BK7Switch2 Bank SelectedTrackFXMenu 1
+
+ BK7Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK7Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK7Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu -1
+ BK7Switch3 Bank SelectedTrackFXMenu 1
+ BK7Switch3 Bank SelectedTrackFXMenu 1
+
+ BK7Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK7Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK7Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu -1
+ BK7Switch4 Bank SelectedTrackFXMenu 1
+ BK7Switch4 Bank SelectedTrackFXMenu 1
+ BK7Switch4 Bank SelectedTrackFXMenu 1
+
+ BK7Switch5 GoHome
+ BK7Switch5 Speak "Global View"
+
+ BK7Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK7Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK7Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu -1
+ BK7Switch6 Bank SelectedTrackFXMenu 1
+ BK7Switch6 Bank SelectedTrackFXMenu 1
+ BK7Switch6 Bank SelectedTrackFXMenu 1
+ BK7Switch6 Bank SelectedTrackFXMenu 1
+
+ BK7Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK7Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK7Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu -1
+ BK7Switch7 Bank SelectedTrackFXMenu 1
+ BK7Switch7 Bank SelectedTrackFXMenu 1
+ BK7Switch7 Bank SelectedTrackFXMenu 1
+ BK7Switch7 Bank SelectedTrackFXMenu 1
+ BK7Switch7 Bank SelectedTrackFXMenu 1
+
+ BK7Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK7Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK7Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu -1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+ BK7Switch8 Bank SelectedTrackFXMenu 1
+
+ BK7Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK7Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK7Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu -1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+ BK7Switch9 Bank SelectedTrackFXMenu 1
+
+ BK7Switch10 GoFXSlot
+
+// Bank 8
+
+ BK8Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK8Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK8Switch1 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+ BK8Switch1 Bank SelectedTrackFXMenu -1
+
+ BK8Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK8Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK8Switch2 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu -1
+ BK8Switch2 Bank SelectedTrackFXMenu 1
+
+ BK8Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK8Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK8Switch3 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu -1
+ BK8Switch3 Bank SelectedTrackFXMenu 1
+ BK8Switch3 Bank SelectedTrackFXMenu 1
+
+ BK8Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK8Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK8Switch4 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu -1
+ BK8Switch4 Bank SelectedTrackFXMenu 1
+ BK8Switch4 Bank SelectedTrackFXMenu 1
+ BK8Switch4 Bank SelectedTrackFXMenu 1
+
+ BK8Switch5 GoHome
+ BK8Switch5 Speak "Global View"
+
+ BK8Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK8Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK8Switch6 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu -1
+ BK8Switch6 Bank SelectedTrackFXMenu 1
+ BK8Switch6 Bank SelectedTrackFXMenu 1
+ BK8Switch6 Bank SelectedTrackFXMenu 1
+ BK8Switch6 Bank SelectedTrackFXMenu 1
+
+ BK8Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK8Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK8Switch7 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu -1
+ BK8Switch7 Bank SelectedTrackFXMenu 1
+ BK8Switch7 Bank SelectedTrackFXMenu 1
+ BK8Switch7 Bank SelectedTrackFXMenu 1
+ BK8Switch7 Bank SelectedTrackFXMenu 1
+ BK8Switch7 Bank SelectedTrackFXMenu 1
+
+ BK8Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK8Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK8Switch8 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu -1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+ BK8Switch8 Bank SelectedTrackFXMenu 1
+
+ BK8Switch9 Reaper _S&M_SELFX8 // SWS/S&M : Sélectionner l'FX 8 pour les pistes sélectionnées
+ BK8Switch9 Reaper _S&M_FXBYP_ALL_ON_EXCPT8 // SWS/S&M : Contourner tous les FX (sauf 8) pour les pistes sélectionnées
+ BK8Switch9 Reaper _RSd7c46f4723c2096d120ba90faaac13e5fbe36a26 // Script : ReaperAccessible - CSI FX - Speak name of selected FX on selected track.lua
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu -1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+ BK8Switch9 Bank SelectedTrackFXMenu 1
+
+ BK8Switch10 GoFXSlot
+
+// Bank 9 - Tuner
+
+ BK9Switch1 Reaper _S&M_SELFX1 // SWS/S&M : Sélectionner l'FX 1 pour les pistes sélectionnées
+ BK9Switch1 Reaper _S&M_FXBYP_ALL_ON_EXCPT1 // SWS/S&M : Contourner tous les FX (sauf 1) pour les pistes sélectionnées
+ BK9Switch1 Speak "D"
+
+ BK9Switch2 Reaper _S&M_SELFX2 // SWS/S&M : Sélectionner l'FX 2 pour les pistes sélectionnées
+ BK9Switch2 Reaper _S&M_FXBYP_ALL_ON_EXCPT2 // SWS/S&M : Contourner tous les FX (sauf 2) pour les pistes sélectionnées
+ BK9Switch2 Speak "E"
+
+ BK9Switch3 Reaper _S&M_SELFX3 // SWS/S&M : Sélectionner l'FX 3 pour les pistes sélectionnées
+ BK9Switch3 Reaper _S&M_FXBYP_ALL_ON_EXCPT3 // SWS/S&M : Contourner tous les FX (sauf 3) pour les pistes sélectionnées
+ BK9Switch3 Speak "A"
+
+ BK9Switch4 Reaper _S&M_SELFX4 // SWS/S&M : Sélectionner l'FX 4 pour les pistes sélectionnées
+ BK9Switch4 Reaper _S&M_FXBYP_ALL_ON_EXCPT4 // SWS/S&M : Contourner tous les FX (sauf 4) pour les pistes sélectionnées
+ BK9Switch4 Speak "D"
+
+ BK9Switch5 Reaper _S&M_FXBYPALL2 // SWS/S&M : Contourner tous les FX des pistes sélectionnées
+ BK9Switch5 GoHome
+ BK9Switch5 Speak "Global View"
+
+ BK9Switch6 Reaper _S&M_SELFX5 // SWS/S&M : Sélectionner l'FX 5 pour les pistes sélectionnées
+ BK9Switch6 Reaper _S&M_FXBYP_ALL_ON_EXCPT5 // SWS/S&M : Contourner tous les FX (sauf 5) pour les pistes sélectionnées
+ BK9Switch6 Speak "G"
+
+ BK9Switch7 Reaper _S&M_SELFX6 // SWS/S&M : Sélectionner l'FX 6 pour les pistes sélectionnées
+ BK9Switch7 Reaper _S&M_FXBYP_ALL_ON_EXCPT6 // SWS/S&M : Contourner tous les FX (sauf 6) pour les pistes sélectionnées
+ BK9Switch7 Speak "B"
+
+ BK9Switch8 Reaper _S&M_SELFX7 // SWS/S&M : Sélectionner l'FX 7 pour les pistes sélectionnées
+ BK9Switch8 Reaper _S&M_FXBYP_ALL_ON_EXCPT7 // SWS/S&M : Contourner tous les FX (sauf 7) pour les pistes sélectionnées
+ BK9Switch8 Speak "E"
+
+ BK9Switch9 Speak "No Action"
+
+ BK9Switch10 Reaper _S&M_FXBYPALL2 // SWS/S&M : Contourner tous les FX des pistes sélectionnées
+ BK9Switch10 Speak "Tuner Tone Off"
+
+// Fader1 NoAction
+// Fader2 NoAction
+
+ZoneEnd

@@ -1,0 +1,83 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: Baby Comeback (BABY Audio)
+// by Paul Warner
+// Version 2.0 for CSI 2.0
+// 8 September 2022
+// ------------------------------------------------------------
+
+Zone "VST3: Baby Comeback (BABY Audio)" "BabyAudio_BabyComeBack"
+		OnZoneActivation		Speak "Baby Come Back by Baby Audio. Press smpteBeats for help"
+
+	F7		Reaper 42455  // delta
+	F8				ToggleFXBypass
+
+	Rotary1 				FXParam 				"0"			"Delay Time - Sync"
+	Fader1 				FXParam 				"1"			"Delay Time - MS"
+	RecordArm1 				FXParam 				"2"			[ 0.0 0.35 0.7 1.0 ]	"Delay Mode"
+	Fader2 				FXParam 				"3"			"Feedback"
+	Mute1 				FXParam 				"4"			[ 0.0 1.0 ]	"Ping-Pong"
+	RecordArm2 				FXParam 				"5"			[ 0.0 0.25 0.5 0.75 1.0 ]	"Flavor"
+	Fader3 				FXParam 				"6"			"Ducker"
+	Fader4 				FXParam 				"7"			"Dry/Out"
+	MasterFader			FXParam 				"8" 		"Wet/Out"
+
+// help section
+	smpteBeats		Speak "Baby Come Back. Press alt with buttons to the right of the rotaries for overview of assignments"
+	Alt+Track		Speak "Faders 1 to 4 and master fader assigned"
+	Alt+Pan		Speak "Rotary 1 assigned but no pushes assigned"
+	Alt+EQ		Speak "Record arm 1 and 2, mute 1 assigned"
+	Alt+Send	Speak "There are no sub pages"
+	Alt+PlugIn	NoAction
+	Alt+Instrument	NoAction
+
+// NoAction
+	Fader5	NoAction
+	Fader6	NoAction
+	Fader7	NoAction
+	Fader8	NoAction
+	Rotary2	NoAction
+	Rotary3	NoAction
+	Rotary4	NoAction
+	Rotary5	NoAction
+	Rotary6	NoAction
+	Rotary7	NoAction
+	Rotary8	NoAction
+	RotaryPush1	NoAction
+	RotaryPush2	NoAction
+	RotaryPush3	NoAction
+	RotaryPush4	NoAction
+	RotaryPush5	NoAction
+	RotaryPush6	NoAction
+	RotaryPush7	NoAction
+	RotaryPush8	NoAction
+	RecordArm3	NoAction
+	RecordArm4	NoAction
+	RecordArm5	NoAction
+	RecordArm6	NoAction
+	RecordArm7	NoAction
+	RecordArm8	NoAction
+	Solo1	NoAction
+	Solo2	NoAction
+	Solo3	NoAction
+	Solo4	NoAction
+	Solo5	NoAction
+	Solo6	NoAction
+	Solo7	NoAction
+	Solo8	NoAction
+	Mute2	NoAction
+	Mute3	NoAction
+	Mute4	NoAction
+	Mute5	NoAction
+	Mute6	NoAction
+	Mute7	NoAction
+	Mute8	NoAction
+		Select1	NoAction
+	Select2	NoAction
+	Select3	NoAction
+	Select4	NoAction
+	Select5	NoAction
+	Select6	NoAction
+	Select7	NoAction
+	Select8	NoAction
+ZoneEnd
+                                   

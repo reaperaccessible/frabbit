@@ -1,0 +1,11 @@
+Zone "VST: UAD Teletronix LA-2 (Universal Audio, Inc.)"
+	FXParam 0 "Peak Reduct"
+	FXParam 1 "Gain"
+	FXParam 2 "Emphasis"
+	FXParam 3 "Meter"
+	FXParam 4 "Mix"
+	FXParam 5 "Power"
+	FXParam 6 "Bypass"
+	FXParam 7 "Wet"
+	FXParam 8 "Delta"
+ZoneEnd

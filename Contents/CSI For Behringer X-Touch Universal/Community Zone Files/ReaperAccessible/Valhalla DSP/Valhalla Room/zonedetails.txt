@@ -1,0 +1,6 @@
+Details
+Page 1 :
+    - Section 1 : 7 paramètres
+    - Section 2 : 8 paramètres
+    - Section 3 : 6 paramètres
+1 pages, 3 sections, 21 paramètres

@@ -1,0 +1,165 @@
+Zone "Tremolo - Dead Duck Software"
+ OnZoneActivation Speak "Tremolo Edit On"
+
+// Page 1 Section 1
+// page : "Tremolo"
+// section : "Tremolo"
+
+// Bank 0
+
+ BK0Switch1 FXParam 3 "Rate" [ 0.0600 0.1000 0.1600 0.2000 0.2600 0.3200 0.3600 0.4200 0.4600 0.5200 0.5600 0.6000 0.6600 0.7000 0.7600 0.8000 0.8600 0.9000 0.9600 1.0 ]
+ BK0Switch2 FXParam 1 "Sync" [ 0.0 1.0 ]
+ BK0Switch3 Speak "No Action"
+ BK0Switch4 Speak "No Action"
+ BK0Switch5 Speak "Global View"
+ BK0Switch5 GoHome
+ BK0Switch6 Speak "No Action"
+ BK0Switch7 Speak "No Action"
+ BK0Switch8 Speak "No Action"
+ BK0Switch9 Speak "No Action"
+ BK0Switch10 Speak " Edit Off"
+ BK0Switch10 LeaveSubZone
+
+// Bank 1
+
+ BK1Switch1 Speak "No Action"
+ BK1Switch2 Speak "No Action"
+ BK1Switch3 Speak "No Action"
+ BK1Switch4 Speak "No Action"
+ BK1Switch5 Speak "Global View"
+ BK1Switch5 GoHome
+ BK1Switch6 Speak "No Action"
+ BK1Switch7 Speak "No Action"
+ BK1Switch8 Speak "No Action"
+ BK1Switch9 Speak "No Action"
+ BK1Switch10 Speak " Edit Off"
+ BK1Switch10 LeaveSubZone
+
+// Bank 2
+
+ BK2Switch1 Speak "No Action"
+ BK2Switch2 Speak "No Action"
+ BK2Switch3 Speak "No Action"
+ BK2Switch4 Speak "No Action"
+ BK2Switch5 Speak "Global View"
+ BK2Switch5 GoHome
+ BK2Switch6 Speak "No Action"
+ BK2Switch7 Speak "No Action"
+ BK2Switch8 Speak "No Action"
+ BK2Switch9 Speak "No Action"
+ BK2Switch10 Speak " Edit Off"
+ BK2Switch10 LeaveSubZone
+
+// Bank 3
+
+ BK3Switch1 Speak "No Action"
+ BK3Switch2 Speak "No Action"
+ BK3Switch3 Speak "No Action"
+ BK3Switch4 Speak "No Action"
+ BK3Switch5 Speak "Global View"
+ BK3Switch5 GoHome
+ BK3Switch6 Speak "No Action"
+ BK3Switch7 Speak "No Action"
+ BK3Switch8 Speak "No Action"
+ BK3Switch9 Speak "No Action"
+ BK3Switch10 Speak " Edit Off"
+ BK3Switch10 LeaveSubZone
+
+// Bank 4
+
+ BK4Switch1 Speak "Bank4 Switch1 No Action"
+ BK4Switch2 Speak "Bank4 Switch2 No Action"
+ BK4Switch3 Speak "Bank4 Switch3 No Action"
+ BK4Switch4 Speak "Bank4 Switch4 No Action"
+ BK4Switch5 Speak "Global View"
+ BK4Switch5 GoHome
+ BK4Switch6 Speak "Bank4 Switch6 No Action"
+ BK4Switch7 Speak "Bank4 Switch7 No Action"
+ BK4Switch8 Speak "Bank4 Switch8 No Action"
+ BK4Switch9 Speak "Bank4 Switch9 No Action"
+ BK4Switch10 Speak "Ampifier Edit Off"
+ BK4Switch10 LeaveSubZone
+
+// Bank 5
+
+ BK5Switch1 Speak "Bank5 Switch1 No Action"
+ BK5Switch2 Speak "Bank5 Switch2 No Action"
+ BK5Switch3 Speak "Bank5 Switch3 No Action"
+ BK5Switch4 Speak "Bank5 Switch4 No Action"
+ BK5Switch5 Speak "Global View"
+ BK5Switch5 Speak "Bank5 Switch5 No Action"
+ BK5Switch6 Speak "Bank5 Switch6 No Action"
+ BK5Switch7 Speak "Bank5 Switch7 No Action"
+ BK5Switch8 Speak "Bank5 Switch8 No Action"
+ BK5Switch9 Speak "Bank5 Switch9 No Action"
+ BK5Switch10 Speak "Ampifier Edit Off"
+ BK5Switch10 LeaveSubZone
+
+// Bank 6
+
+ BK6Switch1 Speak "Bank6 Switch1 No Action"
+ BK6Switch2 Speak "Bank6 Switch2 No Action"
+ BK6Switch3 Speak "Bank6 Switch3 No Action"
+ BK6Switch4 Speak "Bank6 Switch4 No Action"
+ BK6Switch5 Speak "Global View"
+ BK6Switch5 GoHome
+ BK6Switch6 Speak "Bank6 Switch6 No Action"
+ BK6Switch7 Speak "Bank6 Switch7 No Action"
+ BK6Switch8 Speak "Bank6 Switch8 No Action"
+ BK6Switch9 Speak "Bank6 Switch9 No Action"
+ BK6Switch10 Speak "Ampifier Edit Off"
+ BK6Switch10 LeaveSubZone
+
+
+// Bank 7
+
+ BK7Switch1 Speak "Bank7 Switch1 No Action"
+ BK7Switch2 Speak "Bank7 Switch2 No Action"
+ BK7Switch3 Speak "Bank7 Switch3 No Action"
+ BK7Switch4 Speak "Bank7 Switch4 No Action"
+ BK7Switch5 Speak "Global View"
+ BK7Switch5 GoHome
+ BK7Switch6 Speak "Bank7 Switch6 No Action"
+ BK7Switch7 Speak "Bank7 Switch7 No Action"
+ BK7Switch8 Speak "Bank7 Switch8 No Action"
+ BK7Switch9 Speak "Bank7 Switch9 No Action"
+ BK7Switch10 Speak "Ampifier Edit Off"
+ BK7Switch10 LeaveSubZone
+
+
+// Bank 8
+
+ BK8Switch1 Speak "Bank8 Switch1 No Action"
+ BK8Switch2 Speak "Bank8 Switch2 No Action"
+ BK8Switch3 Speak "Bank8 Switch3 No Action"
+ BK8Switch4 Speak "Bank8 Switch4 No Action"
+ BK8Switch5 Speak "Global View"
+ BK8Switch5 GoHome
+ BK8Switch6 Speak "Bank8 Switch6 No Action"
+ BK8Switch7 Speak "Bank8 Switch7 No Action"
+ BK8Switch8 Speak "Bank8 Switch8 No Action"
+ BK8Switch9 Speak "Bank8 Switch9 No Action"
+ BK8Switch10 Speak "Ampifier Edit Off"
+ BK8Switch10 LeaveSubZone
+
+// Bank 9
+
+ BK9Switch1 Speak "Bank8 Switch1 No Action"
+ BK9Switch2 Speak "Bank8 Switch2 No Action"
+ BK9Switch3 Speak "Bank8 Switch3 No Action"
+ BK9Switch4 Speak "Bank8 Switch4 No Action"
+ BK9Switch5 Speak "Global View"
+ BK9Switch5 GoHome
+ BK9Switch6 Speak "Bank8 Switch6 No Action"
+ BK9Switch7 Speak "Bank8 Switch7 No Action"
+ BK9Switch8 Speak "Bank8 Switch8 No Action"
+ BK9Switch9 Speak "Bank8 Switch9 No Action"
+ BK9Switch10 Speak "Ampifier Edit Off"
+ BK9Switch10 LeaveSubZone
+
+ Fader1 Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Ignorer le prochain message d'OSARA
+ Fader1 FXParam 6 "Depth"
+
+ Fader1 Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Ignorer le prochain message d'OSARA
+ Fader2 NoAction
+ZoneEnd

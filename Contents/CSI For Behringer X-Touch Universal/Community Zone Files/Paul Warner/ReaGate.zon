@@ -1,0 +1,28 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST: ReaGate (Cockos)
+// by Paul Warner
+// 12 May 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST: ReaGate (Cockos)" "ReaGate"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Fader1 				FXParam 				"0"			"Thresh"
+	Fader2 				FXParam 				"1"			"Attack"
+	Fader3 				FXParam 				"2"			"Release"
+	Rotary1 			FXParam 				"3"			"Pre-open"
+	Fader4 			FXParam 				"4" 		"Hold"
+	Rotary2 			FXParam 				"5" 		"Lowpass"
+	Rotary3 			FXParam 				"6" 		"Hipass"
+	Fader7 			FXParam 				"9" 		"Dry"
+	Fader8 			FXParam 				"10" 		"Wet"
+	Fader5 			FXParam 				"11" 		"Noise"
+	Rotary4 			FXParam 				"12" 		"Hystrsis"
+	Mute1 			FXParam 				"13" 		[ 0.0 1.0 ]	"PreviewF"
+	Rotary5 			FXParam 				"14" 		"RMS size"
+	RecordArm7 			FXParam 				"23" 		[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

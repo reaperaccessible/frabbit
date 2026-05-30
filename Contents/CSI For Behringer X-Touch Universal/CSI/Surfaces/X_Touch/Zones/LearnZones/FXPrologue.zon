@@ -1,0 +1,7 @@
+Zone FXPrologue
+  OnZoneActivation  SpeakFXMenuName
+  OnZoneActivation SetXTouchDisplayColors Cyan
+  OnZoneDeactivation  RestoreXTouchDisplayColors
+
+  Plugin  ClearFXSlot
+ZoneEnd

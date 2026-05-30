@@ -1,0 +1,6 @@
+Zone: VST3: Amped - Bass (ML Sound Lab)
+Version: 2.0
+Date: 2025-08-14 15:38
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

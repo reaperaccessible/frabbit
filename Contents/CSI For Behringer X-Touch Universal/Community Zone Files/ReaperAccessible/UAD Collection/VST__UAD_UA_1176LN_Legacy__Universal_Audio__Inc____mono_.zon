@@ -1,0 +1,12 @@
+Zone "VST: UAD UA 1176LN Legacy (Universal Audio, Inc.) (mono)"
+	FXParam 0 "Input"
+	FXParam 1 "Output"
+	FXParam 2 "Attack"
+	FXParam 3 "Release"
+	FXParam 4 "Ratio"
+	FXParam 5 "Meter"
+	FXParam 6 "Power"
+	FXParam 7 "Bypass"
+	FXParam 8 "Wet"
+	FXParam 9 "Delta"
+ZoneEnd

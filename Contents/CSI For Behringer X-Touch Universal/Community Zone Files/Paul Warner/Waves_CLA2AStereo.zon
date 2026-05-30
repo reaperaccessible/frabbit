@@ -1,0 +1,22 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: CLA-2A Stereo (Waves)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: CLA-2A Stereo (Waves)" "Waves_CLA2AStereo"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Rotary1 				FXParam 				"1"			"Bank"
+	Fader1 				FXParam 				"2"			"Gain"
+// following sets Gain to unity gain or 32.28 in param value
+	RotaryPush1 				FXParam 				"2"			[ 0.27 ]	"Gain"
+	Fader2 				FXParam 				"3"			"Peak Reduction"
+	Mute1 				FXParam 				"4"			[ 0.0 1.0 ]	"Comp/Limiter"
+	Rotary2 				FXParam 				"5"			"Hi Freq"
+	RecordArm7 				FXParam 				"10"			[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

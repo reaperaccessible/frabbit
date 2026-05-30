@@ -2,6 +2,7 @@ pub mod arch_probe;
 pub mod archive;
 pub mod artifact;
 pub mod configuration;
+pub mod csi;
 pub mod detection;
 pub mod disk_image;
 pub mod error;

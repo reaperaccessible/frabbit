@@ -1,0 +1,6 @@
+Zone: VST3: Abbey Road RS127 Rack (Softube)
+Version: 2.0
+Date: 2025-08-14 15:57
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

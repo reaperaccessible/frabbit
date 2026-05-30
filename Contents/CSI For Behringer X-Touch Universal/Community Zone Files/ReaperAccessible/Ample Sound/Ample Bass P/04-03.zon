@@ -1,0 +1,128 @@
+Zone "VST3i: Ample Bass P (Ample Sound) 04-3"
+// Page 4 Section 3
+// page : "Amplifier"
+// section : "AMP-BassPro"
+    Rotary1  FXParam 191 "AMP-Type-Index" [ (1) 0.0 0.5 1.0 ]
+    Rotary2  FXParam 204 "AMP-BassPro-Mid Frequency Index" [ (1) 0.0 0.2010 0.4010 0.6010 1.0 ]
+    Rotary3           NoAction
+    Rotary4           NoAction
+    Rotary5           NoAction
+    Rotary6           NoAction
+    Rotary7           NoAction
+    Rotary8           NoAction
+    RotaryPush1       NoAction
+    RotaryPush2       NoAction
+    RotaryPush3       NoAction
+    RotaryPush4       NoAction
+    RotaryPush5       NoAction
+    RotaryPush6       NoAction
+    RotaryPush7       NoAction
+    RotaryPush8       NoAction
+    RecordArm1        NoAction
+    RecordArm2        NoAction
+    RecordArm3        NoAction
+    RecordArm4        NoAction
+    RecordArm5        NoAction
+    RecordArm6        NoAction
+    RecordArm7        NoAction
+    RecordArm8        NoAction
+    Solo1             NoAction
+    Solo2             NoAction
+    Solo3             NoAction
+    Solo4             NoAction
+    Solo5             NoAction
+    Solo6             NoAction
+    Solo7             NoAction
+    Solo8             NoAction
+    Mute1  FXParam 190 "AMP-Enabled" [ (1) 0.0 1.0 ]
+    Mute2  FXParam 210 "AMP-BassPro-Limiter Enabled" [ (1) 0.0 1.0 ]
+    Mute3  FXParam 212 "AMP-BassPro-Compression Enabled" [ (1) 0.0 1.0 ]
+    Mute4  FXParam 209 "AMP-BassPro-Graphic EQ Enabled" [ (1) 0.0 1.0 ]
+    Mute5  FXParam 207 "AMP-BassPro-Ultra Hi" [ (1) 0.0 1.0 ]
+    Mute6  FXParam 208 "AMP-BassPro-Ultra Lo" [ (1) 0.0 1.0 ]
+    Mute7  FXParam 211 "AMP-BassPro-FX Bypassed" [ (1) 0.0 1.0 ]
+    Mute8             NoAction
+    Select1           NoAction
+    Select2           NoAction
+    Select3           NoAction
+    Select4           NoAction
+    Select5           NoAction
+    Select6           NoAction
+    Select7           NoAction
+    Select8           NoAction
+    Fader1  FXParam 200 "AMP-BassPro-Gain" 
+    Fader2  FXParam 201 "AMP-BassPro-Compression Ratio" 
+    Fader3  FXParam 202 "AMP-BassPro-Bass Gain" 
+    Fader4  FXParam 203 "AMP-BassPro-Mid Gain" 
+    Fader5  FXParam 205 "AMP-BassPro-Treble Gain" 
+    Fader6  FXParam 206 "AMP-BassPro-Master" 
+    Fader7            NoAction
+    Fader8            NoAction
+    Shift+Rotary1     NoAction
+    Shift+Rotary2     NoAction
+    Shift+Rotary3     NoAction
+    Shift+Rotary4     NoAction
+    Shift+Rotary5     NoAction
+    Shift+Rotary6     NoAction
+    Shift+Rotary7     NoAction
+    Shift+Rotary8     NoAction
+    Shift+RotaryPush1 NoAction
+    Shift+RotaryPush2 NoAction
+    Shift+RotaryPush3 NoAction
+    Shift+RotaryPush4 NoAction
+    Shift+RotaryPush5 NoAction
+    Shift+RotaryPush6 NoAction
+    Shift+RotaryPush7 NoAction
+    Shift+RotaryPush8 NoAction
+    Shift+RecordArm1  NoAction
+    Shift+RecordArm2  NoAction
+    Shift+RecordArm3  NoAction
+    Shift+RecordArm4  NoAction
+    Shift+RecordArm5  NoAction
+    Shift+RecordArm6  NoAction
+    Shift+RecordArm7  NoAction
+    Shift+RecordArm8  NoAction
+    Shift+Solo1       NoAction
+    Shift+Solo2       NoAction
+    Shift+Solo3       NoAction
+    Shift+Solo4       NoAction
+    Shift+Solo5       NoAction
+    Shift+Solo6       NoAction
+    Shift+Solo7       NoAction
+    Shift+Solo8       NoAction
+    Shift+Mute1       NoAction
+    Shift+Mute2       NoAction
+    Shift+Mute3       NoAction
+    Shift+Mute4       NoAction
+    Shift+Mute5       NoAction
+    Shift+Mute6       NoAction
+    Shift+Mute7       NoAction
+    Shift+Mute8       NoAction
+    Shift+Select1     NoAction
+    Shift+Select2     NoAction
+    Shift+Select3     NoAction
+    Shift+Select4     NoAction
+    Shift+Select5     NoAction
+    Shift+Select6     NoAction
+    Shift+Select7     NoAction
+    Shift+Select8     NoAction
+    Shift+Fader1      NoAction
+    Shift+Fader2      NoAction
+    Shift+Fader3      NoAction
+    Shift+Fader4      NoAction
+    Shift+Fader5      NoAction
+    Shift+Fader6      NoAction
+    Shift+Fader7      NoAction
+    Shift+Fader8      NoAction
+
+    Up        Speak "Equalizer"
+    Up        GoSubZone "VST3i: Ample Bass P (Ample Sound) 03-1"
+    Down      Speak "Cabinet"
+    Down      GoSubZone "VST3i: Ample Bass P (Ample Sound) 05-1"
+    Left      Speak "AMP-Vintage15-V64"
+    Left      GoSubZone "VST3i: Ample Bass P (Ample Sound) 04-2"
+    Right     Speak "AMP-BassPro-Graphic EQ"
+    Right     GoSubZone "VST3i: Ample Bass P (Ample Sound) 04-4"
+    Marker    Speak "Amplifier, AMP-BassPro"
+    Hold+Marker Speak "Ample Bass P"
+ZoneEnd

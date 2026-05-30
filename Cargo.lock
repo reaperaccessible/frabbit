@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit"
-version = "1.6.0"
+version = "1.8.0"
 dependencies = [
  "frabbit-cli",
  "frabbit-ui-wxdragon",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-cli"
-version = "1.6.0"
+version = "1.8.0"
 dependencies = [
  "clap",
  "frabbit-core",
@@ -515,7 +515,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-core"
-version = "1.6.0"
+version = "1.8.0"
 dependencies = [
  "fluent-bundle",
  "frabbit-platform",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-platform"
-version = "1.6.0"
+version = "1.8.0"
 dependencies = [
  "plist",
  "serde",
@@ -546,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-ui-wxdragon"
-version = "1.6.0"
+version = "1.8.0"
 dependencies = [
  "frabbit-core",
  "serde",

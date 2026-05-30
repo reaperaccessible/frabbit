@@ -44,6 +44,9 @@ pub struct SetupOptions {
     /// Active locale used to select the correct ReaPack repository.
     #[serde(default = "default_locale")]
     pub active_locale: String,
+    /// Install CSI (Control Surface Integrator) for X-Touch Universal.
+    #[serde(default)]
+    pub install_csi: bool,
 }
 
 fn default_locale() -> String {
@@ -144,6 +147,10 @@ pub fn execute_setup_operation_with_progress(
         apply_keymap_step(resource_path, options.keymap_choice)?;
     }
 
+    if !options.dry_run && options.install_csi {
+        crate::csi::install_csi(resource_path)?;
+    }
+
     Ok(SetupReport {
         resource_path: resource_path.to_path_buf(),
         dry_run: options.dry_run,
@@ -226,6 +233,10 @@ pub fn execute_resolved_setup_operation_with_progress(
 
     if !options.dry_run && options.keymap_choice.replaces_keymap() {
         apply_keymap_step(resource_path, options.keymap_choice)?;
+    }
+
+    if !options.dry_run && options.install_csi {
+        crate::csi::install_csi(resource_path)?;
     }
 
     Ok(SetupReport {
@@ -360,6 +371,7 @@ mod tests {
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
                 active_locale: "fr-FR".to_string(),
+                install_csi: false,
             },
         )
         .unwrap();
@@ -396,6 +408,7 @@ mod tests {
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
                 active_locale: "fr-FR".to_string(),
+                install_csi: false,
             },
         )
         .unwrap();
@@ -448,6 +461,7 @@ mod tests {
                 force_reinstall_packages: Vec::new(),
                 configuration_step_ids: Vec::new(),
                 active_locale: "fr-FR".to_string(),
+                install_csi: false,
             },
         )
         .unwrap();

@@ -1,0 +1,469 @@
+// Behringer XTouch - Kontakt: The Resonator
+// Par Ludovic SANSONE
+// Version 1.0 Créée le 12.08.2022
+// Courriel : libreaudio63@gmail.com
+// Zone générée par Zonard 2.5, de Ludovic SANSONE
+
+Zone "Kontakt: The Resonator"
+    SelectedTrackNavigator
+
+    IncludedZones
+        "Settings"
+    IncludedZonesEnd
+
+// Page 1 Section 1 - Widgets
+    Rotary1           FXParam 5 "Master Key" [ (1) 0 0.04 0.08 0.12 0.16 0.2 0.24 0.28 0.32 0.36 0.4 0.44 0.48 ]
+    Rotary2           NoAction
+    Rotary3           NoAction
+    Rotary4           NoAction
+    Rotary5           NoAction
+    Rotary6           NoAction
+    Rotary7           NoAction
+    Rotary8           NoAction
+    RotaryPush1       FXParam 4 "Chords (On/Off)" [ 0 1 ]
+    RotaryPush2       FXParam 7 "Link Chords (On/Off)" [ 0 1 ]
+    RotaryPush3       NoAction
+    RotaryPush4       NoAction
+    RotaryPush5       NoAction
+    RotaryPush6       NoAction
+    RotaryPush7       NoAction
+    RotaryPush8       NoAction
+    RecordArm1        FXParam 21 "Grace Note" [ 0 1 ]
+    RecordArm2        FXParam 22 "Harmony" [ 0 1 ]
+    RecordArm3        FXParam 23 "Bend 1" [ 0 1 ]
+    RecordArm4        FXParam 24 "Bend 2" [ 0 1 ]
+    RecordArm5        FXParam 25 "Up Trills" [ 0 1 ]
+    RecordArm6        FXParam 26 "Mute" [ 0 1 ]
+    RecordArm7        FXParam 27 "Down Slides" [ 0 1 ]
+    RecordArm8        FXParam 28 "Down Trills" [ 0 1 ]
+    Solo1             FXParam 29 "Up Slides" [ 0 1 ]
+    Solo2             NoAction
+    Solo3             NoAction
+    Solo4             NoAction
+    Solo5             NoAction
+    Solo6             NoAction
+    Solo7             NoAction
+    Solo8             NoAction
+    Mute1             NoAction
+    Mute2             NoAction
+    Mute3             NoAction
+    Mute4             NoAction
+    Mute5             NoAction
+    Mute6             NoAction
+    Mute7             NoAction
+    Mute8             FXParam 15 "Vibrato (On/Off)" [ 0 1 ]
+    Fader1            FXParam 0 "Volume"
+    Fader2            FXParam 1 "Pan"
+    Fader3            FXParam 2 "Tune"
+    Fader4            FXParam 10 "Resonance"
+    Fader5            FXParam 11 "Release Volume"
+    Fader6            FXParam 12 "Noises Volume"
+    Fader7            FXParam 13 "Harmonic Volume"
+    Fader8            FXParam 16 "Vibrato Depth"
+    Shift+Rotary1     NoAction
+    Shift+Rotary2     NoAction
+    Shift+Rotary3     NoAction
+    Shift+Rotary4     NoAction
+    Shift+Rotary5     NoAction
+    Shift+Rotary6     NoAction
+    Shift+Rotary7     NoAction
+    Shift+Rotary8     NoAction
+    Shift+RotaryPush1 NoAction
+    Shift+RotaryPush2 NoAction
+    Shift+RotaryPush3 NoAction
+    Shift+RotaryPush4 NoAction
+    Shift+RotaryPush5 NoAction
+    Shift+RotaryPush6 NoAction
+    Shift+RotaryPush7 NoAction
+    Shift+RotaryPush8 NoAction
+    Shift+RecordArm1  NoAction
+    Shift+RecordArm2  NoAction
+    Shift+RecordArm3  NoAction
+    Shift+RecordArm4  NoAction
+    Shift+RecordArm5  NoAction
+    Shift+RecordArm6  NoAction
+    Shift+RecordArm7  NoAction
+    Shift+RecordArm8  NoAction
+    MasterFader       FXParam 513 "Wet"
+    Flip              FXParam 512 "Contourner" [ 0 1 ]
+
+// Page 2 Section 1 - Widgets
+    P2+Rotary1           NoAction
+    P2+Rotary2           NoAction
+    P2+Rotary3           NoAction
+    P2+Rotary4           NoAction
+    P2+Rotary5           NoAction
+    P2+Rotary6           NoAction
+    P2+Rotary7           NoAction
+    P2+Rotary8           NoAction
+    P2+RotaryPush1       NoAction
+    P2+RotaryPush2       NoAction
+    P2+RotaryPush3       NoAction
+    P2+RotaryPush4       NoAction
+    P2+RotaryPush5       NoAction
+    P2+RotaryPush6       NoAction
+    P2+RotaryPush7       NoAction
+    P2+RotaryPush8       NoAction
+    P2+RecordArm1        NoAction
+    P2+RecordArm2        NoAction
+    P2+RecordArm3        NoAction
+    P2+RecordArm4        NoAction
+    P2+RecordArm5        NoAction
+    P2+RecordArm6        NoAction
+    P2+RecordArm7        NoAction
+    P2+RecordArm8        NoAction
+    P2+Solo1             NoAction
+    P2+Solo2             NoAction
+    P2+Solo3             NoAction
+    P2+Solo4             NoAction
+    P2+Solo5             NoAction
+    P2+Solo6             NoAction
+    P2+Solo7             NoAction
+    P2+Solo8             NoAction
+    P2+Mute1             NoAction
+    P2+Mute2             NoAction
+    P2+Mute3             NoAction
+    P2+Mute4             NoAction
+    P2+Mute5             NoAction
+    P2+Mute6             NoAction
+    P2+Mute7             NoAction
+    P2+Mute8             NoAction
+    P2+Fader1            FXParam 17 "Compressor"
+    P2+Fader2            FXParam 18 "Flanger"
+    P2+Fader3            FXParam 19 "Reverb Send"
+    P2+Fader4            FXParam 20 "Reverb Size"
+    P2+Fader5            NoAction
+    P2+Fader6            NoAction
+    P2+Fader7            NoAction
+    P2+Fader8            NoAction
+    P2+Shift+Rotary1     NoAction
+    P2+Shift+Rotary2     NoAction
+    P2+Shift+Rotary3     NoAction
+    P2+Shift+Rotary4     NoAction
+    P2+Shift+Rotary5     NoAction
+    P2+Shift+Rotary6     NoAction
+    P2+Shift+Rotary7     NoAction
+    P2+Shift+Rotary8     NoAction
+    P2+Shift+RotaryPush1 NoAction
+    P2+Shift+RotaryPush2 NoAction
+    P2+Shift+RotaryPush3 NoAction
+    P2+Shift+RotaryPush4 NoAction
+    P2+Shift+RotaryPush5 NoAction
+    P2+Shift+RotaryPush6 NoAction
+    P2+Shift+RotaryPush7 NoAction
+    P2+Shift+RotaryPush8 NoAction
+    P2+Shift+RecordArm1  NoAction
+    P2+Shift+RecordArm2  NoAction
+    P2+Shift+RecordArm3  NoAction
+    P2+Shift+RecordArm4  NoAction
+    P2+Shift+RecordArm5  NoAction
+    P2+Shift+RecordArm6  NoAction
+    P2+Shift+RecordArm7  NoAction
+    P2+Shift+RecordArm8  NoAction
+
+
+
+// Page 2 Section 1 - Navigation
+    Inputs                       Reaper _RS4ba8e9454169f8069021b3ea0a10ad66b4fc64db
+    Inputs                       P2 [ 1 ]
+    Inputs                       P3 [ 0 ]
+    Inputs                       P4 [ 0 ]
+    Inputs                       P5 [ 0 ]
+    Inputs                       P6 [ 0 ]
+    Inputs                       P7 [ 0 ]
+    Inputs                       P8 [ 0 ]
+    Inputs                       P9 [ 0 ]
+    Inputs                       P10 [ 0 ]
+    Inputs                       P11 [ 0 ]
+    Inputs                       P12 [ 0 ]
+    Inputs                       P13 [ 0 ]
+    Inputs                       P14 [ 0 ]
+    Inputs                       P15 [ 0 ]
+    Inputs                       P16 [ 0 ]
+    Inputs                       S2 [ 0 ]
+    Inputs                       S3 [ 0 ]
+    Inputs                       S4 [ 0 ]
+    Inputs                       S5 [ 0 ]
+    Inputs                       S6 [ 0 ]
+    BankRight                       Reaper _RS4ba8e9454169f8069021b3ea0a10ad66b4fc64db
+    BankRight                       P2 [ 1 ]
+    BankRight                       P3 [ 0 ]
+    BankRight                       P4 [ 0 ]
+    BankRight                       P5 [ 0 ]
+    BankRight                       P6 [ 0 ]
+    BankRight                       P7 [ 0 ]
+    BankRight                       P8 [ 0 ]
+    BankRight                       P9 [ 0 ]
+    BankRight                       P10 [ 0 ]
+    BankRight                       P11 [ 0 ]
+    BankRight                       P12 [ 0 ]
+    BankRight                       P13 [ 0 ]
+    BankRight                       P14 [ 0 ]
+    BankRight                       P15 [ 0 ]
+    BankRight                       P16 [ 0 ]
+    BankRight                       S2 [ 0 ]
+    BankRight                       S3 [ 0 ]
+    BankRight                       S4 [ 0 ]
+    BankRight                       S5 [ 0 ]
+    BankRight                       S6 [ 0 ]
+    S2+BankRight                       P2 [ 1 ]
+    S2+BankRight                       P3 [ 0 ]
+    S2+BankRight                       P4 [ 0 ]
+    S2+BankRight                       P5 [ 0 ]
+    S2+BankRight                       P6 [ 0 ]
+    S2+BankRight                       P7 [ 0 ]
+    S2+BankRight                       P8 [ 0 ]
+    S2+BankRight                       P9 [ 0 ]
+    S2+BankRight                       P10 [ 0 ]
+    S2+BankRight                       P11 [ 0 ]
+    S2+BankRight                       P12 [ 0 ]
+    S2+BankRight                       P13 [ 0 ]
+    S2+BankRight                       P14 [ 0 ]
+    S2+BankRight                       P15 [ 0 ]
+    S2+BankRight                       P16 [ 0 ]
+    S2+BankRight                       S2 [ 0 ]
+    S2+BankRight                       S3 [ 0 ]
+    S2+BankRight                       S4 [ 0 ]
+    S2+BankRight                       S5 [ 0 ]
+    S2+BankRight                       S6 [ 0 ]
+    S3+BankRight                       P2 [ 1 ]
+    S3+BankRight                       P3 [ 0 ]
+    S3+BankRight                       P4 [ 0 ]
+    S3+BankRight                       P5 [ 0 ]
+    S3+BankRight                       P6 [ 0 ]
+    S3+BankRight                       P7 [ 0 ]
+    S3+BankRight                       P8 [ 0 ]
+    S3+BankRight                       P9 [ 0 ]
+    S3+BankRight                       P10 [ 0 ]
+    S3+BankRight                       P11 [ 0 ]
+    S3+BankRight                       P12 [ 0 ]
+    S3+BankRight                       P13 [ 0 ]
+    S3+BankRight                       P14 [ 0 ]
+    S3+BankRight                       P15 [ 0 ]
+    S3+BankRight                       P16 [ 0 ]
+    S3+BankRight                       S2 [ 0 ]
+    S3+BankRight                       S3 [ 0 ]
+    S3+BankRight                       S4 [ 0 ]
+    S3+BankRight                       S5 [ 0 ]
+    S3+BankRight                       S6 [ 0 ]
+    S4+BankRight                       P2 [ 1 ]
+    S4+BankRight                       P3 [ 0 ]
+    S4+BankRight                       P4 [ 0 ]
+    S4+BankRight                       P5 [ 0 ]
+    S4+BankRight                       P6 [ 0 ]
+    S4+BankRight                       P7 [ 0 ]
+    S4+BankRight                       P8 [ 0 ]
+    S4+BankRight                       P9 [ 0 ]
+    S4+BankRight                       P10 [ 0 ]
+    S4+BankRight                       P11 [ 0 ]
+    S4+BankRight                       P12 [ 0 ]
+    S4+BankRight                       P13 [ 0 ]
+    S4+BankRight                       P14 [ 0 ]
+    S4+BankRight                       P15 [ 0 ]
+    S4+BankRight                       P16 [ 0 ]
+    S4+BankRight                       S2 [ 0 ]
+    S4+BankRight                       S3 [ 0 ]
+    S4+BankRight                       S4 [ 0 ]
+    S4+BankRight                       S5 [ 0 ]
+    S4+BankRight                       S6 [ 0 ]
+    S5+BankRight                       P2 [ 1 ]
+    S5+BankRight                       P3 [ 0 ]
+    S5+BankRight                       P4 [ 0 ]
+    S5+BankRight                       P5 [ 0 ]
+    S5+BankRight                       P6 [ 0 ]
+    S5+BankRight                       P7 [ 0 ]
+    S5+BankRight                       P8 [ 0 ]
+    S5+BankRight                       P9 [ 0 ]
+    S5+BankRight                       P10 [ 0 ]
+    S5+BankRight                       P11 [ 0 ]
+    S5+BankRight                       P12 [ 0 ]
+    S5+BankRight                       P13 [ 0 ]
+    S5+BankRight                       P14 [ 0 ]
+    S5+BankRight                       P15 [ 0 ]
+    S5+BankRight                       P16 [ 0 ]
+    S5+BankRight                       S2 [ 0 ]
+    S5+BankRight                       S3 [ 0 ]
+    S5+BankRight                       S4 [ 0 ]
+    S5+BankRight                       S5 [ 0 ]
+    S5+BankRight                       S6 [ 0 ]
+    S6+BankRight                       P2 [ 1 ]
+    S6+BankRight                       P3 [ 0 ]
+    S6+BankRight                       P4 [ 0 ]
+    S6+BankRight                       P5 [ 0 ]
+    S6+BankRight                       P6 [ 0 ]
+    S6+BankRight                       P7 [ 0 ]
+    S6+BankRight                       P8 [ 0 ]
+    S6+BankRight                       P9 [ 0 ]
+    S6+BankRight                       P10 [ 0 ]
+    S6+BankRight                       P11 [ 0 ]
+    S6+BankRight                       P12 [ 0 ]
+    S6+BankRight                       P13 [ 0 ]
+    S6+BankRight                       P14 [ 0 ]
+    S6+BankRight                       P15 [ 0 ]
+    S6+BankRight                       P16 [ 0 ]
+    S6+BankRight                       S2 [ 0 ]
+    S6+BankRight                       S3 [ 0 ]
+    S6+BankRight                       S4 [ 0 ]
+    S6+BankRight                       S5 [ 0 ]
+    S6+BankRight                       S6 [ 0 ]
+
+    MidiTracks                       Reaper _RSf0a79f408b7f9d5af1a5e99816f57be71d4a0a3b
+    MidiTracks                       P2 [ 0 ]
+    MidiTracks                       P3 [ 0 ]
+    MidiTracks                       P4 [ 0 ]
+    MidiTracks                       P5 [ 0 ]
+    MidiTracks                       P6 [ 0 ]
+    MidiTracks                       P7 [ 0 ]
+    MidiTracks                       P8 [ 0 ]
+    MidiTracks                       P9 [ 0 ]
+    MidiTracks                       P10 [ 0 ]
+    MidiTracks                       P11 [ 0 ]
+    MidiTracks                       P12 [ 0 ]
+    MidiTracks                       P13 [ 0 ]
+    MidiTracks                       P14 [ 0 ]
+    MidiTracks                       P15 [ 0 ]
+    MidiTracks                       P16 [ 0 ]
+    MidiTracks                       S2 [ 0 ]
+    MidiTracks                       S3 [ 0 ]
+    MidiTracks                       S4 [ 0 ]
+    MidiTracks                       S5 [ 0 ]
+    MidiTracks                       S6 [ 0 ]
+    P2+BankLeft                       Reaper _RSf0a79f408b7f9d5af1a5e99816f57be71d4a0a3b
+    P2+BankLeft                       P2 [ 0 ]
+    P2+BankLeft                       P3 [ 0 ]
+    P2+BankLeft                       P4 [ 0 ]
+    P2+BankLeft                       P5 [ 0 ]
+    P2+BankLeft                       P6 [ 0 ]
+    P2+BankLeft                       P7 [ 0 ]
+    P2+BankLeft                       P8 [ 0 ]
+    P2+BankLeft                       P9 [ 0 ]
+    P2+BankLeft                       P10 [ 0 ]
+    P2+BankLeft                       P11 [ 0 ]
+    P2+BankLeft                       P12 [ 0 ]
+    P2+BankLeft                       P13 [ 0 ]
+    P2+BankLeft                       P14 [ 0 ]
+    P2+BankLeft                       P15 [ 0 ]
+    P2+BankLeft                       P16 [ 0 ]
+    P2+BankLeft                       S2 [ 0 ]
+    P2+BankLeft                       S3 [ 0 ]
+    P2+BankLeft                       S4 [ 0 ]
+    P2+BankLeft                       S5 [ 0 ]
+    P2+BankLeft                       S6 [ 0 ]
+    P2+S2+BankLeft                       P2 [ 0 ]
+    P2+S2+BankLeft                       P3 [ 0 ]
+    P2+S2+BankLeft                       P4 [ 0 ]
+    P2+S2+BankLeft                       P5 [ 0 ]
+    P2+S2+BankLeft                       P6 [ 0 ]
+    P2+S2+BankLeft                       P7 [ 0 ]
+    P2+S2+BankLeft                       P8 [ 0 ]
+    P2+S2+BankLeft                       P9 [ 0 ]
+    P2+S2+BankLeft                       P10 [ 0 ]
+    P2+S2+BankLeft                       P11 [ 0 ]
+    P2+S2+BankLeft                       P12 [ 0 ]
+    P2+S2+BankLeft                       P13 [ 0 ]
+    P2+S2+BankLeft                       P14 [ 0 ]
+    P2+S2+BankLeft                       P15 [ 0 ]
+    P2+S2+BankLeft                       P16 [ 0 ]
+    P2+S2+BankLeft                       S2 [ 0 ]
+    P2+S2+BankLeft                       S3 [ 0 ]
+    P2+S2+BankLeft                       S4 [ 0 ]
+    P2+S2+BankLeft                       S5 [ 0 ]
+    P2+S2+BankLeft                       S6 [ 0 ]
+    P2+S3+BankLeft                       P2 [ 0 ]
+    P2+S3+BankLeft                       P3 [ 0 ]
+    P2+S3+BankLeft                       P4 [ 0 ]
+    P2+S3+BankLeft                       P5 [ 0 ]
+    P2+S3+BankLeft                       P6 [ 0 ]
+    P2+S3+BankLeft                       P7 [ 0 ]
+    P2+S3+BankLeft                       P8 [ 0 ]
+    P2+S3+BankLeft                       P9 [ 0 ]
+    P2+S3+BankLeft                       P10 [ 0 ]
+    P2+S3+BankLeft                       P11 [ 0 ]
+    P2+S3+BankLeft                       P12 [ 0 ]
+    P2+S3+BankLeft                       P13 [ 0 ]
+    P2+S3+BankLeft                       P14 [ 0 ]
+    P2+S3+BankLeft                       P15 [ 0 ]
+    P2+S3+BankLeft                       P16 [ 0 ]
+    P2+S3+BankLeft                       S2 [ 0 ]
+    P2+S3+BankLeft                       S3 [ 0 ]
+    P2+S3+BankLeft                       S4 [ 0 ]
+    P2+S3+BankLeft                       S5 [ 0 ]
+    P2+S3+BankLeft                       S6 [ 0 ]
+    P2+S4+BankLeft                       P2 [ 0 ]
+    P2+S4+BankLeft                       P3 [ 0 ]
+    P2+S4+BankLeft                       P4 [ 0 ]
+    P2+S4+BankLeft                       P5 [ 0 ]
+    P2+S4+BankLeft                       P6 [ 0 ]
+    P2+S4+BankLeft                       P7 [ 0 ]
+    P2+S4+BankLeft                       P8 [ 0 ]
+    P2+S4+BankLeft                       P9 [ 0 ]
+    P2+S4+BankLeft                       P10 [ 0 ]
+    P2+S4+BankLeft                       P11 [ 0 ]
+    P2+S4+BankLeft                       P12 [ 0 ]
+    P2+S4+BankLeft                       P13 [ 0 ]
+    P2+S4+BankLeft                       P14 [ 0 ]
+    P2+S4+BankLeft                       P15 [ 0 ]
+    P2+S4+BankLeft                       P16 [ 0 ]
+    P2+S4+BankLeft                       S2 [ 0 ]
+    P2+S4+BankLeft                       S3 [ 0 ]
+    P2+S4+BankLeft                       S4 [ 0 ]
+    P2+S4+BankLeft                       S5 [ 0 ]
+    P2+S4+BankLeft                       S6 [ 0 ]
+    P2+S5+BankLeft                       P2 [ 0 ]
+    P2+S5+BankLeft                       P3 [ 0 ]
+    P2+S5+BankLeft                       P4 [ 0 ]
+    P2+S5+BankLeft                       P5 [ 0 ]
+    P2+S5+BankLeft                       P6 [ 0 ]
+    P2+S5+BankLeft                       P7 [ 0 ]
+    P2+S5+BankLeft                       P8 [ 0 ]
+    P2+S5+BankLeft                       P9 [ 0 ]
+    P2+S5+BankLeft                       P10 [ 0 ]
+    P2+S5+BankLeft                       P11 [ 0 ]
+    P2+S5+BankLeft                       P12 [ 0 ]
+    P2+S5+BankLeft                       P13 [ 0 ]
+    P2+S5+BankLeft                       P14 [ 0 ]
+    P2+S5+BankLeft                       P15 [ 0 ]
+    P2+S5+BankLeft                       P16 [ 0 ]
+    P2+S5+BankLeft                       S2 [ 0 ]
+    P2+S5+BankLeft                       S3 [ 0 ]
+    P2+S5+BankLeft                       S4 [ 0 ]
+    P2+S5+BankLeft                       S5 [ 0 ]
+    P2+S5+BankLeft                       S6 [ 0 ]
+    P2+S6+BankLeft                       P2 [ 0 ]
+    P2+S6+BankLeft                       P3 [ 0 ]
+    P2+S6+BankLeft                       P4 [ 0 ]
+    P2+S6+BankLeft                       P5 [ 0 ]
+    P2+S6+BankLeft                       P6 [ 0 ]
+    P2+S6+BankLeft                       P7 [ 0 ]
+    P2+S6+BankLeft                       P8 [ 0 ]
+    P2+S6+BankLeft                       P9 [ 0 ]
+    P2+S6+BankLeft                       P10 [ 0 ]
+    P2+S6+BankLeft                       P11 [ 0 ]
+    P2+S6+BankLeft                       P12 [ 0 ]
+    P2+S6+BankLeft                       P13 [ 0 ]
+    P2+S6+BankLeft                       P14 [ 0 ]
+    P2+S6+BankLeft                       P15 [ 0 ]
+    P2+S6+BankLeft                       P16 [ 0 ]
+    P2+S6+BankLeft                       S2 [ 0 ]
+    P2+S6+BankLeft                       S3 [ 0 ]
+    P2+S6+BankLeft                       S4 [ 0 ]
+    P2+S6+BankLeft                       S5 [ 0 ]
+    P2+S6+BankLeft                       S6 [ 0 ]
+    P2+BankRight                NoAction
+    P2+S2+BankRight             NoAction
+    P2+S3+BankRight             NoAction
+    P2+S4+BankRight             NoAction
+    P2+S5+BankRight             NoAction
+    P2+S6+BankRight             NoAction
+    P2+Track                    NoAction
+    P2+Pan                      NoAction
+    P2+EQ                       NoAction
+    P2+Plugin                   NoAction
+    P2+Send                     NoAction
+    P2+Instrument               NoAction
+
+    Up                      Reaper _S&M_PREV_FOCFX_PRESET
+    Down                    Reaper _S&M_NEXT_FOCFX_PRESET
+    Footswitch1             Reaper _S&M_PREV_FOCFX_PRESET
+    Footswitch2             Reaper _S&M_NEXT_FOCFX_PRESET
+ZoneEnd

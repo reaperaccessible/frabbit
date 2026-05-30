@@ -1,0 +1,93 @@
+// Behringer X-Touch - VST3: Spaced Out (BABY Audio)
+// Page 1: Space (reverb)
+// by Paul Warner
+// 16 September 2022
+// Version 2 for CSI 2.0
+
+Zone "VST3: Spaced Out (BABY Audio)"
+	OnZoneActivation	Speak "Spaced Out by Baby Audio. Press smpteBeats for help"
+
+	SubZones
+	"SpacedOut2-1"
+	SubZonesEnd
+	Up	NoAction
+	Down	GoSubZone "SpacedOut2-1"
+	Left	NoAction
+	Right	NoAction
+	
+	// Global params
+	F7	Reaper 42455  // delta
+	F8		ToggleFXBypass
+	Mute1 		FXParam 		1		[ 0.0 1.0 ]	"Space Active"
+	Mute2 		FXParam 		12		[ 0.0 1.0 ]	"Echo Active"
+	RotaryPush8	FXParam 	37	[ 1 ]	"Dry/Wet Mix"  // sets to 100% wet
+	Fader8	FXParam 	38	"Echo/Space Mix"
+	Mute8	FXParam 	39	[ 0.0 1.0 ]	"Ducker Sync"  // toggles the ducker
+	Rotary8	FXParam 	40	"Main Ducker"  // ducker amount
+	Shift+MasterFader 	FXParam 	37	"Dry/Wet Mix"
+	MasterFader 	FXParam 	41	"Output"
+
+// Space (reverb) params
+	Rotary1	FXParam  2	[ 0.0 0.35 0.7 1.0 ]	"Space Program"
+	Fader1 	FXParam 	3	"Space Length"
+	RecordArm1 	FXParam 	4	[ 0.0 0.35 0.7 1.0 ]	"Space Modulation FX"
+	Fader2 	FXParam 	5	"Space Modulation Mix"
+	Fader3 	FXParam 	6	"Space Pre-Delay"
+	Rotary2	FXParam 	7	"Space Mellow Hi"
+	Rotary3	FXParam 	8Space Mellow Lo"
+	Fader4 	FXParam 	9	"Space Stardust"
+	Fader5 	FXParam 	10	"Space Width"
+	Fader6 	FXParam 	11	"Space Clean-Up"
+
+// help section
+	smpteBeats	Speak "Spaced Out space page. Press Alt with the buttons to the right of the rotaries for more information"
+	Alt+Track	Speak "Only fader 7 is not assigned. Dry wet balance is assigned to shift master fader but rotary push 8 sets wet to 100 percent. Master fader controls plugin output"
+	Alt+Pan	Speak "Rotaries 4 to 7 not assigned". Rotary push 8 sets dry wet mix to 100 percent with shift master fader controlling dry wet balance"
+	Alt+EQ	Speak "Buttons: Record arm 1 and mute 1 2 and 8 are assigned. F7 and F8 toggle delta and bypass"
+	Alt+Send	Speak "There are two pages for this plugin. Navigate between them using the down and up buttons"
+	Alt+PlugIn	NoAction
+	Alt+Instrument	NoAction
+
+// Not assigned
+	Fader7	Speak "Not assigned"
+	Rotary4	Speak "Not assigned"
+	Rotary5	Speak "Not assigned"
+	Rotary6	Speak "Not assigned"
+	Rotary7	Speak "Not assigned"
+	RotaryPush1	Speak "Not assigned"
+	RotaryPush2	Speak "Not assigned"
+	RotaryPush3	Speak "Not assigned"
+	RotaryPush4	Speak "Not assigned"
+	RotaryPush5	Speak "Not assigned"
+	RotaryPush6	Speak "Not assigned"
+	RotaryPush7	Speak "Not assigned"
+	RecordArm2	Speak "Not assigned"
+	RecordArm3	Speak "Not assigned"
+	RecordArm4	Speak "Not assigned"
+	RecordArm5	Speak "Not assigned"
+	RecordArm6	Speak "Not assigned"
+	RecordArm7	Speak "Not assigned"
+	RecordArm8	Speak "Not assigned"
+	Solo1	Speak "No solo button is assigned"
+	Solo2	Speak "No solo button is assigned"
+	Solo3	Speak "No solo button is assigned"
+	Solo4	Speak "No solo button is assigned"
+	Solo5	Speak "No solo button is assigned"
+	Solo6	Speak "No solo button is assigned"
+	Solo7	Speak "No solo button is assigned"
+	Solo8	Speak "No solo button is assigned"
+	Mute3	Speak "Not assigned"
+	Mute4	Speak "Not assigned"
+	Mute5	Speak "Not assigned"
+	Mute6	Speak "Not assigned"
+	Mute7	Speak "Not assigned"
+		Select1	Speak "No select button is assigned"
+	Select2	Speak "No select button is assigned"
+	Select3	Speak "No select button is assigned"
+	Select4	Speak "No select button is assigned"
+	Select5	Speak "No select button is assigned"
+	Select6	Speak "No select button is assigned"
+	Select7	Speak "No select button is assigned"
+	Select8	Speak "No select button is assigned"
+ZoneEnd
+                                   

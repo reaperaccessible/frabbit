@@ -1,0 +1,88 @@
+Zone "VST3: NA Cali Dual (Nembrini Audio) 02-05"
+// Page 2 Section 5
+// page : ""
+// section : "IR 2"
+  Rotary1  NoAction
+  Rotary2  NoAction
+  Rotary3  NoAction
+  Rotary4  NoAction
+  Rotary5  NoAction
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  FXParam 61 [ 0.00 1.00 ] "Ir2 Mute"
+  Mute2  FXParam 64 [ 0.00 1.00 ] "Ir2 Solo"
+  Mute3  NoAction
+  Mute4  NoAction
+  Mute5  NoAction
+  Mute6  NoAction
+  Mute7  NoAction
+  Mute8  NoAction
+  Fader1  FXParam 58 "Ir2 Gain"
+  Fader2  FXParam 67 "Ir2 Phase"
+  Fader3  FXParam 70 "Ir2 Pan"
+  Fader4  NoAction
+  Fader5  NoAction
+  Fader6  NoAction
+  Fader7  NoAction
+  Fader8  NoAction
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  Marker  Speak "Page 2"
+  Nudge  Speak "IR 2"
+  Cycle  Speak "VST3: NA Cali Dual (Nembrini Audio)"
+  Up    Speak "Page 1"
+  Up    GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 01-01"
+  Down  NoAction
+  Left  Speak "IR 1"
+  Left  GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 02-04"
+  Right Speak "IR 3"
+  Right GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 02-06"
+  GlobalView  GoSubZone "VST3: NA Cali Dual (Nembrini Audio) 02-05 Help"
+ZoneEnd

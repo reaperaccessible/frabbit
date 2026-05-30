@@ -1,0 +1,151 @@
+Zone "VST: STL Tonality - Howard Benson (STL Tones)"
+// Page 1 Section 1
+// page : "Amplifier"
+// section : "Amp"
+    Rotary1           FXParam 60 [ (1) 0.0 0.18 0.34 0.50 0.68 0.84 ] "Cab Model"
+    Rotary2           NoAction
+    Rotary3           NoAction
+    Rotary4           NoAction
+    Rotary5           NoAction
+    Rotary6           NoAction
+    Rotary7           NoAction
+    Rotary8           NoAction
+    RotaryPush1       NoAction
+    RotaryPush2       NoAction
+    RotaryPush3       NoAction
+    RotaryPush4       NoAction
+    RotaryPush5       NoAction
+    RotaryPush6       NoAction
+    RotaryPush7       NoAction
+    RotaryPush8       NoAction
+    RecordArm1        FXParam 20 [ 0.0 ] "Amp Model"
+    RecordArm1        Speak "Bogner Uberschall"
+    RecordArm2        FXParam 20 [ 0.20 ] "Amp Model"
+    RecordArm2        Speak "Assistant 50"
+    RecordArm3        FXParam 20 [ 0.40 ] "Amp Model"
+    RecordArm3        Speak "Vibrato Marshall JTM50"
+    RecordArm4        FXParam 20 [ 0.60 ] "Amp Model"
+    RecordArm4        Speak "Blackface Fender Twin Reverb"
+    RecordArm5        FXParam 20 [ 0.80 ] "Amp Model"
+    RecordArm5        Speak "Fender Bassman"
+    RecordArm6        NoAction
+    RecordArm7        NoAction
+    RecordArm8        NoAction
+    Solo1             NoAction
+    Solo2             NoAction
+    Solo3             NoAction
+    Solo4             NoAction
+    Solo5             NoAction
+    Solo6             NoAction
+    Solo7             NoAction
+    Solo8             NoAction
+    Mute1             FXParam 1 [ (1) 0.0 1.0 ] "Tuner StatusOn/Off"
+    Mute2             FXParam 19 [ (1) 0.0 1.0 ] "Amp StatusOn/Off"
+    Mute3             FXParam 2 [ (1) 0.0 1.0 ] "Noise Gate Status On/Off"
+    Mute4             FXParam 4 [ (1) 0.0 1.0 ] "Stomps StatusOn/Off"
+    Mute5             FXParam 59 [ (1) 0.0 1.0 ] "Cab Status On/Off"
+    Mute6             FXParam 65 "Delta"
+    Mute7             NoAction
+    Mute8             NoAction
+    Select1           NoAction
+    Select2           NoAction
+    Select3           NoAction
+    Select4           NoAction
+    Select5           NoAction
+    Select6           NoAction
+    Select7           NoAction
+    Select8           NoAction
+    Fader1            FXParam 0 "Input Level"
+    Fader2            FXParam 62 "Output Level"
+    Fader3            FXParam 3 "Noise Gate Threshold"
+    Fader4            NoAction
+    Fader5            NoAction
+    Fader6            NoAction
+    Fader7            NoAction
+    Fader8            NoAction
+    Shift+Rotary1     NoAction
+    Shift+Rotary2     NoAction
+    Shift+Rotary3     NoAction
+    Shift+Rotary4     NoAction
+    Shift+Rotary5     NoAction
+    Shift+Rotary6     NoAction
+    Shift+Rotary7     NoAction
+    Shift+Rotary8     NoAction
+    Shift+RotaryPush1 NoAction
+    Shift+RotaryPush2 NoAction
+    Shift+RotaryPush3 NoAction
+    Shift+RotaryPush4 NoAction
+    Shift+RotaryPush5 NoAction
+    Shift+RotaryPush6 NoAction
+    Shift+RotaryPush7 NoAction
+    Shift+RotaryPush8 NoAction
+    Shift+RecordArm1  NoAction
+    Shift+RecordArm2  NoAction
+    Shift+RecordArm3  NoAction
+    Shift+RecordArm4  NoAction
+    Shift+RecordArm5  NoAction
+    Shift+RecordArm6  NoAction
+    Shift+RecordArm7  NoAction
+    Shift+RecordArm8  NoAction
+    Shift+Solo1       NoAction
+    Shift+Solo2       NoAction
+    Shift+Solo3       NoAction
+    Shift+Solo4       NoAction
+    Shift+Solo5       NoAction
+    Shift+Solo6       NoAction
+    Shift+Solo7       NoAction
+    Shift+Solo8       NoAction
+    Shift+Mute1       NoAction
+    Shift+Mute2       NoAction
+    Shift+Mute3       NoAction
+    Shift+Mute4       NoAction
+    Shift+Mute5       NoAction
+    Shift+Mute6       NoAction
+    Shift+Mute7       NoAction
+    Shift+Mute8       NoAction
+    Shift+Select1     NoAction
+    Shift+Select2     NoAction
+    Shift+Select3     NoAction
+    Shift+Select4     NoAction
+    Shift+Select5     NoAction
+    Shift+Select6     NoAction
+    Shift+Select7     NoAction
+    Shift+Select8     NoAction
+    Shift+Fader1      NoAction
+    Shift+Fader2      NoAction
+    Shift+Fader3      NoAction
+    Shift+Fader4      NoAction
+    Shift+Fader5      NoAction
+    Shift+Fader6      NoAction
+    Shift+Fader7      NoAction
+    Shift+Fader8      NoAction
+    MasterFader       FXParam 64 "Wet"
+    Flip              ToggleFXBypass
+    Scrub             Reaper 42455
+    BankLeft          Reaper _S&M_PREV_FOCFX_PRESET
+    BankRight         Reaper _S&M_NEXT_FOCFX_PRESET
+    Footswitch1       Reaper _S&M_PREV_FOCFX_PRESET
+    Footswitch2       Reaper _S&M_NEXT_FOCFX_PRESET
+
+
+    SubZones
+        "VST: STL Tonality - Howard Benson (STL Tones) 1-2"
+        "VST: STL Tonality - Howard Benson (STL Tones) 1-3"
+        "VST: STL Tonality - Howard Benson (STL Tones) 1-4"
+        "VST: STL Tonality - Howard Benson (STL Tones) 2-1"
+        "VST: STL Tonality - Howard Benson (STL Tones) 3-1"
+        "VST: STL Tonality - Howard Benson (STL Tones) 4-1"
+        "VST: STL Tonality - Howard Benson (STL Tones) 5-1"
+        "VST: STL Tonality - Howard Benson (STL Tones) 6-1"
+    SubZonesEnd
+
+    Up        NoAction
+    Down      Speak "Amp1"
+    Down      GoSubZone "VST: STL Tonality - Howard Benson (STL Tones) 2-1"
+    Left      NoAction
+    Right     Speak "Overdrive"
+    Right     GoSubZone "VST: STL Tonality - Howard Benson (STL Tones) 1-2"
+    Marker    Speak "Amplifier, Amp"
+    Hold+Marker Speak "STL Tonality - Howard Benson"
+    OnZoneActivation    Speak "STL Tonality - Howard Benson"
+ZoneEnd

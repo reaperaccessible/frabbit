@@ -1,0 +1,5 @@
+Zone: VST: DD Phaser (Dead Duck Software)
+Version: 2.0
+Date: 2025-08-13 21:42
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com

@@ -1,0 +1,117 @@
+Zone "VST: DD Channel2 (Dead Duck Software)"
+// Page 1 Section 1 - Widgets
+// page : "Main"
+// section : ""
+  Rotary1  FXParam 32 [ (1) 0 0.14 0.38 0.64 1 ] "InMode"
+  Rotary2  FXParam 6 [ (1) 0 0.3400 1 ] "GCEOrder"
+  Rotary3  NoAction
+  Rotary4  NoAction
+  Rotary5  NoAction
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  FXParamRelative 32 [ 0 ] "InMode"
+  RotaryPush2  FXParamRelative 6 [ 0 ] "GCEOrder"
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  FXParam 32 [ 0 ] "InMode"
+  RecordArm2  FXParam 6 [ 0 ] "GCEOrder"
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  FXParam 1 [ 0.5 ] "Input"
+  Solo2  FXParam 3 [ 0 ] "HPFCut"
+  Solo3  FXParam 5 [ 1 ] "LPFCut"
+  Solo4  FXParam 31 [ 0.5 ] "Output"
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  NoAction
+  Mute2  FXParam 2 [ 0 1 ] "HPFOn"
+  Mute3  FXParam 4 [ 0 1 ] "LPFOn"
+  Mute4  NoAction
+  Mute5  NoAction
+  Mute6  NoAction
+  Mute7  NoAction
+  Mute8  NoAction
+  Select1 NoAction
+  Select2 NoAction
+  Select3 NoAction
+  Select4 NoAction
+  Select5 NoAction
+  Select6 NoAction
+  Select7 NoAction
+  Select8 NoAction
+  Fader1  FXParam 1 "Input"
+  Fader2  FXParam 3 "HPFCut"
+  Fader3  FXParam 5 "LPFCut"
+  Fader4  FXParam 31 "Output"
+  Fader5  NoAction
+  Fader6  NoAction
+  Fader7  NoAction
+  Fader8  NoAction
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  MasterFader  FXParam 36 "Wet"
+  Flip  ToggleFXBypass
+  Scrub  Reaper 42455 // Toggle delta solo for last focused FX
+  BankLeft  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  BankRight  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  Footswitch1  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  Footswitch2  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  
+
+  SubZones
+      "VST: DD Channel2 (Dead Duck Software) 02-01"
+      "VST: DD Channel2 (Dead Duck Software) 02-02"
+      "VST: DD Channel2 (Dead Duck Software) 02-03"
+      "VST: DD Channel2 (Dead Duck Software) 03-01"
+      "VST: DD Channel2 (Dead Duck Software) 04-01"
+      "VST: DD Channel2 (Dead Duck Software) Help"
+      "VST: DD Channel2 (Dead Duck Software) 02-01 Help"
+      "VST: DD Channel2 (Dead Duck Software) 02-02 Help"
+      "VST: DD Channel2 (Dead Duck Software) 02-03 Help"
+      "VST: DD Channel2 (Dead Duck Software) 03-01 Help"
+      "VST: DD Channel2 (Dead Duck Software) 04-01 Help"
+  SubZonesEnd
+  Marker  Speak "Main"
+  Nudge  Speak "Section 1"
+  Cycle  Speak "VST: DD Channel2 (Dead Duck Software)"
+  Up    NoAction
+  Down  Speak "EQ"
+  Down  GoSubZone "VST: DD Channel2 (Dead Duck Software) 02-01"
+  Left  NoAction
+  Right NoAction
+  GlobalView  GoSubZone "VST: DD Channel2 (Dead Duck Software) Help"
+  OnZoneActivation  Speak "VST__DD_Channel2"
+ZoneEnd

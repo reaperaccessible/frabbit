@@ -1,0 +1,23 @@
+Zone GoZones
+  Automation
+  AutomationHelp
+  Edit
+  EditHelp
+  Envelope
+  EnvelopeHelp
+  Folder
+  FolderHelp
+  HomeHelp
+  MasterTrackFXMenu
+  MasterTrackFXMenuHelp
+  OSARASettings
+  OSARASettingsHelp
+  Recording
+  RecordingHelp
+  SelectedTrackFXMenu
+  SelectedTrackFXMenuHelp
+  SelectedTrackReceive
+  SelectedTrackReceiveHelp
+  SelectedTrackSend
+  SelectedTrackSendHelp
+ZoneEnd

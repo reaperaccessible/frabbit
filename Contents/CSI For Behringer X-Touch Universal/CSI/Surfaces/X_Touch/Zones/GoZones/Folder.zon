@@ -1,0 +1,209 @@
+Zone Folder
+  OnZoneActivation  Speak "Folder View"
+  OnZoneActivation  SetXTouchDisplayColors Yellow
+  OnZoneDeactivation  RestoreXTouchDisplayColors
+
+  VUMeter|  TrackOutputMeterMaxPeakLR
+  DisplayUpper|  TrackNameDisplay { Track }
+  Touch+DisplayLower|  TrackVolumeDisplay
+  Option+DisplayLower|  TrackFolderParentDisplay
+
+// Left Panel
+
+// Strip 1
+                                
+  Fader|  TrackVolume 
+  Flip+Fader|  TrackPan 
+
+// Strip 2
+
+  Decrease+Rotary|  Reaper 40283 // Track: Nudge track pan left
+  Increase+Rotary|  Reaper 40284 // Track: Nudge track pan right
+
+  RotaryPush|  TrackPan [ 0.5 ]                    // Reset track pan to center
+
+  Shift+Decrease+Rotary|  Reaper _RS266a36644ce239e20743fdaf784b878d0965c176 // Script: ReaperAccessible - CSI Misc - Decrease and Invert Track Width by 1%
+  Shift+Increase+Rotary|  Reaper _RS6dd018c28cba005ebf43dddc8ad1700e4bbe4a57 // Script: ReaperAccessible - CSI Misc - Increase and Invert Track Width by 1%
+
+  Shift+RotaryPush|  TrackPanWidth [ 1.0 ] // Reset track width to maximum
+  Shift+RotaryPush|  Speak "Width Set to 0%"
+
+// Strip 3
+
+  RecordArm|  TrackRecordArm
+  DoublePress+RecordArm|  Reaper 40491 // Track: Unarm all tracks for recording
+
+  Option+RecordArm|  Reaper 40495 // Track: Cycle track record monitor
+  Option+DisplayLower|  TrackInputMonitorDisplay   
+
+  Control+RecordArm|  Reaper 40282 // Track: Invert track polarity/phase
+  Control+DisplayLower|  TrackInvertPolarityDisplay
+
+// Strip 4
+
+  Solo|  TrackSolo
+  DoublePress+Solo|  Reaper 40340 // Track: Unsolo all tracks
+
+// Strip 5
+
+  Mute|  TrackMute
+  DoublePress+Mute|  Reaper 40339 Feedback=No            // Track: Unmute all tracks
+
+// Strip 6
+
+  Select|  Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Mute next message from OSARA
+  Select|  TrackUniqueSelect
+  Select|  SpeakTrackName
+
+  Shift+Select|  Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Mute next message from OSARA
+  Shift+Select|  TrackRangeSelect
+  Shift+Select|  Reaper _RS9d377eefc39ffe901969c67973e989591807e5fc // Script: ReaperAccessible - CSI Misc - Speak Selected Tracks
+
+  Control+Select|  Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Mute next message from OSARA
+  Control+Select|  TrackSelect
+  Control+Select|  Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Mute next message from OSARA
+  Control+Select|  Reaper _RS9d377eefc39ffe901969c67973e989591807e5fc // Script: ReaperAccessible - CSI Misc - Speak Selected Tracks
+
+  Hold+Select|  TrackVolume [ 0.716 ] Feedback=No   // Reset track volume to unity
+
+  Option+Select|  TrackToggleFolderSpill
+
+// Left Panel
+
+// Strip 1
+
+  Track  GoZone  OSARASettings
+  Pan  NoAction
+  Pan  Speak "Pan, NoAction"
+  EQ  GoZone  Envelope
+  Send  GoZone  Automation
+  Plugin  GoZone  Edit
+  Instrument  GoZone  Recording
+
+// Strip 2
+
+  MidiTracks  Reaper 40630 // Go to start of time selection
+  Inputs  Reaper 40631 // Go to end of time selection
+  AudioTracks  ToggleEnableLastTouchedFXParamMapping
+  AudioInstrument  LearnFocusedFX
+  Aux  ToggleEnableFocusedFXMapping
+  Busses  Speak "Busses, NoAction
+  Outputs  GoZone  SelectedTrackSend
+  User  GoZone  SelectedTrackReceive
+
+// Strip 3
+
+  F1  Reaper 40625 // Time selection: Set start point
+  F2  Reaper 40626 // Time selection: Set end point
+  F3  Reaper 40020 // Time selection: Remove (unselect) time selection and loop points
+  F4  NoAction
+  F4  Speak "F4, NoAction"
+  F5  NoAction
+  F5  Speak "F5, NoAction"
+  F6  Reaper 40157 // Markers: Insert marker at current position
+  F7  Reaper 40172 // Markers: Go to previous marker/project start
+  F8  Reaper 40173 // Markers: Go to next marker/project end
+
+// Strip 4
+
+  Shift  Shift
+  Option  Option
+  Read  ClearModifiers
+  Read  Speak "ClearModifiers"
+  Write  Speak "Write, NoAction"
+  Trim  Speak "Trim, NoAction"
+  Save  Speak "Save, NoAction"
+  Undo  Reaper 40029 // Edit: Undo
+  Shift+Undo  Reaper 40030 // Edit: Redo
+
+// Strip 5
+
+  Control  Control
+  Alt  Alt   
+  Touch  Speak "Touch, NoAction"
+  Latch  Speak "Latch, NoAction"
+  Group  Speak "Group, NoAction"
+  Cancel  Speak "Cancel, NoAction"
+  Enter  Speak "Enter, NoAction"
+
+// Strip 6
+
+  Marker  Reaper _XENAKIOS_SETMASTVOLTO0 // Xenakios/SWS: Set master volume to 0 dB
+  Nudge  Reaper _OSARA_CURSORPOS // OSARA: Report edit/play cursor position and transport state
+  Hold+Nudge  Reaper _OSARA_MANAGETEMPOTIMESIGMARKERS // OSARA: Report tempo and time signature at play cursor, press twice to add/edit tempo markers
+  Cycle  Reaper 1068 // Transport: Toggle repeat
+  Drop  Speak "Drop, NoAction"
+  Replace  Speak "Replace, NoAction"
+  Click  Reaper 40364 // Toggle metronome
+  Hold+Click  Reaper 40363 // Show metronome settings
+  Shift+Click  Reaper _SWS_AWCOUNTRECTOG // Toggle count-in before recording
+  Solo  Reaper 40745 // Options: Solo in front
+
+// Strip 7
+
+  Rewind  Reaper 41041 // Move edit cursor to start of current measure
+  Hold+Rewind  Reaper 40042 // Go to start of project
+  Alt+Rewind  Reaper 40646 // View: Move cursor left to grid division
+  FastForward  Reaper 41040 // Move edit cursor to start of next measure
+  Hold+FastForward  Reaper 40043 // Transport: Go to end of project
+  Alt+FastForward  Reaper 40647 // View: Move cursor right to grid division
+  Stop  Reaper 1016 // Transport: Stop
+  Hold+Stop Reaper _SWS_PREVIEWTRACKTOG // Xenakios/SWS: Preview selected media item through track (toggle)
+  Play  Reaper 40073 // Transport: Play/pause
+  Record  Reaper 1013 // Transport: Record
+
+// Strip 8
+
+  Decrease+JogWheel  Reaper 40104 // View: Move cursor right one pixel
+  Shift+Decrease+JogWheel  Reaper 1012 // View: Zoom in horizontal
+  Alt+Decrease+JogWheel  Reaper _RSe9688519edb0742b722edf3075082c90b6350e9f // Script: ReaperAccessible - CSI Grid - Select previous grid division from grid menu
+  Increase+JogWheel  Reaper 40105 // View: Move cursor left one pixel
+  Shift+Increase+JogWheel  Reaper 1011 // View: Zoom out horizontal
+  Alt+Increase+JogWheel  Reaper _RS3349ac2280e03c53f96421b1d53ac27c98c54792 // Script: ReaperAccessible - CSI Grid - Select next grid division from grid menu
+  Scrub  Reaper 41187 // Scrub: Toggle looped-segment scrub at edit cursor
+  Shift+Scrub  Reaper 43617 // Scrub: Invert looped-segment scrub range
+
+// Strip 9
+
+  BankLeft  Bank Folder -8
+  BankLeft  Speak "Bank Left, 8 Folder tracks to Left"
+  BankRight  Bank Folder 8
+  BankRight  Speak "Bank Right, 8 Folder tracks to Right"
+  ChannelLeft  Bank Folder -1
+  ChannelLeft  Speak "ChannelLeft, 1 Folder Track to Left"
+  ChannelRight  Bank Folder 1
+  ChannelRight  Speak "ChannelRight, 1 Folder Track to Right"
+
+// Strip 10
+
+  Up  Reaper 40286 // Track: Go to previous track
+  Shift+Up  Reaper 40288 // Track: Go to previous track (leaving other tracks selected)
+  Down  Reaper 40285 // Track: Go to next track
+  Shift+Down  Reaper 40287 // Track: Go to next track (leaving other tracks selected)
+  Left  Reaper 40416 // Item navigation: Select and move to previous item
+  Shift+Left  Reaper _OSARA_PREVITEMKEEPSEL // OSARA: Move to previous item (leaving other items selected)
+  Option+Left  Reaper 40123 // Item edit: Move contents of items left
+  Alt+Left  Reaper 40793 // Item edit: Move items/envelope points left by grid size
+  Right  Reaper 40417 // Item navigation: Select and move to next item
+  Shift+Right  Reaper _OSARA_NEXTITEMKEEPSEL // OSARA: Move to next item (leaving other items selected)
+  Option+Right  Reaper 40124 // Item edit: Move contents of items right
+  Alt+Right  Reaper 40794 // Item edit: Move items/envelope points right by grid size
+  Zoom  GoZone  SelectedTrackFXMenu
+  Alt+Zoom  Reaper _RS9c531d0d98a293ac284b7a0517e4536a52426e7f // Script: ReaperAccessible - CSI - Speak current grid division
+
+// Strip 11
+
+  smpteBeats  NoAction
+  smpteBeats  Speak "NoAction"
+  nameValue  GoHome
+  nameValue  Reaper _S&M_WNCLS4          // Closes all FX chain windows
+  nameValue  Reaper _S&M_WNCLS3          // Closes all floating FX windows  
+  nameValue  Speak "Home View"
+  GlobalView  GoZone  FolderHelp
+  Flip  Flip
+
+// Strip 12
+
+  Footswitch1  Reaper 40044 // Play/stop
+  Footswitch2  Speak "Footswitch2, NoAction"
+ZoneEnd

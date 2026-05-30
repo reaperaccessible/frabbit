@@ -1,0 +1,5 @@
+Zone: VST3i: SWAM Soprano Sax 3 (Audio Modeling)
+Version: 2.0
+Date: 2025-08-13 22:01
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com

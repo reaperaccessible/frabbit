@@ -1,0 +1,6 @@
+Zone: VST3: SPL TwinTube (Plugin Alliance)
+Version: 2.0
+Date: 2025-08-14 15:55
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

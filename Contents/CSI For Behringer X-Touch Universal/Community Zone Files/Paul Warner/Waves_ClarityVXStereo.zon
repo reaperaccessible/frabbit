@@ -1,0 +1,21 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: Clarity Vx Stereo (Waves)
+// by Paul Warner
+// 10 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: Clarity Vx Stereo (Waves)" "Waves_ClarityVXStereo"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Rotary1 				FXParam 				"1"			"Bank"
+	Fader1 				FXParam 				"2"			"Ambience / Voice"
+	RecordArm1 				FXParam 				"3"			[ 0.0 ]		"Parameter: Reset Neural Network"
+	Mute1 			FXParam 				"4"			[ 0.0 1.0 ]		"Analysis"
+	Fader2 			FXParam 				"5" 		"Output Width 
+	MasterFader 			FXParam 				"7" 		"Wet"
+	RecordArm7 			FXParam 				"8" 		[ 0.0 1.0 ]		"Delta"
+ZoneEnd
+                                   

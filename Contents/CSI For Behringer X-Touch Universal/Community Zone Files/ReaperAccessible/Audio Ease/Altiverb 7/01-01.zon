@@ -1,0 +1,146 @@
+Zone "VST: Altiverb 7 (Audio Ease)  (6ch)"
+// Page 1 Section 1
+// page : "Main"
+// section : "Reverb"
+  Rotary1  FXParam 0 [ (1) 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 ] "Snapshot This feature allows you to store and recall personalized parameter configurations"
+  Rotary2  FXParam 1 [ (1) 0.0 0.025 0.05 0.075 0.1 0.125 0.15 0.175 0.2 0.225 0.25 0.275 0.3 0.325 0.35 0.375 0.4 0.425 0.45 0.475 0.5 0.525 0.55 0.575 0.6 0.625 0.65 0.675 0.7 0.725 0.75 0.775 0.8 0.825 0.85 0.875 0.9 0.925 0.95 0.975 1.0 ] 
+  Rotary3  NoAction
+  Rotary4  NoAction
+  Rotary5  NoAction
+  Rotary6  NoAction
+  Rotary7  NoAction
+  Rotary8  NoAction
+  RotaryPush1  NoAction
+  RotaryPush2  NoAction
+  RotaryPush3  NoAction
+  RotaryPush4  NoAction
+  RotaryPush5  NoAction
+  RotaryPush6  NoAction
+  RotaryPush7  NoAction
+  RotaryPush8  NoAction
+  RecordArm1  NoAction
+  RecordArm2  NoAction
+  RecordArm3  NoAction
+  RecordArm4  NoAction
+  RecordArm5  NoAction
+  RecordArm6  NoAction
+  RecordArm7  NoAction
+  RecordArm8  NoAction
+  Solo1  NoAction
+  Solo2  NoAction
+  Solo3  NoAction
+  Solo4  NoAction
+  Solo5  NoAction
+  Solo6  NoAction
+  Solo7  NoAction
+  Solo8  NoAction
+  Mute1  FXParam 2 [ (1) 0.0 1.0 ] "ER On/Off"
+  Mute2  FXParam 33 [ (1) 0.0 1.0 ] "EQ On"
+  Mute3  FXParam 35 [ (1) 0.0 1.0 ] "StgPosOn"
+  Mute4  FXParam 38 [ (1) 0.0 1.0 ] "Decay On"
+  Mute5  FXParam 39 [ (1) 0.0 1.0 ] "Reverse"
+  Mute6  FXParam 40 [ (1) 0.0 1.0 ] "DirectOn"
+  Mute7  FXParam 41 [ (1) 0.0 1.0 ] "Tail On"
+  Mute8  FXParam 46 [ (1) 0.0 1.0 ] "Mod On"
+  Select1  NoAction
+  Select2  NoAction
+  Select3  NoAction
+  Select4  NoAction
+  Select5  NoAction
+  Select6  NoAction
+  Select7  NoAction
+  Select8  NoAction
+  Fader1  FXParam 3 "DirectGn"
+  Fader2  FXParam 4 "DirctCol"
+  Fader3  FXParam 5 "ER Gain"
+  Fader4  FXParam 6 "ER Delay"
+  Fader5  FXParam 7 "Tail Gn"
+  Fader6  FXParam 8 "Tail Del"
+  Fader7  FXParam 9 "RvrbTime"
+  Fader8  FXParam 25 "Dry/Wet"
+  Shift+Rotary1  NoAction
+  Shift+Rotary2  NoAction
+  Shift+Rotary3  NoAction
+  Shift+Rotary4  NoAction
+  Shift+Rotary5  NoAction
+  Shift+Rotary6  NoAction
+  Shift+Rotary7  NoAction
+  Shift+Rotary8  NoAction
+  Shift+RotaryPush1 NoAction
+  Shift+RotaryPush2 NoAction
+  Shift+RotaryPush3 NoAction
+  Shift+RotaryPush4 NoAction
+  Shift+RotaryPush5 NoAction
+  Shift+RotaryPush6 NoAction
+  Shift+RotaryPush7 NoAction
+  Shift+RotaryPush8 NoAction
+  Shift+RecordArm1  NoAction
+  Shift+RecordArm2  NoAction
+  Shift+RecordArm3  NoAction
+  Shift+RecordArm4  NoAction
+  Shift+RecordArm5  NoAction
+  Shift+RecordArm6  NoAction
+  Shift+RecordArm7  NoAction
+  Shift+RecordArm8  NoAction
+  Shift+Solo1  NoAction
+  Shift+Solo2  NoAction
+  Shift+Solo3  NoAction
+  Shift+Solo4  NoAction
+  Shift+Solo5  NoAction
+  Shift+Solo6  NoAction
+  Shift+Solo7  NoAction
+  Shift+Solo8  NoAction
+  Shift+Mute1  FXParam 47 [ (1) 0.0 1.0 ] "IR Autom"
+  Shift+Mute2  NoAction
+  Shift+Mute3  NoAction
+  Shift+Mute4  NoAction
+  Shift+Mute5  NoAction
+  Shift+Mute6  NoAction
+  Shift+Mute7  NoAction
+  Shift+Mute8  NoAction
+  Shift+Select1  NoAction
+  Shift+Select2  NoAction
+  Shift+Select3  NoAction
+  Shift+Select4  NoAction
+  Shift+Select5  NoAction
+  Shift+Select6  NoAction
+  Shift+Select7  NoAction
+  Shift+Select8  NoAction
+  Shift+Fader1  FXParam 34 "Size"
+  Shift+Fader2  FXParam 42 "Bright"
+  Shift+Fader3  FXParam 43 "Attack"
+  Shift+Fader4  FXParam 44 "Mod Spd"
+  Shift+Fader5  FXParam 45 "Mod Dpth"
+  Shift+Fader6  FXParam 48 "RevLenSe"
+  Shift+Fader7  FXParam 28 "SamplLvl"
+  Shift+Fader8  NoAction
+  MasterFader  FXParam 50 "Wet"
+  Flip  ToggleFXBypass
+  Scrub  Reaper 42455 // Toggle delta solo for last focused FX
+  BankLeft  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  BankRight  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+  Footswitch1  Reaper _S&M_PREV_FOCFX_PRESET // Trigger previous preset for last touched FX
+  Footswitch2  Reaper _S&M_NEXT_FOCFX_PRESET // Trigger next preset for last touched FX
+
+  SubZones
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-01"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-02"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-03"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 03-01"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) Help"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-01 Help"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-02 Help"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 02-03 Help"
+      "VST: Altiverb 7 (Audio Ease)  (6ch) 03-01 Help"
+  SubZonesEnd
+  Marker  Speak "Main"
+  Nudge  Speak "Reverb"
+  Cycle  Speak "VST: Altiverb 7 (Audio Ease)  (6ch)"
+  Up    NoAction
+  Down  Speak "EQ"
+  Down  GoSubZone "VST: Altiverb 7 (Audio Ease)  (6ch) 02-01"
+  Left  NoAction
+  Right NoAction
+  GlobalView  GoSubZone "VST: Altiverb 7 (Audio Ease)  (6ch) Help"
+  OnZoneActivation  Speak "VST- Altiverb 7"
+ZoneEnd

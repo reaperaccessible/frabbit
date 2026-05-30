@@ -1,0 +1,31 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST3: Butch Vig Vocals Mono (Waves)
+// by Paul Warner
+// 3 June 2022
+// ------------------------------------------------------------
+// Version 1
+// ------------------------------------------------------------
+// ------------------------------------------------------------
+Zone "VST3: Butch Vig Vocals Mono (Waves)" "Waves_ButchVigVocalsMono"
+
+	RecordArm8				Reaper					"_S&M_FXBYPSEL"									// SWS/S&M: Toggle selected FX bypass for selected tracks
+
+	Rotary1 				FXParam 				"1"			"Bank"
+	Shift+MasterFader 				FXParam 				"2"			"Input"
+	Fader1 				FXParam 				"3"			"Lows"
+	Fader2 				FXParam 				"4"			"Presence"
+	Fader3 				FXParam 				"5"			"Air"
+	Rotary2 				FXParam 				"6"			"Lo Cut"
+	Rotary3 				FXParam 				"7"			"Mid Dip"
+	Rotary4 				FXParam 				"8"			"Hi Cut"
+	Fader4 				FXParam 				"9"			"Compress"
+	Fader5 				FXParam 				"10"			"DeEsser"
+	Rotary5 				FXParam 				"11"			"Focus"
+	Fader6 				FXParam 				"12"			"SolidState"
+	Fader7 				FXParam 				"13"			"Tube"
+	Fader8 				FXParam 				"14"			"Lo Cut Saturation"
+	Shift+Fader8 				FXParam 				"15"			"Hi Cut Saturation"
+	MasterFader 				FXParam 				"16"			"Output"
+	RecordArm7 				FXParam 				"20"			[ 0.0 1.0 ]	"Delta"
+ZoneEnd
+                                   

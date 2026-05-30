@@ -1,0 +1,30 @@
+Zone "VST: UAD Teletronix LA-2A Silver (Universal Audio, Inc.)" "LA2ASlv"
+	DisplayUpper1		FixedTextDisplay "Thresh"
+ 	DisplayLower1		FXParamValueDisplay 0
+	Rotary1 		FXParam 0 
+
+	DisplayUpper2		FixedTextDisplay "Attack"
+ 	DisplayLower2		FXParamValueDisplay 3
+	Rotary2 		FXParam 3 
+
+	DisplayUpper3		FixedTextDisplay "Output" 
+ 	DisplayLower3		FXParamValueDisplay 1
+	Rotary3	 		FXParam 1 
+
+	DisplayUpper4		FixedTextDisplay "CompLim" 
+ 	DisplayLower4		FXParamValueDisplay 2
+	Rotary4 		FXParam 2 [ 0.0 1.0 ]
+
+	DisplayUpper5		FixedTextDisplay "Meter" 
+ 	DisplayLower5		FXParamValueDisplay 4
+	Rotary5			FXParam 4 [ 0.0 0.50 1.0 ]
+
+	Mute1			ToggleFXBypass
+	Mute2			ToggleFXBypass
+	Mute3			ToggleFXBypass
+	Mute4			ToggleFXBypass
+	Mute5			ToggleFXBypass
+	Mute6			ToggleFXBypass
+	Mute7			ToggleFXBypass
+	Mute8			ToggleFXBypass
+ZoneEnd

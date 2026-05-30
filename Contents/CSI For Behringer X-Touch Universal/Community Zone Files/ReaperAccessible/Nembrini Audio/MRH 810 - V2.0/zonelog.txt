@@ -1,0 +1,6 @@
+Zone: VST3: NA Mrh810 V2 (Nembrini Audio)
+Version: 2.0
+Date: 2025-08-14 15:42
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

@@ -1,0 +1,126 @@
+Zone "VST3: Archetype Tim Henson (Neural DSP) 8-3"
+// Page 8 Section 3
+// page : "FX Section"
+// section : "Reverb"
+    Rotary1           NoAction
+    Rotary2           NoAction
+    Rotary3           NoAction
+    Rotary4           NoAction
+    Rotary5           NoAction
+    Rotary6           NoAction
+    Rotary7           NoAction
+    Rotary8           NoAction
+    RotaryPush1       NoAction
+    RotaryPush2       NoAction
+    RotaryPush3       NoAction
+    RotaryPush4       NoAction
+    RotaryPush5       NoAction
+    RotaryPush6       NoAction
+    RotaryPush7       NoAction
+    RotaryPush8       NoAction
+    RecordArm1        NoAction
+    RecordArm2        NoAction
+    RecordArm3        NoAction
+    RecordArm4        NoAction
+    RecordArm5        NoAction
+    RecordArm6        NoAction
+    RecordArm7        NoAction
+    RecordArm8        NoAction
+    Solo1             NoAction
+    Solo2             NoAction
+    Solo3             NoAction
+    Solo4             NoAction
+    Solo5             NoAction
+    Solo6             NoAction
+    Solo7             NoAction
+    Solo8             NoAction
+    Mute1  FXParam 131 "FX Section Active" [ 0.0 1.0 ]
+    Mute2  FXParam 146 "Reverb Active" [ 0.0 1.0 ]
+    Mute3  FXParam 147 "Reverb Mode" [ 0.0 1.0 ]
+    Mute4             NoAction
+    Mute5             NoAction
+    Mute6             NoAction
+    Mute7             NoAction
+    Mute8             NoAction
+    Select1           NoAction
+    Select2           NoAction
+    Select3           NoAction
+    Select4           NoAction
+    Select5           NoAction
+    Select6           NoAction
+    Select7           NoAction
+    Select8           NoAction
+    Fader1  FXParam 148 "Reverb Mix" 
+    Fader2  FXParam 149 "Reverb Decay" 
+    Fader3  FXParam 150 "Reverb Low Cut" 
+    Fader4  FXParam 151 "Reverb High Cut" 
+    Fader5            NoAction
+    Fader6            NoAction
+    Fader7            NoAction
+    Fader8            NoAction
+    Shift+Rotary1     NoAction
+    Shift+Rotary2     NoAction
+    Shift+Rotary3     NoAction
+    Shift+Rotary4     NoAction
+    Shift+Rotary5     NoAction
+    Shift+Rotary6     NoAction
+    Shift+Rotary7     NoAction
+    Shift+Rotary8     NoAction
+    Shift+RotaryPush1 NoAction
+    Shift+RotaryPush2 NoAction
+    Shift+RotaryPush3 NoAction
+    Shift+RotaryPush4 NoAction
+    Shift+RotaryPush5 NoAction
+    Shift+RotaryPush6 NoAction
+    Shift+RotaryPush7 NoAction
+    Shift+RotaryPush8 NoAction
+    Shift+RecordArm1  NoAction
+    Shift+RecordArm2  NoAction
+    Shift+RecordArm3  NoAction
+    Shift+RecordArm4  NoAction
+    Shift+RecordArm5  NoAction
+    Shift+RecordArm6  NoAction
+    Shift+RecordArm7  NoAction
+    Shift+RecordArm8  NoAction
+    Shift+Solo1       NoAction
+    Shift+Solo2       NoAction
+    Shift+Solo3       NoAction
+    Shift+Solo4       NoAction
+    Shift+Solo5       NoAction
+    Shift+Solo6       NoAction
+    Shift+Solo7       NoAction
+    Shift+Solo8       NoAction
+    Shift+Mute1       NoAction
+    Shift+Mute2       NoAction
+    Shift+Mute3       NoAction
+    Shift+Mute4       NoAction
+    Shift+Mute5       NoAction
+    Shift+Mute6       NoAction
+    Shift+Mute7       NoAction
+    Shift+Mute8       NoAction
+    Shift+Select1     NoAction
+    Shift+Select2     NoAction
+    Shift+Select3     NoAction
+    Shift+Select4     NoAction
+    Shift+Select5     NoAction
+    Shift+Select6     NoAction
+    Shift+Select7     NoAction
+    Shift+Select8     NoAction
+    Shift+Fader1      NoAction
+    Shift+Fader2      NoAction
+    Shift+Fader3      NoAction
+    Shift+Fader4      NoAction
+    Shift+Fader5      NoAction
+    Shift+Fader6      NoAction
+    Shift+Fader7      NoAction
+    Shift+Fader8      NoAction
+
+    Up        Speak "Pitch Section"
+    Up        GoSubZone "VST3: Archetype Tim Henson (Neural DSP) 7-1"
+    Down      NoAction
+    Left      Speak "Delay"
+    Left      GoSubZone "VST3: Archetype Tim Henson (Neural DSP) 8-2"
+    Right     NoAction
+    Marker    Speak "FX Section, Reverb"
+    Hold+Marker Speak "Archetype Tim Henson"
+ZoneEnd

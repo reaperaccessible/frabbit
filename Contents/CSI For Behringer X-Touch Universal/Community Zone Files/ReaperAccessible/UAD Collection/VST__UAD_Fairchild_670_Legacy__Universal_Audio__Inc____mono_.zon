@@ -1,0 +1,13 @@
+Zone "VST: UAD Fairchild 670 Legacy (Universal Audio, Inc.) (mono)"
+	FXParam 0 "Power"
+	FXParam 1 "L Input"
+	FXParam 2 "L Thresh"
+	FXParam 3 "L TimeCnst"
+	FXParam 4 "L DC Thr"
+	FXParam 5 "L Output"
+	FXParam 6 "L Meter"
+	FXParam 7 "L Bal"
+	FXParam 8 "Bypass"
+	FXParam 9 "Wet"
+	FXParam 10 "Delta"
+ZoneEnd

@@ -1,0 +1,163 @@
+Zone "Amp2 - Lead - Gojira"
+ OnZoneActivation Speak "Gojira - Lead, Edit On"
+
+// page : "Gojira Clean Ampifier"
+
+// Bank 0
+
+ BK0Switch1 FXParam 13 "OD Active" [ 0.0 1.0 ]
+ BK0Switch2 FXParam 17 "DRT Active" [ 0.0 1.0 ]
+ BK0Switch3 FXParam 21 "PHSR Active" [ 0.0 1.0 ]
+ BK0Switch4 FXParam 101 "DLY Active" [ 0.0 1.0 ]
+ BK0Switch5 Speak "Global View"
+ BK0Switch5 GoHome
+ BK0Switch6 FXParam 23 "CHR Active" [ 0.0 1.0 ]
+ BK0Switch7 FXParam 4 "WOW Active" [ 0.0 1.0 ]
+ BK0Switch8 Speak "Bank0 Switch8 No Action"
+ BK0Switch9 FXParam 112 "REV Active" [ 0.0 1.0 ]
+ BK0Switch10 Speak " Edit Off"
+ BK0Switch10 LeaveSubZone
+
+// Bank 1
+
+ BK1Switch1 FXParam 84 "Cab Type" [ 1.0 0.5 0.0 ]
+ BK1Switch2 FXParam 84 "Cab Type" [ 0.0 0.5 1.0 ]
+ BK1Switch3 Speak "Bank1 Switch3 No Action"
+ BK1Switch4 Speak "Bank1 Switch4 No Action"
+ BK1Switch5 Speak "Global View"
+ BK1Switch5 GoHome
+ BK1Switch6 FXParam 92 "Cab 1 Mic IR" [ 1.0 0.8333 0.6666 0.5 0.3333 0.1666 0.0 ]
+ BK1Switch7 FXParam 92 "Cab 1 Mic IR" [ 0.0 0.1666 0.3333 0.5 0.6666 0.8333 1.0 ]
+ BK1Switch8 FXParam 99 "Cab 2 Mic IR" [ 1.0 0.8333 0.6666 0.5 0.3333 0.1666 0.0 ]
+ BK1Switch9 FXParam 99 "Cab 2 Mic IR" [ 0.0 0.1666 0.3333 0.5 0.6666 0.8333 1.0 ]
+ BK1Switch10 Speak " Edit Off"
+ BK1Switch10 LeaveSubZone
+
+// Bank 2
+
+ BK2Switch1 FXParam 101 "DLY Active" [ 0.0 1.0 ]
+ BK2Switch2 FXParam 103 "DLY Ping-Pong" [ 0.0 1.0 ]
+ BK2Switch3 FXParam 111 "DLY Tap Tempo" [ 0.0 1.0 ]
+ BK2Switch4 FXParam 102 "DLY Sync Active" [ 0.0 1.0 ]
+ BK2Switch5 Speak "Global View"
+ BK2Switch5 GoHome
+ BK2Switch6 FXParam 109 "DLY Sync Note" [ 1.0 0.95 0.9 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.3 0.25 0.2 0.15 0.1 0.05 0.0 ]
+ BK2Switch7 FXParam 109 "DLY Sync Note" [ 0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 ]
+ BK2Switch8 Speak "Bank2 Switch8 No Action"
+ BK2Switch9 Speak "Bank2 Switch9 No Action"
+ BK2Switch10 Speak " Edit Off"
+ BK2Switch10 LeaveSubZone
+
+// Bank 3
+
+ BK3Switch1 Speak "Bank3 Switch1 No Action"
+ BK3Switch2 Speak "Bank3 Switch2 No Action"
+ BK3Switch3 Speak "Bank3 Switch3 No Action"
+ BK3Switch4 Speak "Bank3 Switch4 No Action"
+ BK3Switch5 Speak "Global View"
+ BK3Switch5 GoHome
+ BK3Switch6 Speak "Bank3 Switch6 No Action"
+ BK3Switch7 Speak "Bank3 Switch7 No Action"
+ BK3Switch8 Speak "Bank3 Switch8 No Action"
+ BK3Switch9 Speak "Bank3 Switch9 No Action"
+ BK3Switch10 Speak " Edit Off"
+ BK3Switch10 LeaveSubZone
+
+// Bank 4
+
+ BK4Switch1 Speak "Bank4 Switch1 No Action"
+ BK4Switch2 Speak "Bank4 Switch2 No Action"
+ BK4Switch3 Speak "Bank4 Switch3 No Action"
+ BK4Switch4 Speak "Bank4 Switch4 No Action"
+ BK4Switch5 Speak "Global View"
+ BK4Switch5 GoHome
+ BK4Switch6 Speak "Bank4 Switch6 No Action"
+ BK4Switch7 Speak "Bank4 Switch7 No Action"
+ BK4Switch8 Speak "Bank4 Switch8 No Action"
+ BK4Switch9 Speak "Bank4 Switch9 No Action"
+ BK4Switch10 Speak "Ampifier Edit Off"
+ BK4Switch10 LeaveSubZone
+
+// Bank 5
+
+ BK5Switch1 Speak "Bank5 Switch1 No Action"
+ BK5Switch2 Speak "Bank5 Switch2 No Action"
+ BK5Switch3 Speak "Bank5 Switch3 No Action"
+ BK5Switch4 Speak "Bank5 Switch4 No Action"
+ BK5Switch5 Speak "Global View"
+ BK5Switch5 Speak "Bank5 Switch5 No Action"
+ BK5Switch6 Speak "Bank5 Switch6 No Action"
+ BK5Switch7 Speak "Bank5 Switch7 No Action"
+ BK5Switch8 Speak "Bank5 Switch8 No Action"
+ BK5Switch9 Speak "Bank5 Switch9 No Action"
+ BK5Switch10 Speak "Ampifier Edit Off"
+ BK5Switch10 LeaveSubZone
+
+// Bank 6
+
+ BK6Switch1 Speak "Bank6 Switch1 No Action"
+ BK6Switch2 Speak "Bank6 Switch2 No Action"
+ BK6Switch3 Speak "Bank6 Switch3 No Action"
+ BK6Switch4 Speak "Bank6 Switch4 No Action"
+ BK6Switch5 Speak "Global View"
+ BK6Switch5 GoHome
+ BK6Switch6 Speak "Bank6 Switch6 No Action"
+ BK6Switch7 Speak "Bank6 Switch7 No Action"
+ BK6Switch8 Speak "Bank6 Switch8 No Action"
+ BK6Switch9 Speak "Bank6 Switch9 No Action"
+ BK6Switch10 Speak "Ampifier Edit Off"
+ BK6Switch10 LeaveSubZone
+
+
+// Bank 7
+
+ BK7Switch1 Speak "Bank7 Switch1 No Action"
+ BK7Switch2 Speak "Bank7 Switch2 No Action"
+ BK7Switch3 Speak "Bank7 Switch3 No Action"
+ BK7Switch4 Speak "Bank7 Switch4 No Action"
+ BK7Switch5 Speak "Global View"
+ BK7Switch5 GoHome
+ BK7Switch6 Speak "Bank7 Switch6 No Action"
+ BK7Switch7 Speak "Bank7 Switch7 No Action"
+ BK7Switch8 Speak "Bank7 Switch8 No Action"
+ BK7Switch9 Speak "Bank7 Switch9 No Action"
+ BK7Switch10 Speak "Ampifier Edit Off"
+ BK7Switch10 LeaveSubZone
+
+
+// Bank 8
+
+ BK8Switch1 Speak "Bank8 Switch1 No Action"
+ BK8Switch2 Speak "Bank8 Switch2 No Action"
+ BK8Switch3 Speak "Bank8 Switch3 No Action"
+ BK8Switch4 Speak "Bank8 Switch4 No Action"
+ BK8Switch5 Speak "Global View"
+ BK8Switch5 GoHome
+ BK8Switch6 Speak "Bank8 Switch6 No Action"
+ BK8Switch7 Speak "Bank8 Switch7 No Action"
+ BK8Switch8 Speak "Bank8 Switch8 No Action"
+ BK8Switch9 Speak "Bank8 Switch9 No Action"
+ BK8Switch10 Speak "Ampifier Edit Off"
+ BK8Switch10 LeaveSubZone
+
+// Bank 9
+
+ BK9Switch1 Speak "Bank8 Switch1 No Action"
+ BK9Switch2 Speak "Bank8 Switch2 No Action"
+ BK9Switch3 Speak "Bank8 Switch3 No Action"
+ BK9Switch4 Speak "Bank8 Switch4 No Action"
+ BK9Switch5 Speak "Global View"
+ BK9Switch5 GoHome
+ BK9Switch6 Speak "Bank8 Switch6 No Action"
+ BK9Switch7 Speak "Bank8 Switch7 No Action"
+ BK9Switch8 Speak "Bank8 Switch8 No Action"
+ BK9Switch9 Speak "Bank8 Switch9 No Action"
+ BK9Switch10 Speak "Ampifier Edit Off"
+ BK9Switch10 LeaveSubZone
+
+ Fader1 Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Ignorer le prochain message d'OSARA
+ Fader1 FXParam 6 "WOW Position" 
+
+ Fader2 Reaper _OSARA_MUTENEXTMESSAGE // OSARA: Ignorer le prochain message d'OSARA
+ Fader2 NoAction
+ZoneEnd

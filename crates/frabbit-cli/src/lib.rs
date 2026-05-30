@@ -728,6 +728,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     force_reinstall_packages: Vec::new(),
                     configuration_step_ids,
                     active_locale: active_locale.clone(),
+                    install_csi: false,
                 },
             )?;
             let report_path =

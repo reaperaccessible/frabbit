@@ -1,0 +1,10 @@
+Zone "VST: UAD Raw (Universal Audio, Inc.) (mono)"
+	FXParam 0 "Distortion"
+	FXParam 1 "Filter"
+	FXParam 2 "Volume"
+	FXParam 3 "Output"
+	FXParam 4 "Power"
+	FXParam 5 "Bypass"
+	FXParam 6 "Wet"
+	FXParam 7 "Delta"
+ZoneEnd

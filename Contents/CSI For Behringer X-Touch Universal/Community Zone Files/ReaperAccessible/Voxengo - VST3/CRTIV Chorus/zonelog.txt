@@ -1,0 +1,6 @@
+Zone: VST3: CRTIV Chorus (Voxengo)
+Version: 2.0
+Date: 2025-08-14 20:07
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

@@ -1,0 +1,6 @@
+Zone: VST3: Pro-Q 3 (FabFilter)
+Version: 2.0
+Date: 2025-08-14 13:58
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

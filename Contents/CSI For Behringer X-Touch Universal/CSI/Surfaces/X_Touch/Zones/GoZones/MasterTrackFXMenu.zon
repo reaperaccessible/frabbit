@@ -1,0 +1,204 @@
+Zone MasterTrackFXMenu
+  OnZoneActivation  Speak "Master Track FX Menu View"
+  OnZoneActivation  SetXTouchDisplayColors Blue
+
+// Left Panel
+
+// Strip 1
+
+  RotaryPush|  GoFXSlot
+
+  Decrease+Rotary1  Speak "Rotary1 Left, NoAction"
+  Increase+Rotary1  Speak "Rotary1 Right, NoAction"
+  Decrease+Rotary2  Speak "Rotary2 Left, NoAction"
+  Increase+Rotary2  Speak "Rotary2 Right, NoAction"
+  Decrease+Rotary3  Speak "Rotary3 Left, NoAction"
+  Increase+Rotary3  Speak "Rotary3 Right, NoAction"
+  Decrease+Rotary4  Speak "Rotary4 Left, NoAction"
+  Increase+Rotary4  Speak "Rotary4 Right, NoAction"
+  Decrease+Rotary5  Speak "Rotary5 Left, NoAction"
+  Increase+Rotary5  Speak "Rotary5 Right, NoAction"
+  Decrease+Rotary6  Speak "Rotary6 Left, NoAction"
+  Increase+Rotary6  Speak "Rotary6 Right, NoAction"
+  Decrease+Rotary7  Speak "Rotary7 Left, NoAction"
+  Increase+Rotary7  Speak "Rotary7 Right, NoAction"
+  Decrease+Rotary8  Speak "Rotary8 Left, NoAction"
+  Increase+Rotary8  Speak "Rotary8 Right, NoAction"
+
+// Strip 2
+
+  RecordArm|  SpeakFXMenuName
+
+// Strip 3
+
+  Solo|  NoAction
+  Solo|  Speak "Solo, NoAction"
+
+// Strip 4
+
+  Mute|  ToggleFXBypass
+
+// Strip 5
+
+  Select|  NoAction
+  Select|  Speak "Select, NoAction"
+
+// Strip 6
+
+  Fader|  NoAction
+  Fader|  Speak "Fader, NoAction"
+
+// Right Panel
+
+// Strip 1
+
+  Track  NoAction
+  Track  Speak "Track, NoAction"
+  Pan  NoAction
+  Pan  Speak "Pan, NoAction"
+  EQ  NoAction
+  EQ  Speak "EQ, NoAction"
+  Send  NoAction
+  Send  Speak "Send, NoAction"
+  Plugin  NoAction
+  Plugin  Speak "Plugin, NoAction"
+  Instrument  NoAction
+  Instrument  Speak "Instrument, NoAction"
+
+// Strip 2
+
+  MidiTracks  Reaper _S&M_FXBYPEXCPTSEL // SWS/S&M: Toggle all FX (except selected) bypass for selected tracks
+  Inputs  Reaper _S&M_FXBYPALL // SWS/S&M: Toggle all FX bypass for selected tracks
+  AudioTracks  NoAction
+  AudioTracks  Speak "AudioTracks, NoAction"
+  AudioInstrument  NoAction
+  AudioInstrument  Speak "AudioInstrument, NoAction"
+  Aux  NoAction
+  Aux  Speak "Aux, NoAction"
+  Busses    NoAction
+  Busses    Speak "Busses, NoAction"
+  Outputs  NoAction
+  Outputs  Speak "Outputs, NoAction"
+  User  NoAction
+  User  Speak "User, NoAction"
+          
+// Strip 3
+
+  F1  NoAction
+  F1  Speak "F1, NoAction"
+  F2  NoAction
+  F2  Speak "F2, NoAction"
+  F3  NoAction
+  F3  Speak "F3, NoAction"
+  F4  NoAction
+  F4  Speak "F4, NoAction"
+  F5  NoAction
+  F5  Speak "F5, NoAction"
+  F6  NoAction
+  F6  Speak "F6, NoAction"
+  F7  NoAction
+  F7  Speak "F7, NoAction"
+  F8  NoAction
+  F8  Speak "F8, NoAction"
+
+// Strip 4
+
+  Shift  Shift
+  Option  Option
+  Read  ClearModifiers
+  Read  Speak "ClearModifiers"
+  Write  NoAction
+  Write  Speak "Write, NoAction"
+  Trim  NoAction
+  Trim  Speak "Trim, NoAction"
+  Save  NoAction
+  Save  Speak "Save, NoAction"
+  Undo  Reaper 40029 // Edit: Undo
+  Shift+Undo  Reaper 40030 // Edit: Redo
+
+// Strip 5
+
+  Control  Control
+  Alt  Alt
+  Touch  NoAction
+  Touch  Speak "Touch, NoAction"
+  Latch  NoAction
+  Latch  Speak "Latch, NoAction"
+  Group  NoAction
+  Group  Speak "Group, NoAction"
+  Cancel  NoAction
+  Cancel  Speak "Cancel, NoAction"
+  Enter  NoAction
+  Enter  Speak "Enter, NoAction"
+
+// Strip 6
+
+  Marker  NoAction
+  Marker  Speak "Marker, NoAction"
+  Nudge  NoAction
+  Nudge  Speak "Nudge, NoAction"
+  Cycle  NoAction
+  Cycle  Speak "Cycle, NoAction"
+  Drop  NoAction
+  Drop  Speak "Drop, NoAction"
+  Replace  NoAction
+  Replace  Speak "Replace, NoAction"
+  Click  NoAction
+  Click  Speak "Click, NoAction"
+  Solo  Reaper 40281 // Track: Solo/unsolo tracks
+
+// Strip 7
+
+  Rewind  Reaper 41041 // Move edit cursor to start of current measure
+  Hold+Rewind  Reaper 40042 // Go to start of project
+  Alt+Rewind  Reaper 40646 // View: Move cursor left to grid division
+  FastForward  Reaper 41040 // Move edit cursor to start of next measure
+  Hold+FastForward  Reaper 40043 // Transport: Go to end of project
+  Alt+FastForward  Reaper 40647 // View: Move cursor right to grid division
+  Stop  Reaper 1016 // Transport: Stop
+  Hold+Stop Reaper _SWS_PREVIEWTRACKTOG // Xenakios/SWS: Preview selected media item through track (toggle)
+  Play  Reaper 40073 // Transport: Play/pause
+  Record  Reaper 1013 // Transport: Record
+
+// Strip 8
+
+  Decrease+JogWheel  Bank MasterTrackFXMenu -1
+  Decrease+JogWheel  SpeakFXMenuName
+  Increase+JogWheel  Bank MasterTrackFXMenu 1
+  Increase+JogWheel  SpeakFXMenuName
+  Scrub  ShowFXSlot
+  Scrub  GoFXSlot
+
+// Strip 9
+
+  BankLeft  Reaper _RSbcad7bfa4a882ff724a3b02a1e1fe60408671aff // Script: ReaperAccessible - CSI Master FX - Move selected Master FX one position up
+  BankLeft  Reaper _RS39968e441f2f7a6d413dfbafd92504647adc77ce // Script: ReaperAccessible - CSI Master FX - Speak name of selected FX on Master Track
+  BankRight  Reaper _RS4901cdf53c1f2ff8f721df8083d82ab694e5de35 // Script: ReaperAccessible - CSI Master FX - Move selected Master FX one position down
+  BankRight  Reaper _RS39968e441f2f7a6d413dfbafd92504647adc77ce // Script: ReaperAccessible - CSI Master FX - Speak name of selected FX on Master Track
+  ChannelLeft  Reaper _RS37428fcb771b918e693643fb6923b48ce636dcb3 // Script: ReaperAccessible - CSI Master FX - Delete selected FX on Master Track
+  ChannelRight  Reaper _RS39968e441f2f7a6d413dfbafd92504647adc77ce // Script: ReaperAccessible - CSI Master FX - Speak name of selected FX on Master Track
+
+// Strip 10
+
+  Left  NoAction
+  Left    Speak "Left, NoAction"
+  Right  NoAction
+  Right    Speak "Right, NoAction"
+  Zoom  GoZone  MasterTrackFXMenu
+  Zoom  GoZone  MasterTrackFXMenu
+
+// Strip 11
+
+  smpteBeats  NoAction
+  smpteBeats  Speak "NoAction"
+  nameValue  GoHome
+  nameValue  Reaper _S&M_WNCLS4          // Closes all FX chain windows
+  nameValue  Reaper _S&M_WNCLS3          // Closes all floating FX windows  
+  nameValue  Speak "Home View"
+  GlobalView  GoZone  MasterTrackFXMenuHelp
+
+// Strip 12
+
+  Footswitch1  NoAction
+  Footswitch2  NoAction
+ZoneEnd

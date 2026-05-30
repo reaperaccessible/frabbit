@@ -1,0 +1,6 @@
+Zone: VST: ValhallaShimmer (Valhalla DSP, LLC)
+Version: 2.0
+Date: 2025-08-14 20:04
+User: ReaperAccessible
+Email: reaperaccessible@gmail.com
+Generator version: 3.6

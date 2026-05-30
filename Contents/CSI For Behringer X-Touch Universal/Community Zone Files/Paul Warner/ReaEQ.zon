@@ -1,0 +1,255 @@
+// ------------------------------------------------------------
+// Behringer X-Touch - VST: ReaEQ (Cockos)
+// by Michael Bodenbach
+// 26.03.2020
+// ------------------------------------------------------------
+// Version 0.2 / 10.04.2020
+// Version 0.3 / 13.04.2020
+// Version 0.4 / 31.01.2021
+// ------------------------------------------------------------
+// History:
+// 10.04.2020   Initial version
+// 13.04.2020	Display Q values on scribble strips
+// 31.01.2021	Add support for 16 bands
+// ------------------------------------------------------------
+// Todo:
+//				...
+// ------------------------------------------------------------
+Zone "VST: ReaEQ (Cockos)" "ReaEQ"
+
+    
+	// ------------------------------------------------------------
+	// Band 1
+	// ------------------------------------------------------------
+	Rotary1 			FXParam 0 			"Freq-Band 1"
+    Fader1 				FXParam 1 			"Gain-Band 1"
+    Shift+Rotary1 		FXParam 2 			"Q-Band 1"
+  		
+	DisplayUpper1 		FXParamNameDisplay 	"0"				"Freq 1"
+	DisplayLower1 		FXParamValueDisplay "0"
+
+	Shift+DisplayUpper1 FXParamNameDisplay 	"2"				"Q-Band 1"
+	Shift+DisplayLower1 FXParamValueDisplay "2"
+
+	// ------------------------------------------------------------
+	// Band 2
+	// ------------------------------------------------------------
+    Rotary2 			FXParam 3 			"Freq-Band 2"
+    Fader2 				FXParam 4 			"Gain-Band 2"
+    Shift+Rotary2 		FXParam 5 			"Q-Band 2"
+   		
+	DisplayUpper2 		FXParamNameDisplay 	"3"				"Freq 2"
+	DisplayLower2 		FXParamValueDisplay "3"
+
+	Shift+DisplayUpper2 FXParamNameDisplay 	"5"				"Q-Band 2"
+	Shift+DisplayLower2 FXParamValueDisplay "5"
+
+	// ------------------------------------------------------------
+	// Band 3
+	// ------------------------------------------------------------
+    Rotary3 			FXParam 6 			"Freq-Band 3"
+    Fader3 				FXParam 7 			"Gain-Band 3"
+    Shift+Rotary3 		FXParam 8 			"Q-Band 3"
+   		
+	DisplayUpper3 		FXParamNameDisplay 	"6"				"Freq 3"
+	DisplayLower3 		FXParamValueDisplay "6"
+
+	Shift+DisplayUpper3 FXParamNameDisplay 	"8"				"Q-Band 3"
+	Shift+DisplayLower3 FXParamValueDisplay "8"
+
+	// ------------------------------------------------------------
+	// Band 4
+	// ------------------------------------------------------------
+    Rotary4 			FXParam 9 			"Freq-Band 4"
+    Fader4 				FXParam 10 			"Gain-Band 4"
+    Shift+Rotary4 		FXParam 11 			"Q-Band 4"
+   		
+	DisplayUpper4 		FXParamNameDisplay 	"9"				"Freq 4"
+	DisplayLower4 		FXParamValueDisplay "9"
+	
+	Shift+DisplayUpper4 FXParamNameDisplay 	"11"			"Q-Band 4"
+	Shift+DisplayLower4 FXParamValueDisplay "11"
+
+	// ------------------------------------------------------------
+	// Band 5
+	// ------------------------------------------------------------
+    Rotary5 			FXParam 12 			"Freq-Band 5"
+    Fader5 				FXParam 13 			"Gain-Band 5"
+    Shift+Rotary5 		FXParam 14 			"Q-Band 5"
+   		
+	DisplayUpper5 		FXParamNameDisplay 	"12"			"Freq 5"
+	DisplayLower5 		FXParamValueDisplay "12"
+
+	Shift+DisplayUpper5 FXParamNameDisplay 	"14"			"Q-Band 5"
+	Shift+DisplayLower5 FXParamValueDisplay "14"
+
+	// ------------------------------------------------------------
+	// Band 6
+	// ------------------------------------------------------------
+    Rotary6				FXParam 15 			"Freq-Band 6"
+    Fader6 				FXParam 16 			"Gain-Band 6"
+    Shift+Rotary6 		FXParam 17 			"Q-Band 6"
+   		
+	DisplayUpper6 		FXParamNameDisplay 	"15"			"Freq 6"
+	DisplayLower6 		FXParamValueDisplay "15"
+
+	Shift+DisplayUpper6 FXParamNameDisplay 	"17"			"Q-Band 6"
+	Shift+DisplayLower6 FXParamValueDisplay "17"
+
+	// ------------------------------------------------------------
+	// Band 7
+	// ------------------------------------------------------------
+    Rotary7 			FXParam 18 			"Freq-Band 7"
+    Fader7 				FXParam 19 			"Gain-Band 7"
+    Shift+Rotary7 		FXParam 20 			"Q-Band 7"
+   		
+	DisplayUpper7 		FXParamNameDisplay 	"18"			"Freq 7"
+	DisplayLower7 		FXParamValueDisplay "18"
+
+	Shift+DisplayUpper7 FXParamNameDisplay 	"20"			"Q-Band 7"
+	Shift+DisplayLower7 FXParamValueDisplay "20"
+
+	// ------------------------------------------------------------
+	// Band 8
+	// ------------------------------------------------------------
+    Rotary8 			FXParam 21 			"Freq-Band 8"
+    Fader8 				FXParam 22 			"Gain-Band 8"
+    Shift+Rotary8 		FXParam 23 			"Q-Band 8"
+   		
+	DisplayUpper8 		FXParamNameDisplay 	"21"			"Freq 8"
+	DisplayLower8 		FXParamValueDisplay "21"
+	
+	Shift+DisplayUpper8 FXParamNameDisplay 	"23"			"Q-Band 8"
+	Shift+DisplayLower8 FXParamValueDisplay "23"
+
+	// ------------------------------------------------------------
+	// Misc actions
+	// ------------------------------------------------------------
+	RotaryPush1 		NoAction
+	RotaryPush2 		NoAction
+	RotaryPush3 		NoAction
+	RotaryPush4 		NoAction
+	RotaryPush5 		NoAction
+	RotaryPush6 		NoAction
+	RotaryPush7 		NoAction
+	RotaryPush8 		NoAction
+
+ 	Mute1				Reaper				"_S&M_FXBYPSEL"				// SWS/S&M: Toggle selected FX bypass for selected tracks
+	
+	BankLeft			NoAction
+	BankRight			GoZone				Section9to16
+
+ZoneEnd
+
+Zone "Section9to16"
+
+	SelectedTrackNavigator
+
+	// ------------------------------------------------------------
+	// Band 9
+	// ------------------------------------------------------------
+    Rotary1 			FXParam 24 			"Freq-Band 9"
+    Fader1 				FXParam 25 			"Gain-Band 9"
+    Shift+Rotary1 		FXParam 26 			"Q-Band 9"
+   		
+	DisplayUpper1 		FXParamNameDisplay 	"24"			"Freq 9"
+	DisplayLower1 		FXParamValueDisplay "24"
+	
+	Shift+DisplayUpper1 FXParamNameDisplay 	"26"			"Q-Band 9"
+	Shift+DisplayLower1 FXParamValueDisplay "26"
+
+	// ------------------------------------------------------------
+	// Band 10
+	// ------------------------------------------------------------
+    Rotary2 			FXParam 27 			"Freq-Band 10"
+    Fader2 				FXParam 28 			"Gain-Band 10"
+    Shift+Rotary2 		FXParam 29 			"Q-Band 10"
+   		
+	DisplayUpper2 		FXParamNameDisplay 	"27"			"Freq 10"
+	DisplayLower2 		FXParamValueDisplay "27"
+	
+	Shift+DisplayUpper2 FXParamNameDisplay 	"29"			"Q-Band 10"
+	Shift+DisplayLower2 FXParamValueDisplay "29"
+
+	// ------------------------------------------------------------
+	// Band 11
+	// ------------------------------------------------------------
+    Rotary3 			FXParam 30 			"Freq-Band 11"
+    Fader3				FXParam 31 			"Gain-Band 11"
+    Shift+Rotary3 		FXParam 32 			"Q-Band 11"
+   		
+	DisplayUpper3 		FXParamNameDisplay 	"30"			"Freq 11"
+	DisplayLower3 		FXParamValueDisplay "30"
+	
+	Shift+DisplayUpper3 FXParamNameDisplay 	"32"			"Q-Band 11"
+	Shift+DisplayLower3 FXParamValueDisplay "32"
+
+	// ------------------------------------------------------------
+	// Band 12
+	// ------------------------------------------------------------
+    Rotary4 			FXParam 33 			"Freq-Band 12"
+    Fader4 				FXParam 34 			"Gain-Band 12"
+    Shift+Rotary4 		FXParam 35 			"Q-Band 12"
+   		
+	DisplayUpper4 		FXParamNameDisplay 	"33"			"Freq 12"
+	DisplayLower4 		FXParamValueDisplay "33"
+	
+	Shift+DisplayUpper4 FXParamNameDisplay 	"35"			"Q-Band 12"
+	Shift+DisplayLower4 FXParamValueDisplay "35"
+
+	// ------------------------------------------------------------
+	// Band 13
+	// ------------------------------------------------------------
+    Rotary5 			FXParam 36 			"Freq-Band 13"
+    Fader5 				FXParam 37 			"Gain-Band 13"
+    Shift+Rotary5 		FXParam 38 			"Q-Band 13"
+   		
+	DisplayUpper5 		FXParamNameDisplay 	"36"			"Freq 13"
+	DisplayLower5 		FXParamValueDisplay "36"
+	
+	Shift+DisplayUpper5 FXParamNameDisplay 	"38"			"Q-Band 13"
+	Shift+DisplayLower5 FXParamValueDisplay "38"
+
+	// ------------------------------------------------------------
+	// Band 14
+	// ------------------------------------------------------------
+    Rotary6 			FXParam 39 			"Freq-Band 14"
+    Fader6 				FXParam 40 			"Gain-Band 14"
+    Shift+Rotary6 		FXParam 41 			"Q-Band 14"
+   		
+	DisplayUpper6 		FXParamNameDisplay 	"39"			"Freq 14"
+	DisplayLower6 		FXParamValueDisplay "39"
+	
+	Shift+DisplayUpper6 FXParamNameDisplay 	"41"			"Q-Band 14"
+	Shift+DisplayLower6 FXParamValueDisplay "41"
+
+	// ------------------------------------------------------------
+	// Band 15
+	// ------------------------------------------------------------
+    Rotary7 			FXParam 42 			"Freq-Band 15"
+    Fader7 				FXParam 43 			"Gain-Band 15"
+    Shift+Rotary7 		FXParam 44 			"Q-Band 15"
+   		
+	DisplayUpper7 		FXParamNameDisplay 	"42"			"Freq 15"
+	DisplayLower7 		FXParamValueDisplay "42"
+	
+	Shift+DisplayUpper7 FXParamNameDisplay 	"44"			"Q-Band 15"
+	Shift+DisplayLower7 FXParamValueDisplay "44"
+
+	// ------------------------------------------------------------
+	// Band 16
+	// ------------------------------------------------------------
+    Rotary8 			FXParam 45 			"Freq-Band 16"
+    Fader8 				FXParam 46 			"Gain-Band 16"
+    Shift+Rotary8 		FXParam 47 			"Q-Band 16"
+   		
+	DisplayUpper8 		FXParamNameDisplay 	"45"			"Freq 16"
+	DisplayLower8 		FXParamValueDisplay "45"
+	
+	Shift+DisplayUpper8 FXParamNameDisplay 	"47"			"Q-Band 16"
+	Shift+DisplayLower8 FXParamValueDisplay "47"
+
+	BankLeft			GoZone				"VST: ReaEQ (Cockos)"
+	BankRight			GoZone				NoAction
+
+ZoneEnd

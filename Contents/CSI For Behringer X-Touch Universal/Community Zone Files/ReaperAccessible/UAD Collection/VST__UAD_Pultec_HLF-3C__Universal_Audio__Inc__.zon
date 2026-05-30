@@ -1,0 +1,8 @@
+Zone "VST: UAD Pultec HLF-3C (Universal Audio, Inc.)"
+	FXParam 0 "Low Cut"
+	FXParam 1 "High Cut"
+	FXParam 2 "Enable"
+	FXParam 3 "Bypass"
+	FXParam 4 "Wet"
+	FXParam 5 "Delta"
+ZoneEnd

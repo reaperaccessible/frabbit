@@ -1,0 +1,128 @@
+Zone "VST3: Archetype Tim Henson (Neural DSP) 3-2"
+// Page 3 Section 2
+// page : "Roses Amp"
+// section : "Roses EQ"
+    Rotary1  FXParam 18 [ (1) 0.0 0.5 1.0 ]
+    Rotary2           NoAction
+    Rotary3           NoAction
+    Rotary4           NoAction
+    Rotary5           NoAction
+    Rotary6           NoAction
+    Rotary7           NoAction
+    Rotary8           NoAction
+    RotaryPush1       NoAction
+    RotaryPush2       NoAction
+    RotaryPush3       NoAction
+    RotaryPush4       NoAction
+    RotaryPush5       NoAction
+    RotaryPush6       NoAction
+    RotaryPush7       NoAction
+    RotaryPush8       NoAction
+    RecordArm1        NoAction
+    RecordArm2        NoAction
+    RecordArm3        NoAction
+    RecordArm4        NoAction
+    RecordArm5        NoAction
+    RecordArm6        NoAction
+    RecordArm7        NoAction
+    RecordArm8        NoAction
+    Solo1             NoAction
+    Solo2             NoAction
+    Solo3             NoAction
+    Solo4             NoAction
+    Solo5             NoAction
+    Solo6             NoAction
+    Solo7             NoAction
+    Solo8             NoAction
+    Mute1  FXParam 40 "EQ Section Active" [ 0.0 1.0 ]
+    Mute2  FXParam 41 "Roses EQ Active" [ 0.0 1.0 ]
+    Mute3             NoAction
+    Mute4             NoAction
+    Mute5             NoAction
+    Mute6             NoAction
+    Mute7             NoAction
+    Mute8             NoAction
+    Select1           NoAction
+    Select2           NoAction
+    Select3           NoAction
+    Select4           NoAction
+    Select5           NoAction
+    Select6           NoAction
+    Select7           NoAction
+    Select8           NoAction
+    Fader1  FXParam 42 "Roses EQ Band 1" 
+    Fader2  FXParam 43 "Roses EQ Band 2" 
+    Fader3  FXParam 44 "Roses EQ Band 3" 
+    Fader4  FXParam 45 "Roses EQ Band 4" 
+    Fader5  FXParam 46 "Roses EQ Band 5" 
+    Fader6  FXParam 47 "Roses EQ Band 6" 
+    Fader7  FXParam 48 "Roses EQ Band 7" 
+    Fader8  FXParam 49 "Roses EQ Band 8" 
+
+    Shift+Rotary2     NoAction
+    Shift+Rotary3     NoAction
+    Shift+Rotary4     NoAction
+    Shift+Rotary5     NoAction
+    Shift+Rotary6     NoAction
+    Shift+Rotary7     NoAction
+    Shift+Rotary8     NoAction
+    Shift+RotaryPush1 NoAction
+    Shift+RotaryPush2 NoAction
+    Shift+RotaryPush3 NoAction
+    Shift+RotaryPush4 NoAction
+    Shift+RotaryPush5 NoAction
+    Shift+RotaryPush6 NoAction
+    Shift+RotaryPush7 NoAction
+    Shift+RotaryPush8 NoAction
+    Shift+RecordArm1  NoAction
+    Shift+RecordArm2  NoAction
+    Shift+RecordArm3  NoAction
+    Shift+RecordArm4  NoAction
+    Shift+RecordArm5  NoAction
+    Shift+RecordArm6  NoAction
+    Shift+RecordArm7  NoAction
+    Shift+RecordArm8  NoAction
+    Shift+Solo1       NoAction
+    Shift+Solo2       NoAction
+    Shift+Solo3       NoAction
+    Shift+Solo4       NoAction
+    Shift+Solo5       NoAction
+    Shift+Solo6       NoAction
+    Shift+Solo7       NoAction
+    Shift+Solo8       NoAction
+    Shift+Mute1       NoAction
+    Shift+Mute2       NoAction
+    Shift+Mute3       NoAction
+    Shift+Mute4       NoAction
+    Shift+Mute5       NoAction
+    Shift+Mute6       NoAction
+    Shift+Mute7       NoAction
+    Shift+Mute8       NoAction
+    Shift+Select1     NoAction
+    Shift+Select2     NoAction
+    Shift+Select3     NoAction
+    Shift+Select4     NoAction
+    Shift+Select5     NoAction
+    Shift+Select6     NoAction
+    Shift+Select7     NoAction
+    Shift+Select8     NoAction
+    Shift+Fader1  FXParam 50 "Roses EQ Band 9" 
+    Shift+Fader2      NoAction
+    Shift+Fader3      NoAction
+    Shift+Fader4      NoAction
+    Shift+Fader5      NoAction
+    Shift+Fader6      NoAction
+    Shift+Fader7      NoAction
+    Shift+Fader8      NoAction
+
+
+    Up        Speak "Pedal Section"
+    Up        GoSubZone "VST3: Archetype Tim Henson (Neural DSP) 2-1"
+    Down      Speak "Cherubs Amp"
+    Down      GoSubZone "VST3: Archetype Tim Henson (Neural DSP) 4-1"
+    Left      Speak "Amp"
+    Left      GoSubZone "VST3: Archetype Tim Henson (Neural DSP) 3-1"
+    Right     NoAction
+    Marker    Speak "Roses Amp, Roses EQ"
+    Hold+Marker Speak "Archetype Tim Henson"
+ZoneEnd

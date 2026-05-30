@@ -1,0 +1,151 @@
+Zone "VST: ReaDelay (Cockos)" "ReaDly"
+
+SubZones
+	"VST: ReaDelay (Cockos)-2"
+	"VST: ReaDelay (Cockos)-3"
+	"VST: ReaDelay (Cockos)-4"
+SubZonesEnd
+
+ChannelLeft 	GoSubZone "VST: ReaDelay (Cockos)-4"
+ChannelRight	GoSubZone "VST: ReaDelay (Cockos)-2"
+
+DisplayUpper1   		FXParamNameDisplay 3 "Time_1"
+DisplayLower1   		FXParamValueDisplay 3
+Flip+DisplayUpper1   	FXParamNameDisplay 2 "Enab_1"
+Flip+DisplayLower1   	FXParamValueDisplay 2
+Rotary1         		FXParam 3	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.01) ]
+RotaryPush1     		FXParam 2	[ 0.0 1.0 ]
+Record1         		NoAction
+Solo1           		NoAction
+Mute1           		NoAction
+Select1         		NoAction
+Fader1          		NoAction
+
+DisplayUpper2   		FXParamNameDisplay 4 "Note_1"
+DisplayLower2   		FXParamValueDisplay 4
+Rotary2         		FXParam 4	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+RotaryPush2     		NoAction
+Record2         		NoAction
+Solo2           		NoAction
+Mute2           		NoAction
+Select2         		NoAction
+Fader2          		NoAction
+
+DisplayUpper3   		FXParamNameDisplay 5 "FB_1"
+DisplayLower3   		FXParamValueDisplay 5
+Rotary3         		FXParam 5	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+RotaryPush3     		NoAction
+Record3         		NoAction
+Solo3           		NoAction
+Mute3           		NoAction
+Select3         		NoAction
+Fader3          		NoAction
+
+DisplayUpper4   		FXParamNameDisplay 10 "Vol_1"
+DisplayLower4   		FXParamValueDisplay 10
+Toggle+DisplayUpper4   	FXParamNameDisplay 11 "Pan_1"
+Toggle+DisplayLower4   	FXParamValueDisplay 11
+Rotary4         		FXParam 10	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+Toggle+Rotary4         	FXParam 11	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+RotaryPush4     		ToggleChannel
+Record4         		NoAction
+Solo4           		NoAction
+Mute4           		NoAction
+Select4         		NoAction
+Fader4          		NoAction
+
+DisplayUpper5   		FXParamNameDisplay 7 "HPF_1"
+DisplayLower5   		FXParamValueDisplay 7
+Toggle+DisplayUpper5   	FXParamNameDisplay 9 "Wid_1"
+Toggle+DisplayLower5   	FXParamValueDisplay 9
+Rotary5         		FXParam 7	[ (0.000003,0.000006,0.00001,0.00003,0.00006,0.0001,0.001) ]
+Toggle+Rotary5         	FXParam 9	[ (0.000003,0.000006,0.00001,0.00003,0.00006,0.0001,0.001) ]
+RotaryPush5     		ToggleChannel
+Record5         		NoAction
+Solo5           		NoAction
+Mute5           		NoAction
+Select5         		NoAction
+Fader5          		NoAction
+
+DisplayUpper6   		FXParamNameDisplay 6 "LPF_1" 
+DisplayLower6   		FXParamValueDisplay 6
+Toggle+DisplayUpper6   	FXParamNameDisplay 8 "Res_1"
+Toggle+DisplayLower6   	FXParamValueDisplay 8
+Toggle+Rotary6         	FXParam 8	[ (0.000003,0.000006,0.00001,0.00003,0.00006,0.001,0.01) ]
+Rotary6         		FXParam 6	[ (0.000003,0.000006,0.00001,0.00003,0.00006,0.001,0.01) ]
+RotaryPush6     		ToggleChanne
+Record6         		NoAction
+Solo6           		NoAction
+Mute6           		NoAction
+Select6         		NoAction
+Fader6          		NoAction
+
+DisplayUpper7   		FXParamNameDisplay 0 "Wet" 
+DisplayLower7   		FXParamValueDisplay 0
+Rotary7         		FXParam 0	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+RotaryPush7     		NoAction
+Record7         		NoAction
+Solo7           		NoAction
+Mute7           		NoAction
+Select7         		NoAction
+Fader7          		NoAction
+
+DisplayUpper8   		FXParamNameDisplay 1 "Dry"
+DisplayLower8   		FXParamValueDisplay 1
+Rotary8         		FXParam 1	[ (0.000003,0.000006,0.00001,0.00007,0.0001,0.005,0.03) ]
+RotaryPush8     		NoAction
+Record8         		NoAction
+Solo8           		NoAction
+Mute8           		NoAction
+Select8         		NoAction
+Fader8          		NoAction
+
+ZoneEnd
+
+/Zone "VST: ReaDelay (Cockos)"
+/	FXParam 0 "Wet"
+/	FXParam 1 "Dry"
+/	FXParam 2 "1: Enabled"
+/	FXParam 3 "1: Length"
+/	FXParam 4 "1: Length"
+/	FXParam 5 "1: Feedback"
+/	FXParam 6 "1: Lowpass"
+/	FXParam 7 "1: Hipass"
+/	FXParam 8 "1: Resolution"
+/	FXParam 9 "1: Stereo width"
+/	FXParam 10 "1: Volume"
+/	FXParam 11 "1: Pan"
+/	FXParam 12 "2: Enabled"
+/	FXParam 13 "2: Length"
+/	FXParam 14 "2: Length"
+/	FXParam 15 "2: Feedback"
+/	FXParam 16 "2: Lowpass"
+/	FXParam 17 "2: Hipass"
+/	FXParam 18 "2: Resolution"
+/	FXParam 19 "2: Stereo width"
+/	FXParam 20 "2: Volume"
+/	FXParam 21 "2: Pan"
+/	FXParam 22 "3: Enabled"
+/	FXParam 23 "3: Length"
+/	FXParam 24 "3: Length"
+/	FXParam 25 "3: Feedback"
+/	FXParam 26 "3: Lowpass"
+/	FXParam 27 "3: Hipass"
+/	FXParam 28 "3: Resolution"
+/	FXParam 29 "3: Stereo width"
+/	FXParam 30 "3: Volume"
+/	FXParam 31 "3: Pan"
+/	FXParam 32 "4: Enabled"
+/	FXParam 33 "4: Length"
+/	FXParam 34 "4: Length"
+/	FXParam 35 "4: Feedback"
+/	FXParam 36 "4: Lowpass"
+/	FXParam 37 "4: Hipass"
+/	FXParam 38 "4: Resolution"
+/	FXParam 39 "4: Stereo width"
+/	FXParam 40 "4: Volume"
+/	FXParam 41 "4: Pan"
+/	FXParam 42 "Bypass"
+/	FXParam 43 "Wet"
+/	FXParam 44 "Delta"
+/ZoneEnd

@@ -1,0 +1,310 @@
+Zone OSARASettingsHelp
+  OnZoneActivation  Speak "OSARA Settings Help Mode On, To disable help mode, press GlobalView"
+  OnZoneActivation  SetXTouchDisplayColors Green
+  OnZoneDeactivation  RestoreXTouchDisplayColors
+
+// Left panel
+
+// Strip 1
+
+  RotaryPush1 NoAction
+  RotaryPush1 Speak "RotaryPush1, NoAction"
+  RotaryPush2 NoAction
+  RotaryPush2 Speak "RotaryPush2, NoAction"
+  RotaryPush3 NoAction
+  RotaryPush3 Speak "RotaryPush3, NoAction"
+  RotaryPush4 NoAction
+  RotaryPush4 Speak "RotaryPush4, NoAction"
+  RotaryPush5 NoAction
+  RotaryPush5 Speak "RotaryPush5, NoAction"
+  RotaryPush6 NoAction
+  RotaryPush6 Speak "RotaryPush6, NoAction"
+  RotaryPush7 NoAction
+  RotaryPush7 Speak "RotaryPush7, NoAction"
+  RotaryPush8 NoAction
+  RotaryPush8 Speak "RotaryPush8, NoAction"
+
+  Decrease+Rotary1 NoAction
+  Decrease+Rotary1 Speak "Decrease+Rotary1, NoAction"
+  Decrease+Rotary2 NoAction
+  Decrease+Rotary2 Speak "Decrease+Rotary2, NoAction"
+  Decrease+Rotary3 NoAction
+  Decrease+Rotary3 Speak "Decrease+Rotary3, NoAction"
+  Decrease+Rotary4 NoAction
+  Decrease+Rotary4 Speak "Decrease+Rotary4, NoAction"
+ Decrease+Rotary5 NoAction
+  Decrease+Rotary5 Speak "Decrease+Rotary5, NoAction"
+  Decrease+Rotary7 NoAction
+  Decrease+Rotary7 Speak "Decrease+Rotary7, NoAction"
+  Decrease+Rotary6 NoAction
+  Decrease+Rotary6 Speak "Decrease+Rotary6, NoAction"
+  Decrease+Rotary8 NoAction
+  Decrease+Rotary8 Speak "Decrease+Rotary8, NoAction"
+
+  Increase+Rotary1 NoAction
+  Increase+Rotary1 Speak "Increase+Rotary1, NoAction"
+  Increase+Rotary2 NoAction
+  Increase+Rotary2 Speak "Increase+Rotary2, NoAction"
+  Increase+Rotary3 NoAction
+  Increase+Rotary3 Speak "Increase+Rotary3, NoAction"
+  Increase+Rotary4 NoAction
+  Increase+Rotary4 Speak "Increase+Rotary4, NoAction"
+  Increase+Rotary5 NoAction
+  Increase+Rotary5 Speak "Increase+Rotary5, NoAction"
+  Increase+Rotary6 NoAction
+  Increase+Rotary6 Speak "Increase+Rotary6, NoAction"
+  Increase+Rotary7 NoAction
+  Increase+Rotary7 Speak "Increase+Rotary7, NoAction"
+  Increase+Rotary8 NoAction
+  Increase+Rotary8 Speak "Increase+Rotary8, NoAction"
+
+// Strip 2
+
+  RecordArm1 NoAction
+  RecordArm1 Speak "RecordArm1, NoAction"
+  RecordArm2 NoAction
+  RecordArm2 Speak "RecordArm2, NoAction"
+  RecordArm3 NoAction
+  RecordArm3 Speak "RecordArm3, NoAction"
+  RecordArm4 NoAction
+  RecordArm4 Speak "RecordArm4, NoAction"
+  RecordArm5 NoAction
+  RecordArm5 Speak "RecordArm5, NoAction"
+  RecordArm6 NoAction
+  RecordArm6 Speak "RecordArm6, NoAction"
+  RecordArm7 NoAction
+  RecordArm7 Speak "RecordArm7, NoAction"
+  RecordArm8 NoAction
+  RecordArm8 Speak "RecordArm8, NoAction"
+
+// Strip 3
+
+  Solo1 NoAction
+  Solo1 Speak "Solo1, NoAction"
+  Solo2 NoAction
+  Solo2 Speak "Solo2, NoAction"
+  Solo3 NoAction
+  Solo3 Speak "Solo3, NoAction"
+  Solo4 NoAction
+  Solo4 Speak "Solo4, NoAction"
+  Solo5 NoAction
+  Solo5 Speak "Solo5, NoAction"
+  Solo6 NoAction
+  Solo6 Speak "Solo6, NoAction"
+  Solo7 NoAction
+  Solo7 Speak "Solo7, NoAction"
+  Solo8 NoAction
+  Solo8 Speak "Solo8, NoAction"
+
+// Strip 4
+
+  Mute1 NoAction
+  Mute1 Speak "Mute1, NoAction"
+  Mute2 NoAction
+  Mute2 Speak "Mute2, NoAction"
+  Mute3 NoAction
+  Mute3 Speak "Mute3, NoAction"
+  Mute4 NoAction
+  Mute4 Speak "Mute4, NoAction"
+  Mute5 NoAction
+  Mute5 Speak "Mute5, NoAction"
+  Mute6 NoAction
+  Mute6 Speak "Mute6, NoAction"
+  Mute7 NoAction
+  Mute7 Speak "Mute7, NoAction"
+  Mute8 NoAction
+  Mute8 Speak "Mute8, NoAction"
+
+// Strip 5
+
+  Select1 NoAction
+  Select1 Speak "Select1, NoAction"
+  Select2 NoAction
+  Select2 Speak "Select2, NoAction"
+  Select3 NoAction
+  Select3 Speak "Select3, NoAction"
+  Select4 NoAction
+  Select4 Speak "Select4, NoAction"
+  Select5 NoAction
+  Select5 Speak "Select5, NoAction"
+  Select6 NoAction
+  Select6 Speak "Select6, NoAction"
+  Select7 NoAction
+  Select7 Speak "Select7, NoAction"
+  Select8 NoAction
+  Select8 Speak "Select8, NoAction"
+
+// Strip 6
+
+  Fader1 NoAction
+  Fader1 Speak "Fader1, NoAction"
+  Fader2 NoAction
+  Fader2 Speak "Fader2, NoAction"
+  Fader3 NoAction
+  Fader3 Speak "Fader3, NoAction"
+  Fader4 NoAction
+  Fader4 Speak "Fader4, NoAction"
+  Fader5 NoAction
+  Fader5 Speak "Fader5, NoAction"
+  Fader6 NoAction
+  Fader6 Speak "Fader6, NoAction"
+  Fader7 NoAction
+  Fader7 Speak "Fader7, NoAction"
+  Fader8 NoAction
+  Fader8 Speak "Fader8, NoAction"
+
+  MasterFader NoAction
+  MasterFader Speak "MasterFader, NoAction"
+
+// Right Panel
+
+// Strip 1
+
+  Track  NoAction
+  Track  Speak "Track, NoAction"
+  Pan  NoAction
+  Pan  Speak "Pan, NoAction"
+  EQ  NoAction
+  EQ  Speak "EQ, NoAction"
+  Send  NoAction
+  Send  Speak "Send, NoAction"
+  Plugin  NoAction
+  Plugin  Speak "Plugin, NoAction"
+  Instrument  NoAction
+  Instrument  Speak "Instrument, NoAction"
+
+// Strip 2
+
+  MidiTracks  Speak "MidiTracks, OSARA: Toggle Report changes made via control surfaces"
+  Inputs  Speak "Inputs, OSARA: Toggle Report track numbers"
+  AudioTracks  Speak "AudioTracks, OSARA: Toggle Report transport state (play, record, etc.)"
+  AudioInstrument  Speak "AudioInstrument, OSARA: Toggle Move relative to the play cursor for time movement commands during playback"
+  Aux  Speak "Aux, OSARA: Toggle Report time movement during playback/recording"
+  Busses  Speak "Busses, OSARA: Toggle Report markers during playback"
+  Outputs  Speak "Outputs, OSARA: Toggle Report position when scrubbing"
+  User  Speak "User, OSARA: Toggle Report full time for time movement commands"
+
+  F1  Speak "F1, OSARA: Toggle Report FX when moving to tracks/takes"
+  F2  Speak "F2, OSARA: Toggle Report time selection start and end while playing"
+  F3  NoAction
+  F3  Speak "F3, NoAction"
+  F4  NoAction
+  F4  Speak "F4, NoAction"
+  F5  NoAction
+  F5  Speak "F5, NoAction"
+  F6  NoAction
+  F6  Speak "F6, NoAction"
+  F7  NoAction
+  F7  Speak "F7, NoAction"
+  F8  NoAction
+  F8  Speak "F8, NoAction"
+
+// Strip 4
+
+  Shift  Shift
+  Option  Option
+  Read  NoAction
+  Read  Speak "Read, NoAction"
+  Write  NoAction
+  Write  Speak "Write, NoAction"
+  Trim  NoAction
+  Trim  Speak "Trim, NoAction"
+  Save  NoAction
+  Save  Speak "Save, NoAction"
+  Undo  NoAction
+  Undo  Speak "Undo, NoAction"
+
+// Strip 5
+
+  Control  Control
+  Alt  Alt   
+  Touch  NoAction
+  Touch  Speak "Touch, NoAction"
+  Latch  NoAction
+  Latch  Speak "Latch, NoAction"
+  Group  NoAction
+  Group  Speak "Group, NoAction"
+  Cancel  NoAction
+  Cancel  Speak "Cancel, NoAction"
+  Enter  NoAction
+  Enter  Speak "Enter, NoAction"
+
+// Strip 6
+
+  Marker  NoAction
+  Marker  Speak "Marker, NoAction"
+  Nudge  NoAction
+  Nudge  Speak "Nudge, NoAction"
+  Cycle  NoAction
+  Cycle  Speak "Cycle, NoAction"
+  Drop  NoAction
+  Drop  Speak "Drop, NoAction"
+  Replace  NoAction
+  Replace  Speak "Replace, NoAction"
+  Click  NoAction
+  Click  Speak "Click, NoAction"
+  Solo  NoAction
+  Solo  Speak "Solo, NoAction"
+
+// Strip 7
+
+  Rewind  NoAction
+  Rewind  Speak "Rewind, NoAction"
+  FastForward  NoAction
+  FastForward  Speak "FastForward, NoAction"
+  Stop  NoAction
+  Stop  Speak "Stop, NoAction"
+  Play  NoAction
+  Play  Speak "Play, NoAction"
+  Record  NoAction
+  Record  Speak "Record, NoAction"
+
+// Strip 8
+
+  Decrease+JogWheel  NoAction
+  Decrease+JogWheel  Speak "Decrease+JogWheel, NoAction"
+  Increase+JogWheel  NoAction
+  Increase+JogWheel  Speak "Increase+JogWheel, NoAction"
+  Scrub  NoAction
+  Scrub  Speak "Scrub, NoAction"
+
+// Strip 9
+
+  BankLeft  NoAction
+  BankLeft  Speak "BankLeft, NoAction"
+  BankRight  NoAction
+  BankRight  Speak "BankRight, NoAction"
+  ChannelLeft  NoAction
+  ChannelLeft  Speak "ChannelLeft, NoAction"
+  ChannelRight  NoAction
+  ChannelRight  Speak "ChannelRight, NoAction"
+
+// Strip 10
+
+  Up  NoAction
+  Up  Speak "Up, NoAction"
+  Down  NoAction
+  Down  Speak "Down, NoAction"
+  Left  NoAction
+  Left  Speak "Left, NoAction"
+  Right  NoAction
+  Right  Speak "Right, NoAction"
+  Zoom  NoAction
+  Zoom  Speak "Zoom, NoAction"
+
+// Strip 11
+
+  smpteBeats  NoAction
+  smpteBeats  Speak "NoAction"
+  nameValue  NoAction
+  nameValue  Speak "NameValue, NoAction"
+  GlobalView  GoZone  OSARASettings
+  GlobalView  Speak "OSARASettings Help Off"
+
+// Strip 12
+
+  Footswitch1  NoAction
+  Footswitch1  Speak "Footswitch1, NoAction"
+  Footswitch2  NoAction
+  Footswitch2  Speak "Footswitch2, NoAction"
+ZoneEnd

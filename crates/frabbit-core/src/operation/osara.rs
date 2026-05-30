@@ -15,11 +15,11 @@ use super::{
 pub(super) const TITLE: &str = "OSARA";
 
 const RA_WIN_USA: &[u8] =
-    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - USA.ReaperKeyMap");
+    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - USA.ReaperKeyMap");
 const RA_WIN_FRF: &[u8] =
-    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap");
+    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap");
 const RA_WIN_FRC: &[u8] =
-    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap");
+    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap");
 
 pub(crate) fn embedded_keymap_bytes(choice: KeymapChoice) -> Option<&'static [u8]> {
     match choice {
