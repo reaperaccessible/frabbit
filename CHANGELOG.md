@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-05-30
+
+- Textes ameliores: actions claires, review simplifie, dropdown KeyMaps
+- Dropdown keymap nomme 'KeyMaps' avec labels courts
+- Resume affiche clairement le KeyMap selectionne
+
 ## [1.2.0] - 2026-05-30
 
 - Interface: dropdown de selection du keymap (Preserver, OSARA, ReaperAccessible x3)
