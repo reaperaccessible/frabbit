@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.6.0] - 2026-05-30
+
+- Fix: le KeyMap est maintenant applique meme si OSARA n est pas coche
+
 ## [1.5.0] - 2026-05-30
 
 - Fix: tolere les fichiers reaper-kb.ini non-UTF-8 (Windows-1252)

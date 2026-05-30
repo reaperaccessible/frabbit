@@ -950,11 +950,7 @@ pub fn install_request_from_target_and_rows(
         dry_run: options.dry_run,
         allow_reaper_running: options.allow_reaper_running,
         stage_unsupported: options.stage_unsupported,
-        keymap_choice: if osara_selected {
-            options.keymap_choice
-        } else {
-            KeymapChoice::PreserveCurrent
-        },
+        keymap_choice: options.keymap_choice,
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
         configuration_step_ids,
