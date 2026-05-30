@@ -1169,7 +1169,7 @@ struct WizardWidgets {
     version_check_error_log: TextCtrl,
     package_checklist: PackagesView,
     package_details: TextCtrl,
-    keymap_replace: CheckBox,
+    keymap_choice_dropdown: Choice,
     keymap_note: TextCtrl,
     reapack_ack_confirm: CheckBox,
     review_text: TextCtrl,
@@ -1471,7 +1471,10 @@ pub fn run() {
                             &checked,
                             &rows,
                             &notes,
-                            keymap_choice(&widgets.keymap_replace),
+                            keymap_choice_from_dropdown(
+                                &widgets.keymap_choice_dropdown,
+                                model.platform,
+                            ),
                         );
                         review_can_install.set(review_preview.can_install);
                         widgets
@@ -1580,7 +1583,10 @@ pub fn run() {
                         selected_target.as_ref(),
                         &selected_packages,
                         &rows,
-                        keymap_choice(&widgets.keymap_replace),
+                        keymap_choice_from_dropdown(
+                            &widgets.keymap_choice_dropdown,
+                            model.platform,
+                        ),
                         None,
                     ));
                 let request = match selected_target
@@ -1598,7 +1604,10 @@ pub fn run() {
                             &selected_packages,
                             configuration_step_ids,
                             WizardInstallOptions {
-                                keymap_choice: keymap_choice(&widgets.keymap_replace),
+                                keymap_choice: keymap_choice_from_dropdown(
+                                    &widgets.keymap_choice_dropdown,
+                                    model.platform,
+                                ),
                                 ..WizardInstallOptions::default()
                             },
                         )
@@ -1653,7 +1662,10 @@ pub fn run() {
                         selected_target.as_ref(),
                         &selected_packages,
                         &rows,
-                        keymap_choice(&widgets.keymap_replace),
+                        keymap_choice_from_dropdown(
+                            &widgets.keymap_choice_dropdown,
+                            model.platform,
+                        ),
                         Some(&request.cache_dir),
                     ));
                 drop(rows);
@@ -1710,7 +1722,7 @@ pub fn run() {
                             &widgets.package_checklist,
                             &package_items,
                             &widgets.package_details,
-                            &widgets.keymap_replace,
+                            &widgets.keymap_choice_dropdown,
                             &widgets.keymap_note,
                             &model,
                             &package_rows.borrow(),
@@ -2074,14 +2086,15 @@ fn add_pages(
     );
 
     let packages_page = Panel::builder(book).build();
-    let (package_checklist, package_details, keymap_replace, keymap_note) = build_packages_page(
-        &packages_page,
-        model,
-        package_rows,
-        configuration_rows,
-        package_items,
-        can_install,
-    );
+    let (package_checklist, package_details, keymap_choice_dropdown, keymap_note) =
+        build_packages_page(
+            &packages_page,
+            model,
+            package_rows,
+            configuration_rows,
+            package_items,
+            can_install,
+        );
     book.add_page(
         &packages_page,
         &model.steps[PACKAGES_STEP].label,
@@ -2128,7 +2141,7 @@ fn add_pages(
         version_check_error_log,
         package_checklist,
         package_details,
-        keymap_replace,
+        keymap_choice_dropdown,
         keymap_note,
         reapack_ack_confirm,
         review_text,
@@ -2935,7 +2948,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, CheckBox, TextCtrl) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -3005,32 +3018,31 @@ fn build_packages_page(
         page,
         &sizer,
         &model.text.packages_keymap_heading,
-        "frabbit-osara-keymap-heading",
+        "frabbit-keymap-heading",
     );
-    let keymap_replace = CheckBox::builder(page)
-        .with_label(&model.text.packages_keymap_replace_label)
-        .build();
-    keymap_replace.set_name(&model.text.packages_keymap_replace_label);
-    keymap_replace.set_label(&model.text.packages_keymap_replace_label);
-    keymap_replace.add_style(WindowStyle::TabStop);
-    keymap_replace.set_value(matches!(
-        WizardInstallOptions::default().keymap_choice,
-        KeymapChoice::Osara
-    ));
-    keymap_replace.set_can_focus(false);
-    sizer.add(&keymap_replace, 0, SizerFlag::All | SizerFlag::Expand, 6);
+    let keymap_choice_dropdown = Choice::builder(page).build();
+    keymap_choice_dropdown.set_name("frabbit-keymap-choice");
+    let keymap_choices = KeymapChoice::available_choices(model.platform);
+    for choice in &keymap_choices {
+        keymap_choice_dropdown.append(&keymap_choice_label(model, *choice));
+    }
+    keymap_choice_dropdown.set_selection(0);
+    sizer.add(
+        &keymap_choice_dropdown,
+        0,
+        SizerFlag::All | SizerFlag::Expand,
+        6,
+    );
 
     let keymap_note = TextCtrl::builder(page)
-        .with_value(&model.text.packages_keymap_unavailable_note)
+        .with_value(&model.text.packages_keymap_preserve_note)
         .with_style(TextCtrlStyle::MultiLine | TextCtrlStyle::ReadOnly | TextCtrlStyle::WordWrap)
         .with_size(Size::new(-1, 68))
         .build();
-    keymap_note.set_name("frabbit-osara-keymap-note");
-    keymap_note.enable(false);
-    keymap_note.set_can_focus(false);
+    keymap_note.set_name("frabbit-keymap-note");
     sizer.add(&keymap_note, 0, SizerFlag::All | SizerFlag::Expand, 6);
 
-    sync_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
+    sync_keymap_widgets(model, &keymap_choice_dropdown, &keymap_note);
 
     // Selection-change updates the package details text. The event fires
     // when the focused row changes via mouse or arrow keys; we use the
@@ -3042,7 +3054,7 @@ fn build_packages_page(
         let package_items = Rc::clone(&package_items);
         let model_text = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_selection_changed(move |event| {
             if let Some(item) = event.get_item() {
@@ -3060,12 +3072,7 @@ fn build_packages_page(
                     None => {}
                 }
             }
-            sync_keymap_widgets(
-                &model_text,
-                &package_rows.borrow(),
-                &keymap_replace,
-                &keymap_note,
-            );
+            sync_keymap_widgets(&model_text, &keymap_choice_dropdown, &keymap_note);
         });
     }
 
@@ -3083,7 +3090,7 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.bind_internal(EventType::TREE_STATE_IMAGE_CLICK, move |event| {
             handle_native_checkbox_toggle(
@@ -3094,7 +3101,7 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &keymap_replace,
+                &keymap_choice_dropdown,
                 &keymap_note,
                 TreeEventData::new(event).get_item(),
             );
@@ -3167,7 +3174,7 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_mouse_left_up(move |event| {
             if let WindowEventData::MouseButton(mb) = &event {
@@ -3180,7 +3187,7 @@ fn build_packages_page(
                         &can_install,
                         &wizard_model,
                         &details,
-                        &keymap_replace,
+                        &keymap_choice_dropdown,
                         &keymap_note,
                         pos,
                     );
@@ -3205,7 +3212,7 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_key_down(move |event| {
             let key_code = if let WindowEventData::Keyboard(kbd) = &event {
@@ -3266,7 +3273,7 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &keymap_replace,
+                &keymap_choice_dropdown,
                 &keymap_note,
             );
             // Consume the event so the native control doesn't *also*
@@ -3293,7 +3300,7 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_key_up(move |event| {
             let key_code = if let WindowEventData::Keyboard(kbd) = &event {
@@ -3365,7 +3372,7 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &keymap_replace,
+                &keymap_choice_dropdown,
                 &keymap_note,
             );
         });
@@ -3392,7 +3399,7 @@ fn build_packages_page(
         let can_install = Rc::clone(&can_install);
         let wizard_model = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_item_activated(move |event| {
             let Some(item) = event.get_item() else {
@@ -3417,7 +3424,7 @@ fn build_packages_page(
                 &can_install,
                 &wizard_model,
                 &details,
-                &keymap_replace,
+                &keymap_choice_dropdown,
                 &keymap_note,
             );
         });
@@ -3426,15 +3433,15 @@ fn build_packages_page(
     {
         let model_text = model.clone();
         let rows = Rc::clone(&package_rows);
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
-        keymap_replace.on_toggled(move |_| {
-            sync_keymap_widgets(&model_text, &rows.borrow(), &keymap_replace, &keymap_note);
+        keymap_choice_dropdown.on_selection_changed(move |_| {
+            sync_keymap_widgets(&model_text, &keymap_choice_dropdown, &keymap_note);
         });
     }
 
     page.set_sizer(sizer, true);
-    (tree, details, keymap_replace, keymap_note)
+    (tree, details, keymap_choice_dropdown, keymap_note)
 }
 
 /// Windows-only: which top-level group a tree item belongs to, if any.
@@ -3558,7 +3565,7 @@ fn handle_native_checkbox_toggle(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    keymap_replace: &CheckBox,
+    keymap_choice_dropdown: &Choice,
     keymap_note: &TextCtrl,
     item: Option<TreeItemId>,
 ) {
@@ -3618,7 +3625,7 @@ fn handle_native_checkbox_toggle(
         can_install,
         wizard_model,
         details,
-        keymap_replace,
+        keymap_choice_dropdown,
         keymap_note,
     );
 }
@@ -3644,7 +3651,7 @@ fn handle_packages_left_up(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    keymap_replace: &CheckBox,
+    keymap_choice_dropdown: &Choice,
     keymap_note: &TextCtrl,
     pos: Point,
 ) {
@@ -3696,7 +3703,7 @@ fn handle_packages_left_up(
         can_install,
         wizard_model,
         details,
-        keymap_replace,
+        keymap_choice_dropdown,
         keymap_note,
     );
 }
@@ -3718,7 +3725,7 @@ fn refresh_after_packages_toggle(
     can_install: &Rc<Cell<bool>>,
     wizard_model: &WizardModel,
     details: &TextCtrl,
-    keymap_replace: &CheckBox,
+    keymap_choice_dropdown: &Choice,
     keymap_note: &TextCtrl,
 ) {
     // Configuration rows depend on the package plan (e.g. ReaPack must
@@ -3788,12 +3795,7 @@ fn refresh_after_packages_toggle(
         }
     }
 
-    sync_keymap_widgets(
-        wizard_model,
-        &package_rows.borrow(),
-        keymap_replace,
-        keymap_note,
-    );
+    sync_keymap_widgets(wizard_model, keymap_choice_dropdown, keymap_note);
 }
 
 /// Windows-only: implement the parent-checkbox propagation for the
@@ -3900,7 +3902,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, CheckBox, TextCtrl) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -3999,38 +4001,37 @@ fn build_packages_page(
         page,
         &sizer,
         &model.text.packages_keymap_heading,
-        "frabbit-osara-keymap-heading",
+        "frabbit-keymap-heading",
     );
-    let keymap_replace = CheckBox::builder(page)
-        .with_label(&model.text.packages_keymap_replace_label)
-        .build();
-    keymap_replace.set_name(&model.text.packages_keymap_replace_label);
-    keymap_replace.set_label(&model.text.packages_keymap_replace_label);
-    keymap_replace.add_style(WindowStyle::TabStop);
-    keymap_replace.set_value(matches!(
-        WizardInstallOptions::default().keymap_choice,
-        KeymapChoice::Osara
-    ));
-    keymap_replace.set_can_focus(false);
-    sizer.add(&keymap_replace, 0, SizerFlag::All | SizerFlag::Expand, 6);
+    let keymap_choice_dropdown = Choice::builder(page).build();
+    keymap_choice_dropdown.set_name("frabbit-keymap-choice");
+    let keymap_choices = KeymapChoice::available_choices(model.platform);
+    for choice in &keymap_choices {
+        keymap_choice_dropdown.append(&keymap_choice_label(model, *choice));
+    }
+    keymap_choice_dropdown.set_selection(0);
+    sizer.add(
+        &keymap_choice_dropdown,
+        0,
+        SizerFlag::All | SizerFlag::Expand,
+        6,
+    );
 
     let keymap_note = TextCtrl::builder(page)
-        .with_value(&model.text.packages_keymap_unavailable_note)
+        .with_value(&model.text.packages_keymap_preserve_note)
         .with_style(TextCtrlStyle::MultiLine | TextCtrlStyle::ReadOnly | TextCtrlStyle::WordWrap)
         .with_size(Size::new(-1, 68))
         .build();
-    keymap_note.set_name("frabbit-osara-keymap-note");
-    keymap_note.enable(false);
-    keymap_note.set_can_focus(false);
+    keymap_note.set_name("frabbit-keymap-note");
     sizer.add(&keymap_note, 0, SizerFlag::All | SizerFlag::Expand, 6);
 
-    sync_keymap_widgets(model, &package_rows.borrow(), &keymap_replace, &keymap_note);
+    sync_keymap_widgets(model, &keymap_choice_dropdown, &keymap_note);
 
     {
         let package_rows = Rc::clone(&package_rows);
         let model_text = model.clone();
         let details = details;
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
         tree.on_selection_changed(move |event| {
             if let Some(item) = event.get_item() {
@@ -4049,27 +4050,22 @@ fn build_packages_page(
                     }
                 }
             }
-            sync_keymap_widgets(
-                &model_text,
-                &package_rows.borrow(),
-                &keymap_replace,
-                &keymap_note,
-            );
+            sync_keymap_widgets(&model_text, &keymap_choice_dropdown, &keymap_note);
         });
     }
 
     {
         let model_text = model.clone();
         let rows = Rc::clone(&package_rows);
-        let keymap_replace = keymap_replace;
+        let keymap_choice_dropdown = keymap_choice_dropdown;
         let keymap_note = keymap_note;
-        keymap_replace.on_toggled(move |_| {
-            sync_keymap_widgets(&model_text, &rows.borrow(), &keymap_replace, &keymap_note);
+        keymap_choice_dropdown.on_selection_changed(move |_| {
+            sync_keymap_widgets(&model_text, &keymap_choice_dropdown, &keymap_note);
         });
     }
 
     page.set_sizer(sizer, true);
-    (tree, details, keymap_replace, keymap_note)
+    (tree, details, keymap_choice_dropdown, keymap_note)
 }
 
 /// Non-Windows: build the `CustomDataViewTreeModel` that backs the packages
@@ -4448,7 +4444,7 @@ fn refresh_package_checklist(
     tree: &PackagesView,
     package_items: &PackagesStateCell,
     details: &TextCtrl,
-    keymap_replace: &CheckBox,
+    keymap_choice_dropdown: &Choice,
     keymap_note: &TextCtrl,
     model: &WizardModel,
     rows: &[crate::PackageRow],
@@ -4456,7 +4452,7 @@ fn refresh_package_checklist(
 ) {
     rebuild_packages_tree_model(tree, package_items, model, rows, configuration_rows);
     details.set_value(&rows.first().map(package_details).unwrap_or_default());
-    sync_keymap_widgets(model, rows, keymap_replace, keymap_note);
+    sync_keymap_widgets(model, keymap_choice_dropdown, keymap_note);
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -4898,11 +4894,26 @@ fn checked_package_indices(rows: &[PackageRow]) -> Vec<usize> {
         .collect()
 }
 
-fn keymap_choice(checkbox: &CheckBox) -> KeymapChoice {
-    if checkbox.get_value() {
-        KeymapChoice::Osara
-    } else {
-        KeymapChoice::PreserveCurrent
+fn keymap_choice_from_dropdown(dropdown: &Choice, platform: Platform) -> KeymapChoice {
+    let choices = KeymapChoice::available_choices(platform);
+    let idx = dropdown.get_selection().unwrap_or(0) as usize;
+    choices
+        .get(idx)
+        .copied()
+        .unwrap_or(KeymapChoice::PreserveCurrent)
+}
+
+fn keymap_choice_label(model: &WizardModel, choice: KeymapChoice) -> String {
+    match choice {
+        KeymapChoice::PreserveCurrent => model.text.packages_keymap_preserve_note.clone(),
+        KeymapChoice::Osara => "OSARA (USA)".to_string(),
+        KeymapChoice::ReaperAccessibleWinUsa => "ReaperAccessible (USA)".to_string(),
+        KeymapChoice::ReaperAccessibleWinFrf => {
+            "ReaperAccessible (Fran\u{e7}ais France)".to_string()
+        }
+        KeymapChoice::ReaperAccessibleWinFrc => {
+            "ReaperAccessible (Fran\u{e7}ais Canada)".to_string()
+        }
     }
 }
 
@@ -4916,7 +4927,7 @@ fn refresh_package_checklist(
     tree: &PackagesView,
     package_items: &PackagesStateCell,
     details: &TextCtrl,
-    keymap_replace: &CheckBox,
+    keymap_choice_dropdown: &Choice,
     keymap_note: &TextCtrl,
     model: &WizardModel,
     rows: &[crate::PackageRow],
@@ -4924,22 +4935,12 @@ fn refresh_package_checklist(
 ) {
     populate_packages_tree(tree, package_items, model, rows, configuration_rows);
     details.set_value(&rows.first().map(package_details).unwrap_or_default());
-    sync_keymap_widgets(model, rows, keymap_replace, keymap_note);
+    sync_keymap_widgets(model, keymap_choice_dropdown, keymap_note);
 }
 
-fn sync_keymap_widgets(
-    model: &WizardModel,
-    rows: &[crate::PackageRow],
-    checkbox: &CheckBox,
-    note: &TextCtrl,
-) {
-    let selected_indices = checked_package_indices(rows);
-    let osara_selected = osara_selected_for_rows(rows, &selected_indices);
-    checkbox.enable(osara_selected);
-    checkbox.set_can_focus(osara_selected);
-    note.set_value(&keymap_note(model, osara_selected, keymap_choice(checkbox)));
-    note.enable(osara_selected);
-    note.set_can_focus(osara_selected);
+fn sync_keymap_widgets(model: &WizardModel, dropdown: &Choice, note: &TextCtrl) {
+    let choice = keymap_choice_from_dropdown(dropdown, model.platform);
+    note.set_value(&keymap_note(model, true, choice));
 }
 
 fn portable_choice_index(model: &WizardModel) -> usize {

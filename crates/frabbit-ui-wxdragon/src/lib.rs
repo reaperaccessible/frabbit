@@ -638,19 +638,13 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         version_check_progress_label: localizer.text("wizard-version-check-progress-label").value,
         version_check_error_heading: localizer.text("wizard-version-check-error-heading").value,
         package_details_label: localizer.text("wizard-package-details-label").value,
-        packages_keymap_heading: localizer.text("wizard-packages-osara-keymap-heading").value,
-        packages_keymap_replace_label: localizer
-            .text("wizard-packages-osara-keymap-replace-label")
-            .value,
+        packages_keymap_heading: localizer.text("wizard-packages-keymap-heading").value,
+        packages_keymap_replace_label: localizer.text("wizard-packages-keymap-replace-label").value,
         packages_keymap_unavailable_note: localizer
-            .text("wizard-packages-osara-keymap-unavailable-note")
+            .text("wizard-packages-keymap-unavailable-note")
             .value,
-        packages_keymap_preserve_note: localizer
-            .text("wizard-packages-osara-keymap-preserve-note")
-            .value,
-        packages_keymap_replace_note: localizer
-            .text("wizard-packages-osara-keymap-replace-note")
-            .value,
+        packages_keymap_preserve_note: localizer.text("wizard-packages-keymap-preserve-note").value,
+        packages_keymap_replace_note: localizer.text("wizard-packages-keymap-replace-note").value,
         package_details_handling_prefix: localizer
             .text("wizard-package-details-handling-prefix")
             .value,
@@ -662,9 +656,9 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         review_heading: localizer.text("wizard-review-heading").value,
         review_target_prefix: localizer.text("wizard-review-target-prefix").value,
         review_package_heading: localizer.text("wizard-review-package-heading").value,
-        review_keymap_heading: localizer.text("wizard-review-osara-keymap-heading").value,
-        review_keymap_preserve: localizer.text("wizard-review-osara-keymap-preserve").value,
-        review_keymap_replace: localizer.text("wizard-review-osara-keymap-replace").value,
+        review_keymap_heading: localizer.text("wizard-review-keymap-heading").value,
+        review_keymap_preserve: localizer.text("wizard-review-keymap-preserve").value,
+        review_keymap_replace: localizer.text("wizard-review-keymap-replace").value,
         review_notes_heading: localizer.text("wizard-review-notes-heading").value,
         review_preflight_prefix: localizer.text("wizard-review-preflight-prefix").value,
         review_no_target: localizer.text("wizard-review-no-target").value,

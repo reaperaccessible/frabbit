@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-05-30
+
+- Interface: dropdown de selection du keymap (Preserver, OSARA, ReaperAccessible x3)
+- Suppression du support Windows ARM64 (instable)
+
 ## [1.1.0] - 2026-05-30
 
 - Ajout des keymaps ReaperAccessible (Windows) : USA, Francais France, Francais Canada
