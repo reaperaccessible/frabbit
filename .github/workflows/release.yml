@@ -291,15 +291,21 @@ jobs:
           # retargets every previously-released client onto the new fat
           # binary on its next self-update check.
           MACOS_UNIVERSAL_PATH="$(find release -maxdepth 1 -type f -name 'frabbit-*-macos-universal' ! -name '*.sha256' ! -name '*.zip' | head -1)"
-          add_platform "macos-aarch64" "$MACOS_UNIVERSAL_PATH"
-          add_platform "macos-x86_64"  "$MACOS_UNIVERSAL_PATH"
+          if [ -n "$MACOS_UNIVERSAL_PATH" ]; then
+            add_platform "macos-aarch64" "$MACOS_UNIVERSAL_PATH"
+            add_platform "macos-x86_64"  "$MACOS_UNIVERSAL_PATH"
+          fi
 
           WINDOWS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."windows-x86_64" // empty')"
-          MACOS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."macos-aarch64" // empty')"
-          if [ -z "$WINDOWS_LEGACY" ] || [ -z "$MACOS_LEGACY" ]; then
-            echo "expected primary-arch per-platform artifacts under release/ but found:" >&2
+          if [ -z "$WINDOWS_LEGACY" ]; then
+            echo "expected Windows x86_64 artifact under release/ but found:" >&2
             ls release/ >&2
             exit 1
+          fi
+
+          MACOS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."macos-aarch64" // empty')"
+          if [ -z "$MACOS_LEGACY" ]; then
+            MACOS_LEGACY="null"
           fi
 
           jq -n \
