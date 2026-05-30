@@ -12,8 +12,8 @@ use crate::configuration::{
 use crate::detection::detect_components;
 use crate::model::{Architecture, Platform};
 use crate::operation::{
-    PackageOperationOptions, PackageOperationReport, execute_package_operation_with_progress,
-    execute_resolved_package_operation_with_progress,
+    KeymapChoice, PackageOperationOptions, PackageOperationReport,
+    execute_package_operation_with_progress, execute_resolved_package_operation_with_progress,
 };
 use crate::package::PACKAGE_REAPER;
 use crate::progress::{ProgressEvent, ProgressReporter};
@@ -25,7 +25,7 @@ pub struct SetupOptions {
     pub portable: bool,
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
-    pub replace_osara_keymap: bool,
+    pub keymap_choice: KeymapChoice,
     pub target_app_path: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lock_path: Option<PathBuf>,
@@ -121,7 +121,7 @@ pub fn execute_setup_operation_with_progress(
             dry_run: options.dry_run,
             allow_reaper_running: options.allow_reaper_running,
             stage_unsupported: options.stage_unsupported,
-            replace_osara_keymap: options.replace_osara_keymap,
+            keymap_choice: options.keymap_choice,
             target_app_path: options.target_app_path.clone(),
             lock_path: options.lock_path.clone(),
             force_reinstall_packages: options.force_reinstall_packages.clone(),
@@ -195,7 +195,7 @@ pub fn execute_resolved_setup_operation_with_progress(
             dry_run: options.dry_run,
             allow_reaper_running: options.allow_reaper_running,
             stage_unsupported: options.stage_unsupported,
-            replace_osara_keymap: options.replace_osara_keymap,
+            keymap_choice: options.keymap_choice,
             target_app_path: options.target_app_path.clone(),
             lock_path: options.lock_path.clone(),
             force_reinstall_packages: options.force_reinstall_packages.clone(),
@@ -306,6 +306,7 @@ mod tests {
     use crate::artifact::{ArtifactDescriptor, ArtifactKind};
     use crate::install::InstallFileAction;
     use crate::model::{Architecture, Platform};
+    use crate::operation::KeymapChoice;
     use crate::package::{PACKAGE_REAPACK, PACKAGE_REAPER};
     use crate::version::Version;
 
@@ -326,7 +327,7 @@ mod tests {
                 portable: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -362,7 +363,7 @@ mod tests {
                 portable: true,
                 allow_reaper_running: true,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -414,7 +415,7 @@ mod tests {
                 portable: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(app_path.clone()),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),

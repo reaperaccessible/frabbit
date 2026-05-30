@@ -7,12 +7,28 @@ use crate::package::PACKAGE_OSARA;
 use crate::reapack::extract_scr_lines;
 
 use super::{
-    PackageAutomationSupport, PlannedAutomationKind, PlannedExecutionKind,
+    KeymapChoice, PackageAutomationSupport, PlannedAutomationKind, PlannedExecutionKind,
     PlannedExecutionOverride, UnattendedPostInstallReport, backup_file_for_unattended_change,
     replace_file_from_source, target_likely_portable,
 };
 
 pub(super) const TITLE: &str = "OSARA";
+
+const RA_WIN_USA: &[u8] =
+    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - USA.ReaperKeyMap");
+const RA_WIN_FRF: &[u8] =
+    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap");
+const RA_WIN_FRC: &[u8] =
+    include_bytes!("../../../../KeyMaps/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap");
+
+pub(super) fn embedded_keymap_bytes(choice: KeymapChoice) -> Option<&'static [u8]> {
+    match choice {
+        KeymapChoice::ReaperAccessibleWinUsa => Some(RA_WIN_USA),
+        KeymapChoice::ReaperAccessibleWinFrf => Some(RA_WIN_FRF),
+        KeymapChoice::ReaperAccessibleWinFrc => Some(RA_WIN_FRC),
+        _ => None,
+    }
+}
 
 /// OSARA-specific automation routing. Today: Windows installer is unattended,
 /// macOS archive is unattended via the OSARA-asset extractor.
@@ -37,20 +53,20 @@ pub(super) fn automation_support_for(
 /// is (English text for the saved JSON report, structured code for the
 /// localizable UI surface).
 pub(super) fn unattended_install_message(
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
     keymap_was_backed_up: bool,
 ) -> Option<(String, super::PackageOperationMessage)> {
-    if !replace_osara_keymap {
+    if !keymap_choice.replaces_keymap() {
         return None;
     }
     Some(if keymap_was_backed_up {
         (
-            "FRABBIT ran the upstream installer unattended, backed up reaper-kb.ini, applied the OSARA key map replacement, and updated the FRABBIT receipt.".to_string(),
+            "FRABBIT ran the upstream installer unattended, backed up reaper-kb.ini, applied the key map replacement, and updated the FRABBIT receipt.".to_string(),
             super::PackageOperationMessage::OsaraUnattendedInstalledKeymapBackedUp,
         )
     } else {
         (
-            "FRABBIT ran the upstream installer unattended, applied the OSARA key map replacement, and updated the FRABBIT receipt.".to_string(),
+            "FRABBIT ran the upstream installer unattended, applied the key map replacement, and updated the FRABBIT receipt.".to_string(),
             super::PackageOperationMessage::OsaraUnattendedInstalledKeymapReplaced,
         )
     })
@@ -58,15 +74,15 @@ pub(super) fn unattended_install_message(
 
 pub(super) fn manual_install_notes(
     resource_path: &Path,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Vec<String> {
     let mut notes = vec![
         "OSARA's Windows installer supports standard and portable REAPER targets; preserve an existing key map unless the user explicitly chooses replacement."
             .to_string(),
     ];
-    if replace_osara_keymap {
+    if keymap_choice.replaces_keymap() {
         notes.push(format!(
-            "The selected workflow replaces the current key map. Back up {} before replacing it with the OSARA key map.",
+            "The selected workflow replaces the current key map. Back up {} before replacing it.",
             resource_path.join("reaper-kb.ini").display()
         ));
     } else {
@@ -80,7 +96,7 @@ pub(super) fn manual_install_notes(
 
 /// Files installed by OSARA that the receipt should reference. Filtered to
 /// the on-disk existing ones after the unattended run.
-pub(super) fn receipt_paths(resource_path: &Path, replace_osara_keymap: bool) -> Vec<PathBuf> {
+pub(super) fn receipt_paths(resource_path: &Path, keymap_choice: KeymapChoice) -> Vec<PathBuf> {
     let mut paths = Vec::new();
     let keymap_path = resource_path.join("KeyMaps").join("OSARA.ReaperKeyMap");
     if keymap_path.exists() {
@@ -90,7 +106,7 @@ pub(super) fn receipt_paths(resource_path: &Path, replace_osara_keymap: bool) ->
     if support_dir.exists() {
         paths.push(support_dir);
     }
-    if replace_osara_keymap {
+    if keymap_choice.replaces_keymap() {
         let current_keymap = resource_path.join("reaper-kb.ini");
         if current_keymap.exists() {
             paths.push(current_keymap);
@@ -106,7 +122,7 @@ pub(super) fn post_install_unattended(
     resource_path: &Path,
     platform: Platform,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Result<UnattendedPostInstallReport> {
     let mut report = UnattendedPostInstallReport::default();
     if matches!(platform, Platform::Windows)
@@ -117,19 +133,30 @@ pub(super) fn post_install_unattended(
             std::fs::remove_file(&uninstall_path).with_path(&uninstall_path)?;
         }
     }
-    if replace_osara_keymap {
-        report = apply_osara_keymap_replacement(resource_path)?;
+    match keymap_choice {
+        KeymapChoice::Osara => {
+            report = apply_osara_keymap_replacement(resource_path)?;
+        }
+        choice if choice.is_reaper_accessible() => {
+            if let Some(bytes) = embedded_keymap_bytes(choice) {
+                report = apply_keymap_from_bytes(resource_path, bytes)?;
+            }
+        }
+        _ => {}
     }
     Ok(report)
 }
 
-pub(super) fn verification_paths(resource_path: &Path, replace_osara_keymap: bool) -> Vec<PathBuf> {
+pub(super) fn verification_paths(
+    resource_path: &Path,
+    keymap_choice: KeymapChoice,
+) -> Vec<PathBuf> {
     let mut paths = vec![
         resource_path.join("UserPlugins"),
         resource_path.join("KeyMaps").join("OSARA.ReaperKeyMap"),
         resource_path.join("osara"),
     ];
-    if replace_osara_keymap {
+    if keymap_choice.replaces_keymap() {
         paths.push(resource_path.join("reaper-kb.ini"));
     }
     paths
@@ -170,7 +197,7 @@ fn osara_windows_installer_arguments(resource_path: &Path) -> Vec<String> {
 pub(super) fn osara_manual_steps(
     kind: ArtifactKind,
     resource_path: &Path,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Vec<String> {
     let mut steps = match kind {
         ArtifactKind::Installer => vec![format!(
@@ -190,9 +217,9 @@ pub(super) fn osara_manual_steps(
             resource_path.join("UserPlugins").display()
         )],
     };
-    if replace_osara_keymap {
+    if keymap_choice.replaces_keymap() {
         steps.push(format!(
-            "After backing up {}, replace the current key map with the OSARA key map if the installer offers that option.",
+            "After backing up {}, replace the current key map.",
             resource_path.join("reaper-kb.ini").display()
         ));
     } else {
@@ -240,6 +267,37 @@ pub(super) fn apply_osara_keymap_replacement(
     }
 
     replace_file_from_source(&replacement_source, &current_keymap)?;
+
+    if !preserved_scr_lines.is_empty() {
+        append_lines_preserving_newline(&current_keymap, &preserved_scr_lines)?;
+    }
+
+    Ok(report)
+}
+
+pub(super) fn apply_keymap_from_bytes(
+    resource_path: &Path,
+    keymap_bytes: &[u8],
+) -> Result<UnattendedPostInstallReport> {
+    let current_keymap = resource_path.join("reaper-kb.ini");
+    let mut report = UnattendedPostInstallReport::default();
+    let mut preserved_scr_lines: Vec<String> = Vec::new();
+
+    if current_keymap.is_file() {
+        let existing = std::fs::read_to_string(&current_keymap).with_path(&current_keymap)?;
+        preserved_scr_lines = extract_scr_lines(&existing);
+
+        let (backup_path, backup_manifest_path) = backup_file_for_unattended_change(
+            resource_path,
+            "reaper-accessible-keymap",
+            &current_keymap,
+            "reaper-accessible-keymap-replacement",
+        )?;
+        report.backup_paths.push(backup_path);
+        report.backup_manifest_path = Some(backup_manifest_path);
+    }
+
+    std::fs::write(&current_keymap, keymap_bytes).with_path(&current_keymap)?;
 
     if !preserved_scr_lines.is_empty() {
         append_lines_preserving_newline(&current_keymap, &preserved_scr_lines)?;

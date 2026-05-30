@@ -42,12 +42,48 @@ use crate::upstream::{
 
 const DEFAULT_UNATTENDED_INSTALL_MESSAGE: &str = "FRABBIT ran the upstream installer unattended, verified the expected target paths, and updated the FRABBIT receipt.";
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum KeymapChoice {
+    #[default]
+    PreserveCurrent,
+    Osara,
+    ReaperAccessibleWinUsa,
+    ReaperAccessibleWinFrf,
+    ReaperAccessibleWinFrc,
+}
+
+impl KeymapChoice {
+    pub fn replaces_keymap(self) -> bool {
+        !matches!(self, Self::PreserveCurrent)
+    }
+
+    pub fn is_reaper_accessible(self) -> bool {
+        matches!(
+            self,
+            Self::ReaperAccessibleWinUsa
+                | Self::ReaperAccessibleWinFrf
+                | Self::ReaperAccessibleWinFrc
+        )
+    }
+
+    pub fn available_choices(platform: Platform) -> Vec<Self> {
+        let mut choices = vec![Self::PreserveCurrent, Self::Osara];
+        if platform == Platform::Windows {
+            choices.push(Self::ReaperAccessibleWinUsa);
+            choices.push(Self::ReaperAccessibleWinFrf);
+            choices.push(Self::ReaperAccessibleWinFrc);
+        }
+        choices
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PackageOperationOptions {
     pub dry_run: bool,
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
-    pub replace_osara_keymap: bool,
+    pub keymap_choice: KeymapChoice,
     pub target_app_path: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lock_path: Option<PathBuf>,
@@ -485,7 +521,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                         resource_path,
                         cached,
                         options.target_app_path.as_deref(),
-                        options.replace_osara_keymap,
+                        options.keymap_choice,
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -501,7 +537,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                         resource_path,
                         None,
                         options.target_app_path.as_deref(),
-                        options.replace_osara_keymap,
+                        options.keymap_choice,
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -524,7 +560,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                 planned.plan_action,
                 resource_path,
                 options.target_app_path.as_deref(),
-                options.replace_osara_keymap,
+                options.keymap_choice,
             )
         }));
     } else if !unattended_installable.is_empty() {
@@ -547,7 +583,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                 cached,
                 resource_path,
                 options.target_app_path.as_deref(),
-                options.replace_osara_keymap,
+                options.keymap_choice,
             )?);
             if let Some(state) = &mut unattended_state {
                 upsert_unattended_package_receipt(
@@ -556,7 +592,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                     &planned.artifact,
                     cached,
                     options.target_app_path.as_deref(),
-                    options.replace_osara_keymap,
+                    options.keymap_choice,
                 )?;
                 unattended_receipts_updated = true;
             }
@@ -725,21 +761,21 @@ fn skipped_item(
     resource_path: &Path,
     cached_artifact: Option<CachedArtifact>,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> PackageOperationItem {
     let planned_execution = Some(planned_execution_for_artifact(
         &artifact,
         cached_artifact.as_ref(),
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     ));
     let manual_instruction = Some(manual_instruction_for_artifact(
         &artifact,
         cached_artifact.as_ref(),
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     ));
     let staged = cached_artifact.is_some();
     let message_code = if staged {
@@ -782,14 +818,14 @@ fn planned_unattended_item(
     plan_action: PlanActionKind,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> PackageOperationItem {
     let planned_execution = Some(planned_execution_for_artifact(
         &artifact,
         None,
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     ));
     PackageOperationItem {
         package_id: artifact.package_id.clone(),
@@ -817,14 +853,14 @@ fn executed_unattended_item(
     cached_artifact: &CachedArtifact,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Result<PackageOperationItem> {
     let planned_execution = planned_execution_for_artifact(
         &planned.artifact,
         Some(cached_artifact),
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     );
     // Run the planned execution, the package's post-install fixups, and
     // verify the produced files. Original order is preserved (some
@@ -847,7 +883,7 @@ fn executed_unattended_item(
         &planned.artifact,
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     );
     let post_install = match verify_planned_execution_paths(&planned_execution) {
         Ok(()) => {
@@ -871,16 +907,15 @@ fn executed_unattended_item(
     verify_planned_execution_freshness(&planned_execution, install_started_at)?;
 
     let (message, message_code) = match planned.artifact.package_id.as_str() {
-        crate::package::PACKAGE_OSARA => osara::unattended_install_message(
-            replace_osara_keymap,
-            !post_install.backup_paths.is_empty(),
-        )
-        .unwrap_or_else(|| {
-            (
-                DEFAULT_UNATTENDED_INSTALL_MESSAGE.to_string(),
-                PackageOperationMessage::UnattendedInstalled,
-            )
-        }),
+        crate::package::PACKAGE_OSARA => {
+            osara::unattended_install_message(keymap_choice, !post_install.backup_paths.is_empty())
+                .unwrap_or_else(|| {
+                    (
+                        DEFAULT_UNATTENDED_INSTALL_MESSAGE.to_string(),
+                        PackageOperationMessage::UnattendedInstalled,
+                    )
+                })
+        }
         _ => (
             DEFAULT_UNATTENDED_INSTALL_MESSAGE.to_string(),
             PackageOperationMessage::UnattendedInstalled,
@@ -909,14 +944,10 @@ fn upsert_unattended_package_receipt(
     artifact: &ArtifactDescriptor,
     cached_artifact: &CachedArtifact,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Result<()> {
-    let installed_paths = receipt_paths_for_artifact(
-        artifact,
-        resource_path,
-        target_app_path,
-        replace_osara_keymap,
-    )?;
+    let installed_paths =
+        receipt_paths_for_artifact(artifact, resource_path, target_app_path, keymap_choice)?;
     upsert_package_receipt(
         state,
         resource_path,
@@ -934,7 +965,7 @@ fn receipt_paths_for_artifact(
     artifact: &ArtifactDescriptor,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Result<Vec<PathBuf>> {
     let effective_target_app_path =
         effective_target_app_path(artifact, resource_path, target_app_path);
@@ -958,7 +989,7 @@ fn receipt_paths_for_artifact(
 
     match artifact.package_id.as_str() {
         crate::package::PACKAGE_OSARA => {
-            paths.extend(osara::receipt_paths(resource_path, replace_osara_keymap));
+            paths.extend(osara::receipt_paths(resource_path, keymap_choice));
         }
         crate::package::PACKAGE_SWS => {
             paths.extend(sws::receipt_paths(resource_path));
@@ -981,7 +1012,7 @@ fn receipt_paths_for_artifact(
                 artifact,
                 resource_path,
                 effective_target_app_path.as_deref(),
-                replace_osara_keymap,
+                keymap_choice,
             ),
         });
     }
@@ -993,14 +1024,14 @@ fn post_execute_unattended_artifact(
     artifact: &ArtifactDescriptor,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Result<UnattendedPostInstallReport> {
     if artifact.package_id == crate::package::PACKAGE_OSARA {
         return osara::post_install_unattended(
             resource_path,
             artifact.platform,
             target_app_path,
-            replace_osara_keymap,
+            keymap_choice,
         );
     }
     Ok(UnattendedPostInstallReport::default())
@@ -1139,7 +1170,7 @@ fn planned_execution_for_artifact(
     cached_artifact: Option<&CachedArtifact>,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> PlannedExecutionPlan {
     let artifact_location = cached_artifact
         .map(|cached| cached.path.display().to_string())
@@ -1150,7 +1181,7 @@ fn planned_execution_for_artifact(
         artifact,
         resource_path,
         effective_target_app_path.as_deref(),
-        replace_osara_keymap,
+        keymap_choice,
     );
     let freshness_paths = planned_freshness_paths(artifact);
     let requires_elevation = package_requires_elevation(
@@ -1350,7 +1381,7 @@ fn manual_instruction_for_artifact(
     cached_artifact: Option<&CachedArtifact>,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> ManualInstallInstruction {
     let artifact_location = cached_artifact
         .map(|cached| cached.path.display().to_string())
@@ -1361,7 +1392,7 @@ fn manual_instruction_for_artifact(
         artifact_access_step(artifact.kind, &artifact_location),
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     )
 }
 
@@ -1370,7 +1401,7 @@ pub fn preview_manual_instruction(
     kind: ArtifactKind,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> ManualInstallInstruction {
     build_manual_instruction(
         package_id,
@@ -1378,7 +1409,7 @@ pub fn preview_manual_instruction(
         preview_artifact_access_step(kind),
         resource_path,
         target_app_path,
-        replace_osara_keymap,
+        keymap_choice,
     )
 }
 
@@ -1388,7 +1419,7 @@ fn build_manual_instruction(
     artifact_access: String,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> ManualInstallInstruction {
     let mut steps = vec![artifact_access];
     let mut notes = vec![
@@ -1401,15 +1432,8 @@ fn build_manual_instruction(
 
     match package_id {
         crate::package::PACKAGE_OSARA => {
-            steps.extend(osara_manual_steps(
-                kind,
-                resource_path,
-                replace_osara_keymap,
-            ));
-            notes.extend(osara::manual_install_notes(
-                resource_path,
-                replace_osara_keymap,
-            ));
+            steps.extend(osara_manual_steps(kind, resource_path, keymap_choice));
+            notes.extend(osara::manual_install_notes(resource_path, keymap_choice));
         }
         crate::package::PACKAGE_SWS => {
             steps.extend(sws_manual_steps(kind, resource_path));
@@ -1479,15 +1503,13 @@ fn planned_verification_paths(
     artifact: &ArtifactDescriptor,
     resource_path: &Path,
     target_app_path: Option<&Path>,
-    replace_osara_keymap: bool,
+    keymap_choice: KeymapChoice,
 ) -> Vec<PathBuf> {
     let mut paths = match artifact.package_id.as_str() {
         crate::package::PACKAGE_REAPER => {
             reaper::verification_paths(resource_path, target_app_path)
         }
-        crate::package::PACKAGE_OSARA => {
-            osara::verification_paths(resource_path, replace_osara_keymap)
-        }
+        crate::package::PACKAGE_OSARA => osara::verification_paths(resource_path, keymap_choice),
         crate::package::PACKAGE_SWS => sws::verification_paths(resource_path, artifact),
         crate::package::PACKAGE_REAPACK | crate::package::PACKAGE_REAKONTROL => {
             vec![resource_path.join("UserPlugins")]
@@ -1572,7 +1594,7 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        PackageAutomationSupport, PackageOperationOptions, PackageOperationStatus,
+        KeymapChoice, PackageAutomationSupport, PackageOperationOptions, PackageOperationStatus,
         PlannedAutomationKind, PlannedExecutionKind, execute_resolved_package_operation,
         execute_resolved_package_operation_with_detections, plan_action_for_artifact,
     };
@@ -1603,7 +1625,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -1644,7 +1666,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -1676,7 +1698,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: true,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -1719,7 +1741,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: true,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -1835,8 +1857,13 @@ mod tests {
             file_name: "osara_2026.4.27.2160.89d559fc.zip".to_string(),
         };
 
-        let plan =
-            super::planned_execution_for_artifact(&descriptor, None, resource_path, None, true);
+        let plan = super::planned_execution_for_artifact(
+            &descriptor,
+            None,
+            resource_path,
+            None,
+            KeymapChoice::Osara,
+        );
 
         assert_eq!(
             plan.kind,
@@ -1865,7 +1892,7 @@ mod tests {
             None,
             resource_path,
             Some(inferred_target),
-            false,
+            KeymapChoice::PreserveCurrent,
         );
 
         assert_eq!(
@@ -1896,7 +1923,7 @@ mod tests {
             None,
             resource_path,
             Some(portable_target.as_path()),
-            false,
+            KeymapChoice::PreserveCurrent,
         );
 
         assert_eq!(
@@ -1927,7 +1954,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -1978,7 +2005,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(target_app_path.clone()),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2017,7 +2044,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2059,7 +2086,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: true,
+                keymap_choice: KeymapChoice::Osara,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2101,7 +2128,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2155,7 +2182,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2227,7 +2254,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(target_app_path.clone()),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2270,7 +2297,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2317,7 +2344,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: true,
+                keymap_choice: KeymapChoice::Osara,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2342,7 +2369,7 @@ mod tests {
         assert!(
             report.items[0]
                 .message
-                .contains("applied the OSARA key map replacement")
+                .contains("applied the key map replacement")
         );
         assert!(!resource_path.join("osara").join("uninstall.exe").exists());
     }
@@ -2369,7 +2396,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: true,
+                keymap_choice: KeymapChoice::Osara,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2390,7 +2417,7 @@ mod tests {
         assert!(
             report.items[0]
                 .message
-                .contains("applied the OSARA key map replacement")
+                .contains("applied the key map replacement")
         );
         assert!(!resource_path.join("osara").join("uninstall.exe").exists());
     }
@@ -2417,7 +2444,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2478,7 +2505,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(resource_path.join("reaper.exe")),
                 lock_path: Some(dir.path().join("install.lock")),
                 force_reinstall_packages: Vec::new(),
@@ -2527,7 +2554,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2572,7 +2599,7 @@ mod tests {
             ArtifactKind::Installer,
             dir.path(),
             None,
-            true,
+            KeymapChoice::Osara,
         );
 
         assert!(
@@ -2604,7 +2631,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: true,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2639,7 +2666,7 @@ mod tests {
             ArtifactKind::Installer,
             &resource_path,
             Some(&resource_path.join("reaper.exe")),
-            false,
+            KeymapChoice::PreserveCurrent,
         );
 
         assert!(
@@ -2668,7 +2695,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: Some(target_app_path.clone()),
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),
@@ -2700,7 +2727,7 @@ mod tests {
             ArtifactKind::Installer,
             dir.path(),
             None,
-            false,
+            KeymapChoice::PreserveCurrent,
         );
 
         assert!(
@@ -2720,7 +2747,7 @@ mod tests {
             ArtifactKind::Installer,
             dir.path(),
             Some(&dir.path().join("reaper.exe")),
-            false,
+            KeymapChoice::PreserveCurrent,
         );
 
         assert!(instruction.steps[0].contains("download the upstream installer"));
@@ -2754,7 +2781,7 @@ mod tests {
                 dry_run: false,
                 allow_reaper_running: false,
                 stage_unsupported: false,
-                replace_osara_keymap: false,
+                keymap_choice: KeymapChoice::PreserveCurrent,
                 target_app_path: None,
                 lock_path: None,
                 force_reinstall_packages: Vec::new(),

@@ -301,19 +301,14 @@ pub struct WizardControls {
     pub can_install: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum OsaraKeymapChoice {
-    PreserveCurrent,
-    ReplaceCurrent,
-}
+pub use frabbit_core::operation::KeymapChoice;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WizardInstallOptions {
     pub dry_run: bool,
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
-    pub osara_keymap_choice: OsaraKeymapChoice,
+    pub keymap_choice: KeymapChoice,
     pub cache_dir: Option<PathBuf>,
 }
 
@@ -323,7 +318,7 @@ impl Default for WizardInstallOptions {
             dry_run: false,
             allow_reaper_running: false,
             stage_unsupported: true,
-            osara_keymap_choice: OsaraKeymapChoice::ReplaceCurrent,
+            keymap_choice: KeymapChoice::Osara,
             cache_dir: None,
         }
     }
@@ -340,7 +335,7 @@ pub struct WizardInstallRequest {
     pub dry_run: bool,
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
-    pub osara_keymap_choice: OsaraKeymapChoice,
+    pub keymap_choice: KeymapChoice,
     pub cache_dir: PathBuf,
     /// Packages whose plan-time decision was `Keep` (already current) but
     /// the user explicitly checked the box anyway, opting in to a
@@ -394,7 +389,7 @@ pub struct WizardOutcomeReport {
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
     pub cache_dir: PathBuf,
-    pub osara_keymap_choice: OsaraKeymapChoice,
+    pub keymap_choice: KeymapChoice,
     pub status_line: String,
     pub detail_lines: Vec<String>,
     pub error_message: Option<String>,
@@ -961,10 +956,10 @@ pub fn install_request_from_target_and_rows(
         dry_run: options.dry_run,
         allow_reaper_running: options.allow_reaper_running,
         stage_unsupported: options.stage_unsupported,
-        osara_keymap_choice: if osara_selected {
-            options.osara_keymap_choice
+        keymap_choice: if osara_selected {
+            options.keymap_choice
         } else {
-            OsaraKeymapChoice::PreserveCurrent
+            KeymapChoice::PreserveCurrent
         },
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
@@ -1016,17 +1011,16 @@ pub fn reapack_selected_for_install_or_update(
 pub fn osara_keymap_note(
     model: &WizardModel,
     osara_selected: bool,
-    choice: OsaraKeymapChoice,
+    choice: KeymapChoice,
 ) -> String {
     if !osara_selected {
         return model.text.packages_osara_keymap_unavailable_note.clone();
     }
 
     match choice {
-        OsaraKeymapChoice::PreserveCurrent => {
-            model.text.packages_osara_keymap_preserve_note.clone()
-        }
-        OsaraKeymapChoice::ReplaceCurrent => model.text.packages_osara_keymap_replace_note.clone(),
+        KeymapChoice::PreserveCurrent => model.text.packages_osara_keymap_preserve_note.clone(),
+        KeymapChoice::Osara => model.text.packages_osara_keymap_replace_note.clone(),
+        _ => model.text.packages_osara_keymap_replace_note.clone(),
     }
 }
 
@@ -1098,7 +1092,7 @@ pub fn build_review_preview_for_package_rows(
     selected_package_indices: &[usize],
     package_rows: &[PackageRow],
     notes: &[String],
-    osara_keymap_choice: OsaraKeymapChoice,
+    keymap_choice: KeymapChoice,
 ) -> WizardReviewPreview {
     let Some(target) = target else {
         return WizardReviewPreview {
@@ -1160,9 +1154,9 @@ pub fn build_review_preview_for_package_rows(
     if osara_selected_for_rows(package_rows, selected_package_indices) {
         lines.push(String::new());
         lines.push(model.text.review_osara_keymap_heading.clone());
-        lines.push(match osara_keymap_choice {
-            OsaraKeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
-            OsaraKeymapChoice::ReplaceCurrent => model.text.review_osara_keymap_replace.clone(),
+        lines.push(match keymap_choice {
+            KeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
+            _ => model.text.review_osara_keymap_replace.clone(),
         });
     }
 
@@ -1178,7 +1172,7 @@ pub fn build_review_preview_for_package_rows(
 pub fn package_requires_manual_attention(
     _model: &WizardModel,
     package: &PackageRow,
-    _osara_keymap_choice: OsaraKeymapChoice,
+    _keymap_choice: KeymapChoice,
 ) -> bool {
     matches!(
         package.action,
@@ -1189,7 +1183,7 @@ pub fn package_requires_manual_attention(
 pub fn manual_attention_handling_summary(
     _model: &WizardModel,
     package: &PackageRow,
-    _osara_keymap_choice: OsaraKeymapChoice,
+    _keymap_choice: KeymapChoice,
 ) -> String {
     package.handling_summary.clone()
 }
@@ -1198,7 +1192,7 @@ pub fn preview_manual_instruction_lines(
     model: &WizardModel,
     target: &TargetRow,
     package: &PackageRow,
-    osara_keymap_choice: OsaraKeymapChoice,
+    keymap_choice: KeymapChoice,
 ) -> Vec<String> {
     let Ok(kind) = expected_artifact_kind(&package.package_id, model.platform, model.architecture)
     else {
@@ -1209,7 +1203,7 @@ pub fn preview_manual_instruction_lines(
         kind,
         &target.path,
         Some(&target.planned_app_path),
-        matches!(osara_keymap_choice, OsaraKeymapChoice::ReplaceCurrent),
+        keymap_choice,
     );
     let mut lines = instruction
         .steps
@@ -1582,10 +1576,7 @@ pub fn execute_wizard_install_with_progress(
             portable: request.portable,
             allow_reaper_running: request.allow_reaper_running,
             stage_unsupported: request.stage_unsupported,
-            replace_osara_keymap: matches!(
-                request.osara_keymap_choice,
-                OsaraKeymapChoice::ReplaceCurrent
-            ),
+            keymap_choice: request.keymap_choice,
             target_app_path: request.target_app_path.clone(),
             lock_path: None,
             force_reinstall_packages: request.force_reinstall_packages.clone(),
@@ -1752,7 +1743,7 @@ pub fn wizard_outcome_report_from_success(
         allow_reaper_running: request.allow_reaper_running,
         stage_unsupported: request.stage_unsupported,
         cache_dir: request.cache_dir.clone(),
-        osara_keymap_choice: request.osara_keymap_choice,
+        keymap_choice: request.keymap_choice,
         status_line: summary.status_line,
         detail_lines: summary.detail_lines,
         error_message: None,
@@ -1852,9 +1843,9 @@ pub fn summarize_wizard_error(
         .any(|package_id| package_id == PACKAGE_OSARA)
     {
         detail_lines.push(model.text.review_osara_keymap_heading.clone());
-        detail_lines.push(match request.osara_keymap_choice {
-            OsaraKeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
-            OsaraKeymapChoice::ReplaceCurrent => model.text.review_osara_keymap_replace.clone(),
+        detail_lines.push(match request.keymap_choice {
+            KeymapChoice::PreserveCurrent => model.text.review_osara_keymap_preserve.clone(),
+            _ => model.text.review_osara_keymap_replace.clone(),
         });
     }
 
@@ -1889,7 +1880,7 @@ pub fn wizard_outcome_report_from_error(
         allow_reaper_running: request.allow_reaper_running,
         stage_unsupported: request.stage_unsupported,
         cache_dir: request.cache_dir.clone(),
-        osara_keymap_choice: request.osara_keymap_choice,
+        keymap_choice: request.keymap_choice,
         status_line: summary.status_line,
         detail_lines: summary.detail_lines,
         error_message: Some(error.to_string()),
@@ -3091,7 +3082,7 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        HostCapabilities, OsaraKeymapChoice, UiBootstrapOptions, WizardInstallRequest,
+        HostCapabilities, KeymapChoice, UiBootstrapOptions, WizardInstallRequest,
         custom_portable_target_row, format_self_update_apply_summary, localizer_from_options,
         model_from_plan, refreshed_target_row, wizard_desired_package_ids_for_host,
     };
@@ -3738,7 +3729,7 @@ mod tests {
                 dry_run: true,
                 allow_reaper_running: true,
                 stage_unsupported: false,
-                osara_keymap_choice: OsaraKeymapChoice::ReplaceCurrent,
+                keymap_choice: KeymapChoice::Osara,
                 cache_dir: Some(PathBuf::from("C:/cache")),
             },
         )
@@ -3752,10 +3743,7 @@ mod tests {
             Some(PathBuf::from("C:/REAPER/reaper.exe"))
         );
         assert!(request.dry_run);
-        assert_eq!(
-            request.osara_keymap_choice,
-            OsaraKeymapChoice::ReplaceCurrent
-        );
+        assert_eq!(request.keymap_choice, KeymapChoice::Osara);
         assert_eq!(request.cache_dir, PathBuf::from("C:/cache"));
     }
 
@@ -4097,7 +4085,7 @@ mod tests {
     }
 
     #[test]
-    fn review_preview_includes_osara_keymap_choice() {
+    fn review_preview_includes_keymap_choice() {
         let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
@@ -4125,7 +4113,7 @@ mod tests {
             &[0],
             &model.package_rows,
             &model.notes,
-            OsaraKeymapChoice::ReplaceCurrent,
+            KeymapChoice::Osara,
         );
 
         assert!(preview.lines.iter().any(|line| line == "OSARA key map"));
@@ -4156,7 +4144,7 @@ mod tests {
             },
         );
 
-        let note = super::osara_keymap_note(&model, false, OsaraKeymapChoice::PreserveCurrent);
+        let note = super::osara_keymap_note(&model, false, KeymapChoice::PreserveCurrent);
 
         assert!(note.contains("Select OSARA"));
     }
@@ -4164,8 +4152,8 @@ mod tests {
     #[test]
     fn default_install_options_replace_osara_keymap() {
         assert_eq!(
-            super::WizardInstallOptions::default().osara_keymap_choice,
-            OsaraKeymapChoice::ReplaceCurrent
+            super::WizardInstallOptions::default().keymap_choice,
+            KeymapChoice::Osara
         );
     }
 
@@ -4768,7 +4756,7 @@ mod tests {
             dry_run: false,
             allow_reaper_running: false,
             stage_unsupported: true,
-            osara_keymap_choice: OsaraKeymapChoice::ReplaceCurrent,
+            keymap_choice: KeymapChoice::Osara,
             cache_dir: PathBuf::from("C:/cache"),
             force_reinstall_packages: Vec::new(),
             configuration_step_ids: Vec::new(),

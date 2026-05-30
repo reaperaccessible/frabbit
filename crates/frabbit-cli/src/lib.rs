@@ -651,7 +651,11 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     dry_run: !apply,
                     allow_reaper_running,
                     stage_unsupported,
-                    replace_osara_keymap: !preserve_osara_keymap,
+                    keymap_choice: if preserve_osara_keymap {
+                        frabbit_core::operation::KeymapChoice::PreserveCurrent
+                    } else {
+                        frabbit_core::operation::KeymapChoice::Osara
+                    },
                     target_app_path,
                     lock_path: None,
                     force_reinstall_packages: Vec::new(),
@@ -714,7 +718,11 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     portable,
                     allow_reaper_running,
                     stage_unsupported,
-                    replace_osara_keymap: !preserve_osara_keymap,
+                    keymap_choice: if preserve_osara_keymap {
+                        frabbit_core::operation::KeymapChoice::PreserveCurrent
+                    } else {
+                        frabbit_core::operation::KeymapChoice::Osara
+                    },
                     target_app_path,
                     lock_path: None,
                     force_reinstall_packages: Vec::new(),
