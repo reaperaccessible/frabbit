@@ -137,6 +137,7 @@ use crate::{
     wizard_package_plan_for_target, wizard_package_plan_for_target_with_available,
 };
 use frabbit_core::latest::fetch_latest_for_package;
+use frabbit_core::model::Platform;
 use frabbit_core::plan::{AvailablePackage, PlanActionKind};
 use frabbit_core::progress::{ProgressEvent, ProgressReporter};
 use std::collections::HashMap;
