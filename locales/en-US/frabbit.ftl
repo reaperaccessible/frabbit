@@ -4,9 +4,9 @@ app-short-name = FRABBIT
 common-yes = yes
 common-no = no
 
-action-install = Will install
-action-update = Will update
-action-keep = Won't touch
+action-install = Will be installed
+action-update = Update available
+action-keep = No update available
 
 package-reaper = REAPER
 package-osara = OSARA
@@ -88,7 +88,7 @@ wizard-target-details = REAPER installation path: { $app_path }
     Writable: { $writable }
 
 wizard-packages-heading = Choose packages
-wizard-packages-list-label = Packages to install or update
+wizard-packages-list-label = Packages to install or to update
 wizard-packages-tree-group-label = Packages
 wizard-configuration-tree-group-label = Configuration
 # $package is the localized package name the configuration step depends on.
@@ -120,11 +120,11 @@ wizard-version-check-error-heading = Failed checks
 # $package is the localized package display name; $message is the failure message.
 wizard-version-check-error-line = { $package }: { $message }
 wizard-package-details-label = Package details
-wizard-packages-keymap-heading = OSARA key map
-wizard-packages-keymap-replace-label = Replace your current key map with latest OSARA key map
+wizard-packages-keymap-heading = KeyMaps
+wizard-packages-keymap-replace-label = KeyMaps
 wizard-packages-keymap-unavailable-note = Select OSARA to configure its key map behavior.
-wizard-packages-keymap-preserve-note = For advanced users: your current key map will be preserved. FRABBIT won't touch reaper-kb.ini, you will need to manage staying up to date with the latest OSARA key map additions manually.
-wizard-packages-keymap-replace-note = Recommended for new through intermediate users: FRABBIT will backup a copy of your current reaper-kb.ini file, then replace it with the latest version of the OSARA key map.
+wizard-packages-keymap-preserve-note = For advanced users: your current key map will be preserved. FRABBIT won't touch reaper-kb.ini, you will need to manage staying up to date with the latest KeyMaps additions manually.
+wizard-packages-keymap-replace-note = FRABBIT will backup a copy of your current reaper-kb.ini file, then replace it with the selected KeyMap.
 wizard-package-details-handling-prefix = Handling
 wizard-package-handling-automatic = FRABBIT can install this package directly.
 wizard-package-handling-unattended = FRABBIT can install this package unattended, including launching its installer when required.
@@ -135,12 +135,12 @@ wizard-package-handling-unavailable = This package is not available for the sele
 # $package is the localized package display name, $action is the localized planned action, $installed is the installed version or unknown, and $available is the available version or unknown.
 wizard-package-row = { $package }: { $action }. You have { $installed }. Latest is { $available }
 
-wizard-review-heading = Review what you've asked FRABBIT to do
+wizard-review-heading = Review your choices before confirmation
 wizard-review-target-prefix = Target
 wizard-review-package-heading = Selected packages
-wizard-review-keymap-heading = OSARA key map
-wizard-review-keymap-preserve = Preserve your current key map.
-wizard-review-keymap-replace = Backup your current key map then replace with the latest from OSARA.
+wizard-review-keymap-heading = KeyMaps
+wizard-review-keymap-preserve = No KeyMap will be installed. Your current key map will be preserved.
+wizard-review-keymap-replace = The selected KeyMap will be installed. Your current key map will be backed up before replacement.
 wizard-review-notes-heading = Notes
 wizard-review-preflight-prefix = Cannot install yet
 

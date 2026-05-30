@@ -1291,7 +1291,7 @@ pub fn wizard_package_plan_for_target_with_available(
 /// auto-untick path in [`package_rows`] does for non-recommended Install/
 /// Update rows). Without this, an Install/Update row that becomes unavailable
 /// — e.g. JAWS-for-REAPER scripts on a portable target — would still read
-/// "Will install" / "Will update" while sitting unticked and disabled.
+/// "Will be installed" / "Update available" while sitting unticked and disabled.
 /// `original_action` is preserved so the row can revert to its plan-time
 /// intent if the unavailability is later lifted.
 fn mark_row_unavailable(localizer: &Localizer, row: &mut PackageRow, reason_key: &str) {
@@ -3264,10 +3264,7 @@ mod tests {
             model.text.package_handling_planned,
             "FRABBIT is designed to run this package's installer or setup routine itself and finish the installation unattended, but this build still reports the steps instead of executing them."
         );
-        assert_eq!(
-            model.text.packages_keymap_replace_label,
-            "Replace your current key map with latest OSARA key map"
-        );
+        assert_eq!(model.text.packages_keymap_replace_label, "KeyMaps");
     }
 
     #[test]
@@ -3383,14 +3380,14 @@ mod tests {
                 .contains(&model.package_rows[0].description),
             "expected OSARA description embedded in details"
         );
-        assert_eq!(model.package_rows[0].action_label, "Will install");
+        assert_eq!(model.package_rows[0].action_label, "Will be installed");
         assert!(!model.package_rows[0].manual_attention_expected);
         assert_eq!(
             model.package_rows[0].handling_summary,
             model.text.package_handling_unattended
         );
         assert!(model.package_rows[0].selected);
-        assert_eq!(model.package_rows[1].action_label, "Won't touch");
+        assert_eq!(model.package_rows[1].action_label, "No update available");
         assert!(!model.package_rows[1].manual_attention_expected);
         assert!(!model.package_rows[1].selected);
         assert!(model.controls.can_go_next);
@@ -3426,23 +3423,23 @@ mod tests {
         );
         let mut row = model.package_rows[0].clone();
         assert_eq!(row.action, PlanActionKind::Install);
-        assert_eq!(row.action_label, "Will install");
+        assert_eq!(row.action_label, "Will be installed");
         assert!(row.selected);
 
         let summary = super::apply_checkbox_state_to_package_row(&model, &mut row, false).unwrap();
         assert_eq!(row.action, PlanActionKind::Keep);
-        assert_eq!(row.action_label, "Won't touch");
+        assert_eq!(row.action_label, "No update available");
         assert!(!row.selected);
-        assert!(summary.contains("Won't touch"));
-        assert!(row.summary.contains("Won't touch"));
+        assert!(summary.contains("No update available"));
+        assert!(row.summary.contains("No update available"));
 
         // Re-checking restores the original install action because the
         // package was originally not installed.
         let summary = super::apply_checkbox_state_to_package_row(&model, &mut row, true).unwrap();
         assert_eq!(row.action, PlanActionKind::Install);
-        assert_eq!(row.action_label, "Will install");
+        assert_eq!(row.action_label, "Will be installed");
         assert!(row.selected);
-        assert!(summary.contains("Will install"));
+        assert!(summary.contains("Will be installed"));
     }
 
     #[test]
@@ -3477,9 +3474,9 @@ mod tests {
 
         let _ = super::apply_checkbox_state_to_package_row(&model, &mut row, true).unwrap();
         assert_eq!(row.action, PlanActionKind::Update);
-        assert_eq!(row.action_label, "Will update");
+        assert_eq!(row.action_label, "Update available");
         assert!(row.selected);
-        assert!(row.summary.contains("Will update"));
+        assert!(row.summary.contains("Update available"));
     }
 
     #[test]
@@ -3510,7 +3507,7 @@ mod tests {
         let row = &model.package_rows[0];
         // The plan's action stays available on `original_action`; the row's
         // current `action` mirrors the auto-untick (Keep) so the row label
-        // reads "Won't touch" instead of "Will install" while unselected.
+        // reads "No update available" instead of "Will be installed" while unselected.
         assert_eq!(row.original_action, PlanActionKind::Install);
         assert_eq!(row.action, PlanActionKind::Keep);
         assert!(!row.selected);
@@ -3547,7 +3544,7 @@ mod tests {
 
         let reapack = &model.package_rows[0];
         // Plan's action lives on `original_action`; the unticked row's
-        // current `action` is Keep so the visible row label says "Won't touch".
+        // current `action` is Keep so the visible row label says "No update available".
         assert_eq!(reapack.original_action, PlanActionKind::Install);
         assert_eq!(reapack.action, PlanActionKind::Keep);
         assert!(!reapack.selected, "ReaPack row should start unticked");
@@ -4106,10 +4103,13 @@ mod tests {
             KeymapChoice::Osara,
         );
 
-        assert!(preview.lines.iter().any(|line| line == "OSARA key map"));
-        assert!(preview.lines.iter().any(|line| {
-            line.contains("Backup your current key map") && line.contains("OSARA")
-        }));
+        assert!(preview.lines.iter().any(|line| line == "KeyMaps"));
+        assert!(
+            preview
+                .lines
+                .iter()
+                .any(|line| { line.contains("KeyMap will be installed") })
+        );
         assert!(
             !preview
                 .lines
@@ -4255,7 +4255,7 @@ mod tests {
             summary
                 .detail_lines
                 .iter()
-                .any(|line| line.contains("Plan action:") && line.contains("Will install"))
+                .any(|line| line.contains("Plan action:") && line.contains("Will be installed"))
         );
         assert!(
             summary
@@ -4487,17 +4487,12 @@ mod tests {
                 .iter()
                 .any(|line| line.contains("Packages selected: OSARA, ReaPack"))
         );
+        assert!(summary.detail_lines.iter().any(|line| line == "KeyMaps"));
         assert!(
             summary
                 .detail_lines
                 .iter()
-                .any(|line| line == "OSARA key map")
-        );
-        assert!(
-            summary
-                .detail_lines
-                .iter()
-                .any(|line| line.contains("Backup your current key map"))
+                .any(|line| line.contains("KeyMap will be installed"))
         );
         assert!(
             summary

@@ -23,9 +23,10 @@ jobs:
           - os: windows-latest
             platform_id: windows
             extension: ".exe"
-          - os: macos-latest
-            platform_id: macos
-            extension: ""
+          # macOS temporairement désactivé pour tests rapides
+          # - os: macos-latest
+          #   platform_id: macos
+          #   extension: ""
 
     steps:
       - name: Checkout

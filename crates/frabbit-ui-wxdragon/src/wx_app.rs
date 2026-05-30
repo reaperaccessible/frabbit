@@ -4904,9 +4904,9 @@ fn keymap_choice_from_dropdown(dropdown: &Choice, platform: Platform) -> KeymapC
         .unwrap_or(KeymapChoice::PreserveCurrent)
 }
 
-fn keymap_choice_label(model: &WizardModel, choice: KeymapChoice) -> String {
+fn keymap_choice_label(_model: &WizardModel, choice: KeymapChoice) -> String {
     match choice {
-        KeymapChoice::PreserveCurrent => model.text.packages_keymap_preserve_note.clone(),
+        KeymapChoice::PreserveCurrent => "Aucun / None".to_string(),
         KeymapChoice::Osara => "OSARA (USA)".to_string(),
         KeymapChoice::ReaperAccessibleWinUsa => "ReaperAccessible (USA)".to_string(),
         KeymapChoice::ReaperAccessibleWinFrf => {

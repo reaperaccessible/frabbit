@@ -4,9 +4,9 @@ app-short-name = FRABBIT
 common-yes = oui
 common-no = non
 
-action-install = Va installer
-action-update = Va mettre à jour
-action-keep = Ne touche pas
+action-install = Sera installé
+action-update = Mise à jour disponible
+action-keep = Aucune mise à jour disponible
 
 package-reaper = REAPER
 package-osara = OSARA
@@ -89,7 +89,7 @@ wizard-target-details = Chemin d'installation REAPER : { $app_path }
     Accessible en écriture : { $writable }
 
 wizard-packages-heading = Choisir les paquets
-wizard-packages-list-label = Paquets à installer ou mettre à jour
+wizard-packages-list-label = Paquets à installer ou à mettre à jour
 wizard-packages-tree-group-label = Paquets
 wizard-configuration-tree-group-label = Configuration
 # $package est le nom localisé du paquet dont l'étape de configuration dépend.
@@ -121,11 +121,11 @@ wizard-version-check-error-heading = Vérifications échouées
 # $package est le nom localisé du paquet ; $message est le message d'erreur.
 wizard-version-check-error-line = { $package } : { $message }
 wizard-package-details-label = Détails du paquet
-wizard-packages-keymap-heading = Raccourcis clavier OSARA
-wizard-packages-keymap-replace-label = Remplacer vos raccourcis clavier actuels par les raccourcis OSARA
+wizard-packages-keymap-heading = KeyMaps
+wizard-packages-keymap-replace-label = KeyMaps
 wizard-packages-keymap-unavailable-note = Sélectionnez OSARA pour configurer le comportement des raccourcis clavier.
-wizard-packages-keymap-preserve-note = Pour les utilisateurs avancés : vos raccourcis clavier actuels seront préservés. FRABBIT ne touchera pas reaper-kb.ini, vous devrez gérer manuellement la mise à jour avec les derniers ajouts de raccourcis OSARA.
-wizard-packages-keymap-replace-note = Recommandé pour les utilisateurs débutants à intermédiaires : FRABBIT sauvegardera une copie de votre fichier reaper-kb.ini actuel, puis le remplacera par la dernière version des raccourcis OSARA.
+wizard-packages-keymap-preserve-note = Pour les utilisateurs avancés : vos raccourcis clavier actuels seront préservés. FRABBIT ne touchera pas reaper-kb.ini, vous devrez gérer manuellement la mise à jour avec les derniers ajouts du KeyMaps.
+wizard-packages-keymap-replace-note = FRABBIT sauvegardera une copie de votre fichier reaper-kb.ini actuel, puis le remplacera par le KeyMap sélectionné.
 wizard-package-details-handling-prefix = Traitement
 wizard-package-handling-automatic = FRABBIT peut installer ce paquet directement.
 wizard-package-handling-unattended = FRABBIT peut installer ce paquet sans intervention, y compris en lançant son installateur si nécessaire.
@@ -136,12 +136,12 @@ wizard-package-handling-unavailable = Ce paquet n'est pas disponible pour la pla
 # $package est le nom du paquet, $action est l'action planifiée, $installed est la version installée, $available est la version disponible.
 wizard-package-row = { $package } : { $action }. Vous avez { $installed }. La dernière version est { $available }
 
-wizard-review-heading = Vérifier ce que vous avez demandé à FRABBIT de faire
+wizard-review-heading = Vérifiez vos choix avant confirmation
 wizard-review-target-prefix = Cible
 wizard-review-package-heading = Paquets sélectionnés
-wizard-review-keymap-heading = Raccourcis clavier OSARA
-wizard-review-keymap-preserve = Préserver vos raccourcis clavier actuels.
-wizard-review-keymap-replace = Sauvegarder vos raccourcis clavier actuels puis les remplacer par les derniers d'OSARA.
+wizard-review-keymap-heading = KeyMaps
+wizard-review-keymap-preserve = Aucun KeyMap ne sera installé. Vos raccourcis clavier actuels seront préservés.
+wizard-review-keymap-replace = Le KeyMap sélectionné sera installé. Vos raccourcis clavier actuels seront sauvegardés avant remplacement.
 wizard-review-notes-heading = Notes
 wizard-review-preflight-prefix = Installation impossible pour le moment
 
