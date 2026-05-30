@@ -4825,7 +4825,7 @@ fn progress_details_for_start(
         lines.push(model.text.review_keymap_heading.clone());
         lines.push(match keymap_choice {
             KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
-            KeymapChoice::Osara => model.text.review_keymap_replace.clone(),
+            _ => model.text.review_keymap_replace.clone(),
         });
     }
 
