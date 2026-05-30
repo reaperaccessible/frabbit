@@ -23,9 +23,6 @@ jobs:
           - os: windows-latest
             platform_id: windows
             extension: ".exe"
-          - os: windows-11-arm
-            platform_id: windows
-            extension: ".exe"
           - os: macos-latest
             platform_id: macos
             extension: ""
@@ -52,24 +49,6 @@ jobs:
           choco install llvm ninja --yes --no-progress
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Install Windows GUI build prerequisites (arm64)
-        if: matrix.platform_id == 'windows' && runner.arch == 'ARM64'
-        shell: pwsh
-        run: |
-          # Choco's llvm package is x86_64-only; bindgen rejects it for an
-          # aarch64 target ("invalid DLL (x86-64)"). Pull the woa64 LLVM
-          # installer and ARM64 Ninja straight from upstream releases.
-          $LlvmVersion = "19.1.7"
-          $LlvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LlvmVersion/LLVM-$LlvmVersion-woa64.exe"
-          Invoke-WebRequest -Uri $LlvmUrl -OutFile "$env:RUNNER_TEMP\llvm-installer.exe"
-          Start-Process -FilePath "$env:RUNNER_TEMP\llvm-installer.exe" -ArgumentList "/S" -Wait
-          $NinjaUrl = "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-winarm64.zip"
-          Invoke-WebRequest -Uri $NinjaUrl -OutFile "$env:RUNNER_TEMP\ninja.zip"
-          Expand-Archive -Path "$env:RUNNER_TEMP\ninja.zip" -DestinationPath "C:\ninja" -Force
-          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "C:\ninja" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Install macOS GUI build prerequisites
@@ -108,11 +87,7 @@ jobs:
           RUNNER_ARCH: ${{ runner.arch }}
           EXTENSION: ${{ matrix.extension }}
         run: |
-          case "$RUNNER_ARCH" in
-            X64) ARCH="x86_64" ;;
-            ARM64) ARCH="aarch64" ;;
-            *) echo "unsupported windows runner arch: $RUNNER_ARCH" >&2; exit 1 ;;
-          esac
+          ARCH="x86_64"
           ARTIFACT_NAME="frabbit-${FRABBIT_VERSION}-${PLATFORM_ID}-${ARCH}${EXTENSION}"
           echo "FRABBIT_ARCH=${ARCH}" >> "$GITHUB_ENV"
           echo "FRABBIT_ARTIFACT_NAME=${ARTIFACT_NAME}" >> "$GITHUB_ENV"
@@ -306,7 +281,6 @@ jobs:
               '. + {($key): {url: $url, sha256: $sha}}')"
           }
           add_platform "windows-x86_64"  "$(find release -maxdepth 1 -type f -name 'frabbit-*-windows-x86_64.exe'  ! -name '*.sha256' | head -1)"
-          add_platform "windows-aarch64" "$(find release -maxdepth 1 -type f -name 'frabbit-*-windows-aarch64.exe' ! -name '*.sha256' | head -1)"
           # macOS now ships as a single universal Mach-O, but the platforms
           # map still has to expose `macos-aarch64` and `macos-x86_64` keys
           # because FRABBIT clients <= 0.1.0 look up exactly those keys and

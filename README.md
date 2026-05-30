@@ -19,10 +19,8 @@ FRABBIT installe et maintient à jour un REAPER pleinement accessible sous Windo
 
 Choisissez le fichier correspondant a votre machine. Ces liens pointent toujours vers la derniere version :
 
-- **Windows (Intel/AMD 64 bits)** :
+- **Windows (64 bits)** :
   [frabbit-windows-x86_64.exe](https://github.com/ReaperAccessible/frabbit/releases/latest/download/frabbit-windows-x86_64.exe)
-- **Windows (ARM 64 bits)** :
-  [frabbit-windows-aarch64.exe](https://github.com/ReaperAccessible/frabbit/releases/latest/download/frabbit-windows-aarch64.exe)
 - **macOS (universel -- Apple Silicon + Intel)** :
   [frabbit-macos-universal.app.zip](https://github.com/ReaperAccessible/frabbit/releases/latest/download/frabbit-macos-universal.app.zip)
 
