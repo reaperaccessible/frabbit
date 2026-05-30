@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.8.0] - 2026-05-30
+
+- Release complete: Windows x64 + macOS universel
+
 ## [1.7.0] - 2026-05-30
 
 - Le KeyMap ReaperAccessible est place dans le dossier KeyMaps/ ET applique dans reaper-kb.ini
