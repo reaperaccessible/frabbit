@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.0] - 2026-05-30
+
+- Le KeyMap ReaperAccessible est place dans le dossier KeyMaps/ ET applique dans reaper-kb.ini
+
 ## [1.6.0] - 2026-05-30
 
 - Fix: le KeyMap est maintenant applique meme si OSARA n est pas coche

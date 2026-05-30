@@ -248,7 +248,7 @@ fn apply_keymap_step(resource_path: &Path, keymap_choice: KeymapChoice) -> Resul
         }
         choice if choice.is_reaper_accessible() => {
             if let Some(bytes) = embedded_keymap_bytes(choice) {
-                apply_keymap_from_bytes(resource_path, bytes)?;
+                apply_keymap_from_bytes(resource_path, bytes, choice)?;
             }
         }
         _ => {}

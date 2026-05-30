@@ -261,9 +261,25 @@ pub(crate) fn apply_osara_keymap_replacement(
     Ok(report)
 }
 
+pub(crate) fn keymap_file_name(choice: KeymapChoice) -> Option<&'static str> {
+    match choice {
+        KeymapChoice::ReaperAccessibleWinUsa => {
+            Some("KeyMap ReaperAccessible - Win - USA.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrf => {
+            Some("KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrc => {
+            Some("KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap")
+        }
+        _ => None,
+    }
+}
+
 pub(crate) fn apply_keymap_from_bytes(
     resource_path: &Path,
     keymap_bytes: &[u8],
+    choice: KeymapChoice,
 ) -> Result<UnattendedPostInstallReport> {
     let current_keymap = resource_path.join("reaper-kb.ini");
     let mut report = UnattendedPostInstallReport::default();
@@ -284,6 +300,15 @@ pub(crate) fn apply_keymap_from_bytes(
         report.backup_manifest_path = Some(backup_manifest_path);
     }
 
+    // Place the .ReaperKeyMap file in KeyMaps/ folder for future reimport
+    if let Some(file_name) = keymap_file_name(choice) {
+        let keymaps_dir = resource_path.join("KeyMaps");
+        std::fs::create_dir_all(&keymaps_dir).with_path(&keymaps_dir)?;
+        let keymap_file = keymaps_dir.join(file_name);
+        std::fs::write(&keymap_file, keymap_bytes).with_path(&keymap_file)?;
+    }
+
+    // Apply to reaper-kb.ini (make it active)
     std::fs::write(&current_keymap, keymap_bytes).with_path(&current_keymap)?;
 
     if !preserved_scr_lines.is_empty() {
