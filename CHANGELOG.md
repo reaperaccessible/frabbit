@@ -1,13 +1,13 @@
 # Changelog
 
-## [1.01] - 2026-05-30
+## [1.1.0] - 2026-05-30
 
 - Ajout des keymaps ReaperAccessible (Windows) : USA, Francais France, Francais Canada
 - Choix du keymap a l'installation : Preserver, OSARA (USA), ou ReaperAccessible (3 variantes)
 - Les keymaps sont embarques dans le binaire, pas de telechargement supplementaire
 - Sauvegarde automatique du reaper-kb.ini avant remplacement
 
-## [1.00] - 2026-05-30
+## [1.0.0] - 2026-05-30
 
 Premiere version de FRABBIT, basee sur le code source de RABBIT (Timtam/rabbit).
 
