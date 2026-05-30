@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.0] - 2026-05-30
+
+- Fix: tolere les fichiers reaper-kb.ini non-UTF-8 (Windows-1252)
+
 ## [1.4.0] - 2026-05-30
 
 - KeyMap decoupled: installable independently of OSARA update

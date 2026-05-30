@@ -238,7 +238,8 @@ pub(crate) fn apply_osara_keymap_replacement(
         // REAPER's actions list until the user manually ran
         // "ReaPack: Synchronize packages" inside REAPER. Re-appending
         // the lines after writing OSARA's key map sidesteps that step.
-        let existing = std::fs::read_to_string(&current_keymap).with_path(&current_keymap)?;
+        let raw = std::fs::read(&current_keymap).with_path(&current_keymap)?;
+        let existing = String::from_utf8_lossy(&raw);
         preserved_scr_lines = extract_scr_lines(&existing);
 
         let (backup_path, backup_manifest_path) = backup_file_for_unattended_change(
@@ -269,7 +270,8 @@ pub(crate) fn apply_keymap_from_bytes(
     let mut preserved_scr_lines: Vec<String> = Vec::new();
 
     if current_keymap.is_file() {
-        let existing = std::fs::read_to_string(&current_keymap).with_path(&current_keymap)?;
+        let raw = std::fs::read(&current_keymap).with_path(&current_keymap)?;
+        let existing = String::from_utf8_lossy(&raw);
         preserved_scr_lines = extract_scr_lines(&existing);
 
         let (backup_path, backup_manifest_path) = backup_file_for_unattended_change(
@@ -292,7 +294,8 @@ pub(crate) fn apply_keymap_from_bytes(
 }
 
 fn append_lines_preserving_newline(target_path: &Path, lines: &[String]) -> Result<()> {
-    let existing = std::fs::read_to_string(target_path).with_path(target_path)?;
+    let raw = std::fs::read(target_path).with_path(target_path)?;
+    let existing = String::from_utf8_lossy(&raw).into_owned();
     let newline = if existing.contains("\r\n") {
         "\r\n"
     } else {
