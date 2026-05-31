@@ -295,22 +295,5 @@ wizard-planned-runner-mount-disk-image = Mount disk image and run contained inst
 wizard-planned-runner-mount-disk-image-copy-app = Mount disk image and copy contained app bundle
 wizard-planned-runner-mount-disk-image-run-pkg = Mount disk image and run contained pkg installer
 
-wizard-packages-csi-label = Install CSI (Control Surface Integrator) for Behringer X-Touch Universal
-wizard-packages-csi-note = CSI enables hardware control surface integration with REAPER. Requires ReaPack.
-
 package-csi = CSI (Control Surface Integrator)
 package-csi-description = Hardware control surface integration for Behringer X-Touch Universal. Requires ReaPack.
-
-wizard-review-csi-heading = CSI (Control Surface Integrator)
-wizard-review-csi-will-install = CSI for Behringer X-Touch Universal will be downloaded and installed.
-wizard-review-csi-not-selected = CSI will not be installed.
-
-wizard-progress-status-csi-downloading = Downloading CSI…
-wizard-progress-status-csi-installing = Installing CSI…
-wizard-progress-log-csi-download-started = Downloading CSI…
-wizard-progress-log-csi-download-completed = Downloaded CSI.
-wizard-progress-log-csi-install-completed = Installed CSI.
-
-wizard-summary-csi = CSI (Control Surface Integrator): { $status }
-wizard-summary-csi-installed = Installed
-wizard-summary-csi-not-selected = Not selected

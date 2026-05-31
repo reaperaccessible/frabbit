@@ -28,9 +28,6 @@ fn extract_csi_archive(
     documents_dest: &Path,
     resource_path: &Path,
 ) -> Result<()> {
-    let user_plugins_dir = resource_path.join("UserPlugins");
-    fs::create_dir_all(&user_plugins_dir).with_path(&user_plugins_dir)?;
-
     let csi_resource_dir = resource_path.join("CSI");
 
     let prefix = format!("{}/", CSI_FOLDER_NAME);
@@ -53,14 +50,12 @@ fn extract_csi_archive(
             continue;
         }
 
-        // Route files to their correct destination
+        // Route files to their correct destination.
+        // Skip "DLL file/" entries — the DLL is already extracted by
+        // the standard archive pipeline (archive.rs) before this
+        // post-install hook runs.
         if relative.starts_with("DLL file/") {
-            if let Some(filename) = relative.strip_prefix("DLL file/") {
-                if !filename.is_empty() && !file.is_dir() {
-                    let dest = user_plugins_dir.join(filename);
-                    write_zip_entry(&mut file, &dest)?;
-                }
-            }
+            continue;
         } else if relative.starts_with("CSI/") {
             let sub_path = relative.strip_prefix("CSI/").unwrap_or(&relative);
             if !sub_path.is_empty() {
