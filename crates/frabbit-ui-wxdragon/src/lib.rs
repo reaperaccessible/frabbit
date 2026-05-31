@@ -1913,7 +1913,11 @@ pub fn save_wizard_setup_report(report: &SetupReport) -> Result<PathBuf> {
     Ok(saved.text_path)
 }
 
-pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport, install_csi: bool) -> WizardInstallSummary {
+pub fn summarize_setup_report(
+    model: &WizardModel,
+    report: &SetupReport,
+    install_csi: bool,
+) -> WizardInstallSummary {
     let localizer = localizer_from_options(&model.bootstrap_options).ok();
     let created_resources = report
         .resource_init

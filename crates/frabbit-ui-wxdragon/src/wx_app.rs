@@ -1128,18 +1128,38 @@ fn apply_progress_event_to_ui(
         }
         ProgressEvent::CsiDownloadStarted => {
             state.download_active = true;
-            status_line = Some(localizer.text("wizard-progress-status-csi-downloading").value);
-            log_line = Some(localizer.text("wizard-progress-log-csi-download-started").value);
+            status_line = Some(
+                localizer
+                    .text("wizard-progress-status-csi-downloading")
+                    .value,
+            );
+            log_line = Some(
+                localizer
+                    .text("wizard-progress-log-csi-download-started")
+                    .value,
+            );
         }
         ProgressEvent::CsiDownloadCompleted => {
             state.download_active = false;
             state.completed_phases += 1;
-            status_line = Some(localizer.text("wizard-progress-status-csi-installing").value);
-            log_line = Some(localizer.text("wizard-progress-log-csi-download-completed").value);
+            status_line = Some(
+                localizer
+                    .text("wizard-progress-status-csi-installing")
+                    .value,
+            );
+            log_line = Some(
+                localizer
+                    .text("wizard-progress-log-csi-download-completed")
+                    .value,
+            );
         }
         ProgressEvent::CsiInstallCompleted => {
             state.completed_phases += 1;
-            log_line = Some(localizer.text("wizard-progress-log-csi-install-completed").value);
+            log_line = Some(
+                localizer
+                    .text("wizard-progress-log-csi-install-completed")
+                    .value,
+            );
         }
     });
 
@@ -3470,7 +3490,12 @@ fn build_packages_page(
     let csi_note = StaticText::builder(page)
         .with_label(&model.text.packages_csi_note)
         .build();
-    sizer.add(&csi_note, 0, SizerFlag::Left | SizerFlag::Bottom | SizerFlag::Right | SizerFlag::Expand, 6);
+    sizer.add(
+        &csi_note,
+        0,
+        SizerFlag::Left | SizerFlag::Bottom | SizerFlag::Right | SizerFlag::Expand,
+        6,
+    );
 
     page.set_sizer(sizer, true);
     (
