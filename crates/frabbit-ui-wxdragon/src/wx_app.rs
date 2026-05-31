@@ -889,9 +889,11 @@ struct ProgressUiState {
     total_packages: usize,
     /// Total opted-in configuration steps. Each contributes one phase.
     total_configuration_steps: usize,
-    /// Phases finished so far across all packages and configuration
-    /// steps. Bounded above by `total_packages * 2 +
-    /// total_configuration_steps`.
+    /// Whether CSI installation was requested. Adds 2 phases (download
+    /// + install) to the total when true.
+    install_csi: bool,
+    /// Phases finished so far across all packages, configuration
+    /// steps, and CSI.
     completed_phases: usize,
     /// Bytes downloaded for the in-flight download. Reset to 0 on each
     /// `DownloadStarted`; ignored when no download is active.
@@ -907,10 +909,11 @@ struct ProgressUiState {
 }
 
 impl ProgressUiState {
-    fn new(total_packages: usize, total_configuration_steps: usize) -> Self {
+    fn new(total_packages: usize, total_configuration_steps: usize, install_csi: bool) -> Self {
         Self {
             total_packages,
             total_configuration_steps,
+            install_csi,
             completed_phases: 0,
             current_download_bytes: 0,
             current_download_total: None,
@@ -920,10 +923,12 @@ impl ProgressUiState {
 
     /// Total phases the install will go through: every package emits a
     /// download phase *and* an install phase, every opted-in
-    /// configuration step emits one phase. Always at least 1 so the
+    /// configuration step emits one phase, and CSI adds 2 phases
+    /// (download + install) when enabled. Always at least 1 so the
     /// percentage math doesn't divide by zero on a no-op run.
     fn total_phases(&self) -> usize {
-        (self.total_packages * 2 + self.total_configuration_steps).max(1)
+        let csi_phases = if self.install_csi { 2 } else { 0 };
+        (self.total_packages * 2 + self.total_configuration_steps + csi_phases).max(1)
     }
 
     /// Gauge value in 0..=100. Combines completed phases with the byte
@@ -1832,6 +1837,7 @@ pub fn run() {
                 let progress_state = Arc::new(Mutex::new(ProgressUiState::new(
                     request.package_ids.len(),
                     request.configuration_step_ids.len(),
+                    request.install_csi,
                 )));
                 let progress_widgets = widgets;
                 let progress_state_for_reporter = Arc::clone(&progress_state);
