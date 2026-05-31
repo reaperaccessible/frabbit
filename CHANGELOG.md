@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.11.0] - 2026-05-31
+
+- CSI integre dans le systeme de paquets complet (comme REAPER, OSARA, SWS)
+- Detection automatique via .frabbit-version (CsiVersionFile)
+- Version disponible via GitHub API (CsiGithubRelease)
+- Resolution d'artefact automatique (CsiGithubReleaseZip)
+- Installation: DLL extraite par le pipeline standard, post-install pour CSI/ et Documents/
+- Suppression de l'ancien install_csi: bool, checkbox separee et progress events CSI
+
 ## [1.10.0] - 2026-05-30
 
 - Integration CSI complete: progression en temps reel, resume/review, rapport Done
