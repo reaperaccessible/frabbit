@@ -126,7 +126,7 @@ use crate::{ConfigurationRow, recompute_configuration_row_availability};
 use crate::{
     KeymapChoice, PackageRow, TargetRow, UiBootstrapOptions, WizardInstallOptions, WizardModel,
     WizardOutcomeReport, apply_checkbox_state_to_package_row,
-    build_review_preview_for_package_rows, custom_portable_target_row,
+    build_review_preview_for_package_rows, csi_selected_for_rows, custom_portable_target_row,
     execute_wizard_install_with_progress, format_self_update_apply_summary,
     format_self_update_check_summary, install_request_from_target_and_rows, keymap_note,
     load_wizard_model, localized_package_display_name, localizer_from_options,
@@ -1517,7 +1517,7 @@ pub fn run() {
                                 &widgets.keymap_choice_dropdown,
                                 model.platform,
                             ),
-                            widgets.csi_checkbox.get_value(),
+                            csi_selected_for_rows(&rows, &checked),
                         );
                         review_can_install.set(review_preview.can_install);
                         widgets
@@ -1651,7 +1651,7 @@ pub fn run() {
                                     &widgets.keymap_choice_dropdown,
                                     model.platform,
                                 ),
-                                install_csi: widgets.csi_checkbox.get_value(),
+                                install_csi: csi_selected_for_rows(&rows, &selected_packages),
                                 ..WizardInstallOptions::default()
                             },
                         )
@@ -3486,22 +3486,12 @@ fn build_packages_page(
         });
     }
 
-    // CSI checkbox — Windows only
+    // CSI is now a row in the package tree — keep a hidden checkbox to
+    // satisfy the WizardWidgets struct without showing a redundant control.
     let csi_checkbox = CheckBox::builder(page)
         .with_label(&model.text.packages_csi_label)
         .build();
-    csi_checkbox.set_name(&model.text.packages_csi_label);
-    sizer.add(&csi_checkbox, 0, SizerFlag::All | SizerFlag::Expand, 6);
-
-    let csi_note = StaticText::builder(page)
-        .with_label(&model.text.packages_csi_note)
-        .build();
-    sizer.add(
-        &csi_note,
-        0,
-        SizerFlag::Left | SizerFlag::Bottom | SizerFlag::Right | SizerFlag::Expand,
-        6,
-    );
+    csi_checkbox.show(false);
 
     page.set_sizer(sizer, true);
     (

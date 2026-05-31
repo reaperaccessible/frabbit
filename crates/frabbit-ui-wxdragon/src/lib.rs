@@ -27,6 +27,12 @@ use frabbit_core::operation::{
     PackageAutomationSupport, PackageOperationStatus, PlannedExecutionKind,
     package_automation_support, preview_manual_instruction,
 };
+/// Virtual package ID for CSI — not part of the package manifest, but
+/// rendered as a tree row alongside real packages. The install pipeline
+/// routes this through `SetupOptions::install_csi` instead of the normal
+/// artifact download/install path.
+pub const PACKAGE_CSI: &str = "csi";
+
 use frabbit_core::package::{
     HostCapabilities, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_SURGE_XT, PackageSpec,
     builtin_package_specs, detect_host_capabilities, host_supports_package,
@@ -969,7 +975,7 @@ pub fn install_request_from_target_and_rows(
         allow_reaper_running: options.allow_reaper_running,
         stage_unsupported: options.stage_unsupported,
         keymap_choice: options.keymap_choice,
-        install_csi: options.install_csi,
+        install_csi: csi_selected_for_rows(package_rows, selected_package_indices),
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
         configuration_step_ids,
@@ -987,11 +993,23 @@ pub fn package_ids_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> V
         let Some(row) = package_rows.get(*index) else {
             continue;
         };
+        // Skip the virtual CSI row — it's not a real package and is
+        // handled separately via `install_csi`.
+        if row.package_id == PACKAGE_CSI {
+            continue;
+        }
         if !package_ids.contains(&row.package_id) {
             package_ids.push(row.package_id.clone());
         }
     }
     package_ids
+}
+
+pub fn csi_selected_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> bool {
+    indices
+        .iter()
+        .filter_map(|index| package_rows.get(*index))
+        .any(|row| row.package_id == PACKAGE_CSI)
 }
 
 pub fn osara_selected_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> bool {
@@ -1291,6 +1309,55 @@ pub fn wizard_package_plan_for_target_with_available(
                 mark_row_unavailable(&localizer, row, "wizard-package-row-unavailable-portable");
             }
         }
+    }
+
+    // Append a virtual CSI row — Windows only. CSI is not part of the
+    // package manifest (it has its own download/extract pipeline), but
+    // it appears in the tree as a regular row so users can tick it
+    // alongside REAPER, OSARA, SWS, etc.
+    if model.platform == Platform::Windows {
+        let csi_display_name = localizer.text("package-csi").value;
+        let csi_description = localizer.text("package-csi-description").value;
+        let csi_installed = frabbit_core::csi::installed_csi_version();
+        let csi_action = if csi_installed.is_some() {
+            PlanActionKind::Keep
+        } else {
+            PlanActionKind::Install
+        };
+        let csi_action_label = action_label(&localizer, csi_action);
+        let unknown_version = localizer.text("detect-version-unknown").value;
+        let csi_installed_text = csi_installed.unwrap_or_else(|| unknown_version.clone());
+        let csi_available_text = unknown_version;
+        let csi_summary = localizer
+            .format(
+                "wizard-package-row",
+                &[
+                    ("package", csi_display_name.as_str()),
+                    ("action", csi_action_label.as_str()),
+                    ("installed", csi_installed_text.as_str()),
+                    ("available", csi_available_text.as_str()),
+                ],
+            )
+            .value;
+        let csi_details = format!("{csi_summary}\n\n{csi_description}");
+        package_rows.push(PackageRow {
+            package_id: PACKAGE_CSI.to_string(),
+            display_name: csi_display_name,
+            description: csi_description,
+            selected: false,
+            summary: csi_summary,
+            details: csi_details,
+            installed_version: csi_installed_text,
+            available_version: csi_available_text,
+            action: PlanActionKind::Keep,
+            action_label: csi_action_label,
+            original_action: csi_action,
+            reason: String::new(),
+            handling_summary: String::new(),
+            manual_attention_expected: false,
+            available_for_target: true,
+            unavailability_reason: None,
+        });
     }
 
     let can_install = package_rows.iter().any(|row| {
