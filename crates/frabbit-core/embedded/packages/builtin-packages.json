@@ -200,9 +200,23 @@
       "recommended": false,
       "supported_platforms": ["windows"],
       "supported_architectures": ["x64"],
-      "latest_version_provider": "csi_github_release",
-      "artifact_provider": "csi_github_release_zip",
-      "detectors": ["frabbit_receipt", "user_plugin_file", "csi_version_file"],
+      "github_release_api_url": "https://api.github.com/repos/reaperaccessible/CSI/releases/latest",
+      "artifact_download_url": "https://github.com/reaperaccessible/CSI/releases/latest/download/CSI.zip",
+      "artifact_kind_override": "archive",
+      "artifact_file_name": "CSI.zip",
+      "version_file_documents_relative": "CSI For Behringer X-Touch Universal/.frabbit-version",
+      "post_install_zip_routes": [
+        { "zip_prefix": "!DLL file/", "destination": "" },
+        { "zip_prefix": "!CSI For Behringer X-Touch Universal/DLL file/", "destination": "" },
+        { "zip_prefix": "CSI For Behringer X-Touch Universal/CSI/", "destination": "{resource_path}/CSI" },
+        { "zip_prefix": "CSI For Behringer X-Touch Universal/", "destination": "{documents}/CSI For Behringer X-Touch Universal" }
+      ],
+      "post_install_reapack_repo": {
+        "name": "ReaperAccessible CSI",
+        "url": "https://github.com/reaperaccessible/CSI/raw/main/index.xml"
+      },
+      "post_install_version_file": "CSI For Behringer X-Touch Universal/.frabbit-version",
+      "detectors": ["frabbit_receipt", "user_plugin_file"],
       "install_steps": ["copy_user_plugin_binary"],
       "uninstall_steps": ["remove_user_plugin_binary"],
       "backup_policy": "backup_overwritten_files",

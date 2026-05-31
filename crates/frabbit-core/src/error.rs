@@ -47,12 +47,6 @@ pub enum FrabbitError {
         actual: String,
     },
 
-    #[error("invalid backup id: {0}")]
-    InvalidBackupId(String),
-
-    #[error("backup not found at {0}")]
-    BackupNotFound(PathBuf),
-
     #[error("no artifact found for {package_id} on {platform:?}/{architecture:?}")]
     NoArtifactFound {
         package_id: String,
@@ -89,9 +83,6 @@ pub enum FrabbitError {
 
     #[error("a package installation is already in progress (lock {lock_path}, PID {pid})")]
     PackageInstallInProgress { lock_path: PathBuf, pid: u32 },
-
-    #[error("self-update artifact {path} failed signature verification: {reason}")]
-    SelfUpdateSignatureInvalid { path: PathBuf, reason: String },
 
     #[error("preflight failed: {message}")]
     PreflightFailed { message: String },

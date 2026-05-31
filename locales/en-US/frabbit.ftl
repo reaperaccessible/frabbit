@@ -188,30 +188,12 @@ wizard-done-open-resource-mnemonic = R
 wizard-done-no-reaper-app = No launchable REAPER application is known for this target.
 wizard-done-launch-reaper-error-prefix = REAPER could not be launched
 wizard-done-open-resource-error-prefix = Resource folder could not be opened
-wizard-done-self-update-apply-running = Applying FRABBIT update…
 wizard-done-self-update-error-prefix = FRABBIT self-update failed
-wizard-done-self-update-relaunch-prefix = Relaunched FRABBIT
 wizard-self-update-status-checking = Checking for FRABBIT updates…
-
-wizard-self-update-prompt-title = FRABBIT update available
-wizard-self-update-prompt-body = FRABBIT { $latest } is available. You currently have { $current }. Update now? FRABBIT will relaunch when the update finishes.
 
 # $current is the running FRABBIT version, $latest is the version offered by the release manifest, $channel is the release channel id.
 self-update-status-update-available = FRABBIT update available: { $current } → { $latest } (channel { $channel }). Relaunch FRABBIT to be re-prompted.
 self-update-status-up-to-date = FRABBIT is up to date (current { $current }, channel { $channel }).
-
-# $version is the version that the apply pipeline targeted but did not write.
-self-update-apply-no-files-replaced = Self-update did not replace any files (target version { $version }).
-# $count is the number of files swapped on disk, $root is the install directory, $version is the new FRABBIT version.
-self-update-apply-replaced-summary = Replaced { $count } file(s) under { $root }; relaunch FRABBIT to use { $version }.
-
-# $signed / $unsigned are counts of binaries that produced each verdict.
-self-update-apply-signature-summary-signed-only = Signature verification: { $signed } signed.
-self-update-apply-signature-summary-unsigned-only = Signature verification: { $unsigned } unsigned.
-self-update-apply-signature-summary-mixed = Signature verification: { $signed } signed, { $unsigned } unsigned.
-
-# $pid is the OS process id of the other FRABBIT install holding the lock.
-self-update-lock-blocking = Another FRABBIT install is in progress (PID { $pid }). Apply is paused until it finishes.
 
 wizard-summary-target = Target: { $path }
 wizard-summary-portable = Portable target: { $value }

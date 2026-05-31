@@ -39,9 +39,7 @@ use frabbit_core::resource::{
     ResourceInitActionKind, ResourceInitOptions, initialize_resource_path,
 };
 use frabbit_core::self_update::{
-    ApplySelfUpdateOptions, DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateApplyReport,
-    SelfUpdateCheckReport, apply_self_update, check_self_update, default_self_update_staging_dir,
-    relaunch_current_executable, stage_self_update,
+    DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateCheckReport, check_self_update,
 };
 use frabbit_core::setup::{SetupOptions, SetupReport, setup_requires_extension_support};
 use frabbit_core::version::Version;
@@ -167,9 +165,7 @@ pub struct WizardText {
     pub done_no_reaper_app: String,
     pub done_launch_reaper_error_prefix: String,
     pub done_open_resource_error_prefix: String,
-    pub done_self_update_apply_running: String,
     pub done_self_update_error_prefix: String,
-    pub done_self_update_relaunch_prefix: String,
     pub self_update_status_checking: String,
 }
 
@@ -693,13 +689,7 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         done_open_resource_error_prefix: localizer
             .text("wizard-done-open-resource-error-prefix")
             .value,
-        done_self_update_apply_running: localizer
-            .text("wizard-done-self-update-apply-running")
-            .value,
         done_self_update_error_prefix: localizer.text("wizard-done-self-update-error-prefix").value,
-        done_self_update_relaunch_prefix: localizer
-            .text("wizard-done-self-update-relaunch-prefix")
-            .value,
         self_update_status_checking: localizer.text("wizard-self-update-status-checking").value,
     }
 }
@@ -1578,23 +1568,6 @@ pub fn run_wizard_self_update_check() -> Result<SelfUpdateCheckReport> {
     check_self_update(platform, DEFAULT_SELF_UPDATE_MANIFEST_URL)
 }
 
-pub fn run_wizard_self_update_apply() -> Result<SelfUpdateApplyReport> {
-    let platform = Platform::current().ok_or(FrabbitError::UnsupportedPlatform)?;
-    let staging_dir = default_self_update_staging_dir();
-    let stage = stage_self_update(platform, DEFAULT_SELF_UPDATE_MANIFEST_URL, &staging_dir)?;
-    apply_self_update(
-        &stage,
-        &ApplySelfUpdateOptions {
-            install_root: None,
-            install_target_basename: None,
-        },
-    )
-}
-
-pub fn relaunch_frabbit_after_apply() -> Result<u32> {
-    relaunch_current_executable()
-}
-
 pub fn format_self_update_check_summary(
     localizer: &Localizer,
     report: &SelfUpdateCheckReport,
@@ -1623,92 +1596,6 @@ pub fn format_self_update_check_summary(
             )
             .value
     }
-}
-
-pub fn format_self_update_apply_summary(
-    localizer: &Localizer,
-    report: &SelfUpdateApplyReport,
-) -> String {
-    let version = report.stage.check.latest_version.to_string();
-    if report.replaced_files.is_empty() {
-        return localizer
-            .format(
-                "self-update-apply-no-files-replaced",
-                &[("version", version.as_str())],
-            )
-            .value;
-    }
-
-    let count = report.replaced_files.len().to_string();
-    let install_root = report.install_root.display().to_string();
-    let mut summary = localizer
-        .format(
-            "self-update-apply-replaced-summary",
-            &[
-                ("count", count.as_str()),
-                ("root", install_root.as_str()),
-                ("version", version.as_str()),
-            ],
-        )
-        .value;
-    if let Some(signature_summary) = format_signature_verdict_summary(localizer, report) {
-        summary.push(' ');
-        summary.push_str(&signature_summary);
-    }
-    summary
-}
-
-fn format_signature_verdict_summary(
-    localizer: &Localizer,
-    report: &SelfUpdateApplyReport,
-) -> Option<String> {
-    use frabbit_core::signature::SignatureVerdict;
-
-    if report.signature_verdicts.is_empty() {
-        return None;
-    }
-    let mut signed = 0usize;
-    let mut unsigned = 0usize;
-    for record in &report.signature_verdicts {
-        match record.verdict {
-            SignatureVerdict::Signed { .. } => signed += 1,
-            SignatureVerdict::Unsigned { .. } => unsigned += 1,
-            SignatureVerdict::Invalid { .. } => {}
-        }
-    }
-    let signed_str = signed.to_string();
-    let unsigned_str = unsigned.to_string();
-    let value = match (signed, unsigned) {
-        (0, 0) => return None,
-        (_, 0) => {
-            localizer
-                .format(
-                    "self-update-apply-signature-summary-signed-only",
-                    &[("signed", signed_str.as_str())],
-                )
-                .value
-        }
-        (0, _) => {
-            localizer
-                .format(
-                    "self-update-apply-signature-summary-unsigned-only",
-                    &[("unsigned", unsigned_str.as_str())],
-                )
-                .value
-        }
-        _ => {
-            localizer
-                .format(
-                    "self-update-apply-signature-summary-mixed",
-                    &[
-                        ("signed", signed_str.as_str()),
-                        ("unsigned", unsigned_str.as_str()),
-                    ],
-                )
-                .value
-        }
-    };
-    Some(value)
 }
 
 pub fn wizard_outcome_report_from_success(
@@ -3069,8 +2956,8 @@ mod tests {
 
     use super::{
         HostCapabilities, KeymapChoice, UiBootstrapOptions, WizardInstallRequest,
-        custom_portable_target_row, format_self_update_apply_summary, localizer_from_options,
-        model_from_plan, refreshed_target_row, wizard_desired_package_ids_for_host,
+        custom_portable_target_row, localizer_from_options, model_from_plan, refreshed_target_row,
+        wizard_desired_package_ids_for_host,
     };
 
     #[test]
@@ -4545,131 +4432,6 @@ mod tests {
         let content = std::fs::read_to_string(path).unwrap();
         assert!(content.contains("FRABBIT Report"));
         assert!(content.contains("resource_path:"));
-    }
-
-    #[test]
-    fn apply_summary_appends_signed_count_when_signatures_were_verified() {
-        use frabbit_core::self_update::{ReplacedFile, SignatureVerdictRecord};
-        use frabbit_core::signature::SignatureVerdict;
-
-        let report = sample_apply_report(
-            vec![ReplacedFile {
-                install_path: PathBuf::from("/install/FRABBIT"),
-                backup_path: PathBuf::from("/install/FRABBIT.frabbit-old"),
-            }],
-            vec![SignatureVerdictRecord {
-                source_path: PathBuf::from("/staging/FRABBIT"),
-                verdict: SignatureVerdict::Signed {
-                    details: "valid on disk".to_string(),
-                },
-            }],
-        );
-
-        let localizer = Localizer::embedded("en-US").unwrap();
-        let summary = format_self_update_apply_summary(&localizer, &report);
-        assert!(summary.contains("Replaced 1 file(s)"));
-        assert!(summary.contains("Signature verification: 1 signed."));
-    }
-
-    #[test]
-    fn apply_summary_omits_signature_clause_when_no_verdicts_recorded() {
-        use frabbit_core::self_update::ReplacedFile;
-
-        let report = sample_apply_report(
-            vec![ReplacedFile {
-                install_path: PathBuf::from("/install/FRABBIT"),
-                backup_path: PathBuf::from("/install/FRABBIT.frabbit-old"),
-            }],
-            Vec::new(),
-        );
-
-        let localizer = Localizer::embedded("en-US").unwrap();
-        let summary = format_self_update_apply_summary(&localizer, &report);
-        assert!(summary.contains("Replaced 1 file(s)"));
-        assert!(!summary.contains("Signature verification"));
-    }
-
-    #[test]
-    fn apply_summary_reports_signed_and_unsigned_split() {
-        use frabbit_core::self_update::{ReplacedFile, SignatureVerdictRecord};
-        use frabbit_core::signature::SignatureVerdict;
-
-        let report = sample_apply_report(
-            vec![
-                ReplacedFile {
-                    install_path: PathBuf::from("/install/FRABBIT"),
-                    backup_path: PathBuf::from("/install/FRABBIT.frabbit-old"),
-                },
-                ReplacedFile {
-                    install_path: PathBuf::from("/install/frabbit-cli"),
-                    backup_path: PathBuf::from("/install/frabbit-cli.frabbit-old"),
-                },
-            ],
-            vec![
-                SignatureVerdictRecord {
-                    source_path: PathBuf::from("/staging/FRABBIT"),
-                    verdict: SignatureVerdict::Signed {
-                        details: "ok".to_string(),
-                    },
-                },
-                SignatureVerdictRecord {
-                    source_path: PathBuf::from("/staging/frabbit-cli"),
-                    verdict: SignatureVerdict::Unsigned {
-                        reason: "no signtool".to_string(),
-                    },
-                },
-            ],
-        );
-
-        let localizer = Localizer::embedded("en-US").unwrap();
-        let summary = format_self_update_apply_summary(&localizer, &report);
-        assert!(summary.contains("Signature verification: 1 signed, 1 unsigned."));
-    }
-
-    fn sample_apply_report(
-        replaced_files: Vec<frabbit_core::self_update::ReplacedFile>,
-        signature_verdicts: Vec<frabbit_core::self_update::SignatureVerdictRecord>,
-    ) -> frabbit_core::self_update::SelfUpdateApplyReport {
-        use frabbit_core::model::Platform;
-        use frabbit_core::self_update::{
-            SelfUpdateApplyReport, SelfUpdateAssetSelection, SelfUpdateCheckReport,
-            SelfUpdateStageReport,
-        };
-
-        let check = SelfUpdateCheckReport {
-            manifest_url: "https://example.test/frabbit-update-stable.json".to_string(),
-            current_version: Version::parse("0.1.0").unwrap(),
-            latest_version: Version::parse("0.2.0").unwrap(),
-            channel: "stable".to_string(),
-            published_at: "2026-04-25T00:00:00Z".to_string(),
-            release_notes_url: None,
-            minimum_supported_previous_version: None,
-            update_available: true,
-            requires_manual_transition: false,
-            asset: SelfUpdateAssetSelection {
-                platform: Platform::Windows,
-                url: "https://example.test/FRABBIT-windows.zip".to_string(),
-                sha256: "0".repeat(64),
-            },
-        };
-        let stage = SelfUpdateStageReport {
-            check,
-            staging_dir: PathBuf::from("/staging"),
-            staged_asset_path: Some(PathBuf::from("/staging/0.2.0/FRABBIT-windows.zip")),
-            downloaded: true,
-            reused_existing_file: false,
-            verified_sha256: Some("0".repeat(64)),
-            ready_to_apply: true,
-            status_message: "ready".to_string(),
-        };
-        SelfUpdateApplyReport {
-            stage,
-            install_root: PathBuf::from("/install"),
-            replaced_files,
-            skipped_files: Vec::new(),
-            signature_verdicts,
-            status_message: "applied".to_string(),
-        }
     }
 
     fn fake_installation() -> Installation {

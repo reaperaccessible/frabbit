@@ -189,31 +189,12 @@ wizard-done-open-resource-mnemonic = R
 wizard-done-no-reaper-app = Aucune application REAPER lançable n'est connue pour cette cible.
 wizard-done-launch-reaper-error-prefix = REAPER n'a pas pu être lancé
 wizard-done-open-resource-error-prefix = Le dossier des ressources n'a pas pu être ouvert
-wizard-done-self-update-apply-running = Application de la mise à jour de FRABBIT…
 wizard-done-self-update-error-prefix = La mise à jour automatique de FRABBIT a échoué
-wizard-done-self-update-relaunch-prefix = FRABBIT relancé
 wizard-self-update-status-checking = Recherche de mises à jour de FRABBIT…
-
-wizard-self-update-prompt-title = Mise à jour de FRABBIT disponible
-wizard-self-update-prompt-body = FRABBIT { $latest } est disponible. Vous avez actuellement { $current }. Mettre à jour maintenant ? FRABBIT redémarrera une fois la mise à jour terminée.
 
 # $current est la version actuelle, $latest est la version proposée, $channel est le canal.
 self-update-status-update-available = Mise à jour de FRABBIT disponible : { $current } → { $latest } (canal { $channel }). Relancez FRABBIT pour être à nouveau invité.
 self-update-status-up-to-date = FRABBIT est à jour (version actuelle { $current }, canal { $channel }).
-
-# $version est la version ciblée mais non écrite.
-self-update-apply-no-files-replaced = La mise à jour automatique n'a remplacé aucun fichier (version cible { $version }).
-# $count est le nombre de fichiers remplacés, $root est le répertoire d'installation,
-# $version est la nouvelle version de FRABBIT.
-self-update-apply-replaced-summary = { $count } fichier(s) remplacé(s) sous { $root } ; relancez FRABBIT pour utiliser { $version }.
-
-# $signed / $unsigned sont les nombres de binaires signés/non signés.
-self-update-apply-signature-summary-signed-only = Vérification de signature : { $signed } signé(s).
-self-update-apply-signature-summary-unsigned-only = Vérification de signature : { $unsigned } non signé(s).
-self-update-apply-signature-summary-mixed = Vérification de signature : { $signed } signé(s), { $unsigned } non signé(s).
-
-# $pid est l'identifiant du processus de l'autre installation FRABBIT.
-self-update-lock-blocking = Une autre installation de FRABBIT est en cours (PID { $pid }). L'application est en pause jusqu'à sa fin.
 
 wizard-summary-target = Cible : { $path }
 wizard-summary-portable = Cible portable : { $value }

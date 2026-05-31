@@ -8,8 +8,8 @@ use crate::model::{
     ComponentDetection, Confidence, Evidence, Installation, InstallationKind, Platform,
 };
 use crate::package::{
-    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
-    PACKAGE_REAPACK, PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs,
+    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
+    PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs, embedded_package_manifest,
 };
 use crate::reapack::package_owner_for_file;
 use crate::receipt::{ReceiptVerification, load_install_state, verify_package_receipt};
@@ -222,23 +222,35 @@ fn detect_version_from_files_with_probes(
     package_id: &str,
     uninstall_display_version: fn(&str) -> Option<String>,
 ) -> Result<Option<(crate::version::Version, String, Confidence, Vec<String>)>> {
-    // CSI: version comes from the `.frabbit-version` file written by
-    // FRABBIT's CSI installer in Documents/CSI For Behringer X-Touch Universal/.
-    if package_id == PACKAGE_CSI {
-        if let Some(version_string) = crate::csi::installed_csi_version() {
-            if let Ok(version) = crate::version::Version::parse(&version_string) {
-                return Ok(Some((
-                    version,
-                    "csi-version-file".to_string(),
-                    Confidence::High,
-                    vec![
-                        "Version came from .frabbit-version in the CSI Documents folder."
-                            .to_string(),
-                    ],
-                )));
+    // Generic manifest-driven version detection: if the manifest defines
+    // `version_file_documents_relative` for this package, read the version
+    // file from Documents and return early.
+    {
+        let manifest = embedded_package_manifest();
+        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
+            if let Some(rel_path) = &spec.version_file_documents_relative {
+                if let Ok(userprofile) = std::env::var("USERPROFILE") {
+                    let version_file = std::path::PathBuf::from(userprofile)
+                        .join("Documents")
+                        .join(rel_path);
+                    if let Ok(contents) = std::fs::read_to_string(&version_file) {
+                        let trimmed = contents.trim();
+                        if let Ok(version) = crate::version::Version::parse(trimmed) {
+                            return Ok(Some((
+                                version,
+                                "manifest-version-file".to_string(),
+                                Confidence::High,
+                                vec![format!(
+                                    "Version came from .frabbit-version in Documents/{rel_path}."
+                                )],
+                            )));
+                        }
+                    }
+                }
+                // If no version file found but this package uses a manifest
+                // version file, fall through to other probes.
             }
         }
-        return Ok(None);
     }
 
     // FFmpeg: the libavformat / libavcodec / etc. DLLs carry their

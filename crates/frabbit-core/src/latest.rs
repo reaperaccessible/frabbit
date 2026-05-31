@@ -4,8 +4,8 @@ use serde_json::Value;
 use crate::error::{FrabbitError, Result};
 use crate::hfs::{HfsListEntry, fetch_file_list, parse_get_file_list_response};
 use crate::package::{
-    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
-    PACKAGE_REAPACK, PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
+    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
+    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS, embedded_package_manifest,
 };
 use crate::plan::AvailablePackage;
 use crate::version::Version;
@@ -61,9 +61,6 @@ pub const FFMPEG_SUPPORTED_MAJOR: u64 = 8;
 /// nightlies.
 pub const SURGE_XT_NIGHTLY_URL: &str =
     "https://api.github.com/repos/surge-synthesizer/surge/releases/tags/Nightly";
-pub const CSI_GITHUB_LATEST_URL: &str =
-    "https://api.github.com/repos/reaperaccessible/CSI/releases/latest";
-
 /// HFS root that hosts the JAWS-for-REAPER scripts archive (rejetto HFS).
 pub const JAWS_FOR_REAPER_HFS_BASE: &str = "https://hoard.reaperaccessibility.com";
 /// Folder under that root where the versioned `*.zip` lives. The exact folder
@@ -97,6 +94,26 @@ pub fn fetch_latest_versions() -> Result<Vec<AvailablePackage>> {
         package_id: PACKAGE_JAWS_SCRIPTS.to_string(),
         version: Some(fetch_jaws_for_reaper_latest(&client)?),
     });
+
+    // Manifest-driven packages: any package with a `github_release_api_url`
+    // that isn't already covered by the hardcoded providers list.
+    let covered: std::collections::HashSet<&str> =
+        providers().iter().map(|(id, _, _)| *id).collect();
+    let manifest = embedded_package_manifest();
+    for spec in &manifest.packages {
+        if covered.contains(spec.id.as_str()) || spec.id == PACKAGE_JAWS_SCRIPTS {
+            continue;
+        }
+        if let Some(api_url) = &spec.github_release_api_url {
+            let body = http_get_text(&client, api_url)?;
+            let version = parse_github_latest_release_json(&body, api_url)?;
+            packages.push(AvailablePackage {
+                package_id: spec.id.clone(),
+                version: Some(version),
+            });
+        }
+    }
+
     Ok(packages)
 }
 
@@ -108,16 +125,27 @@ pub fn fetch_latest_for_package(package_id: &str) -> Result<Version> {
         let client = build_http_client()?;
         return fetch_jaws_for_reaper_latest(&client);
     }
-    let (_, url, parser) = providers()
-        .into_iter()
-        .find(|(id, _, _)| *id == package_id)
-        .ok_or_else(|| FrabbitError::RemoteData {
-            url: String::new(),
-            message: format!("no latest-version provider configured for package {package_id}"),
-        })?;
-    let client = build_http_client()?;
-    let body = http_get_text(&client, url)?;
-    parser(&body, url)
+    if let Some((_, url, parser)) = providers().into_iter().find(|(id, _, _)| *id == package_id) {
+        let client = build_http_client()?;
+        let body = http_get_text(&client, url)?;
+        return parser(&body, url);
+    }
+
+    // Manifest-driven fallback: read `github_release_api_url` from the
+    // embedded manifest and parse the GitHub releases `/latest` JSON.
+    let manifest = embedded_package_manifest();
+    if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
+        if let Some(api_url) = &spec.github_release_api_url {
+            let client = build_http_client()?;
+            let body = http_get_text(&client, api_url)?;
+            return parse_github_latest_release_json(&body, api_url);
+        }
+    }
+
+    Err(FrabbitError::RemoteData {
+        url: String::new(),
+        message: format!("no latest-version provider configured for package {package_id}"),
+    })
 }
 
 /// POSTs the HFS listing for the JAWS-for-REAPER scripts folder and returns
@@ -224,7 +252,7 @@ fn build_http_client() -> Result<Client> {
         })
 }
 
-fn providers() -> [(&'static str, &'static str, VersionParser); 8] {
+fn providers() -> [(&'static str, &'static str, VersionParser); 7] {
     [
         (
             PACKAGE_REAPER,
@@ -260,11 +288,6 @@ fn providers() -> [(&'static str, &'static str, VersionParser); 8] {
             PACKAGE_SURGE_XT,
             SURGE_XT_NIGHTLY_URL,
             parse_surge_xt_nightly_release as VersionParser,
-        ),
-        (
-            PACKAGE_CSI,
-            CSI_GITHUB_LATEST_URL,
-            parse_github_latest_release_json as VersionParser,
         ),
     ]
 }

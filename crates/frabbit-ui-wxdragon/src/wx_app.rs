@@ -116,22 +116,14 @@ fn dispatch_version_check_event(event: VersionCheckEvent) {
         }
     });
 }
-// `ConfigurationRow` and `recompute_configuration_row_availability` are
-// brought in for the upcoming Configuration tree-group wiring; the model
-// currently feeds the install pipeline its initial recommended-selection
-// directly via `selected_configuration_step_ids` so the import-warnings
-// suppression is a stop-gap until the tree UI lands.
-#[allow(unused_imports)]
-use crate::{ConfigurationRow, recompute_configuration_row_availability};
 use crate::{
-    KeymapChoice, PackageRow, TargetRow, UiBootstrapOptions, WizardInstallOptions, WizardModel,
-    WizardOutcomeReport, apply_checkbox_state_to_package_row,
+    ConfigurationRow, KeymapChoice, PackageRow, TargetRow, UiBootstrapOptions,
+    WizardInstallOptions, WizardModel, WizardOutcomeReport, apply_checkbox_state_to_package_row,
     build_review_preview_for_package_rows, custom_portable_target_row,
-    execute_wizard_install_with_progress, format_self_update_apply_summary,
-    format_self_update_check_summary, install_request_from_target_and_rows, keymap_note,
-    load_wizard_model, localized_package_display_name, localizer_from_options,
-    osara_selected_for_rows, reapack_selected_for_install_or_update, refreshed_target_row,
-    relaunch_frabbit_after_apply, run_wizard_self_update_apply, run_wizard_self_update_check,
+    execute_wizard_install_with_progress, format_self_update_check_summary,
+    install_request_from_target_and_rows, keymap_note, load_wizard_model,
+    localized_package_display_name, localizer_from_options, reapack_selected_for_install_or_update,
+    recompute_configuration_row_availability, refreshed_target_row, run_wizard_self_update_check,
     save_wizard_outcome_report, selected_configuration_step_ids, wizard_desired_package_ids,
     wizard_outcome_report_from_error, wizard_outcome_report_from_success,
     wizard_package_plan_for_target, wizard_package_plan_for_target_with_available,
@@ -212,64 +204,24 @@ fn render_self_update_status(
     // target still races at the file rename and surfaces a normal IO
     // error.)
     let status = match &check {
-        Ok(report) => format_self_update_check_summary(localizer, report),
+        Ok(report) => {
+            if report.update_available {
+                format!(
+                    "FRABBIT {} is available. Download it from https://github.com/ReaperAccessible/frabbit/releases/latest",
+                    report.latest_version
+                )
+            } else {
+                format_self_update_check_summary(localizer, report)
+            }
+        }
         Err(error) => format!("{}: {}", model.text.done_self_update_error_prefix, error),
     };
-    let apply_enabled = matches!(&check, Ok(report) if report.update_available);
 
     let status_changed = status != state_guard.last_status;
     if status_changed {
         widgets.self_update_status.set_status_text(&status, 0);
         state_guard.last_status = status;
     }
-
-    // Once-per-session prompt: if an update is available, ask up front
-    // instead of forcing the user to navigate to the Done page to find
-    // the apply button. The Done-page button stays around as a fallback
-    // for users who pick "No" here and change their mind later.
-    if !apply_enabled || state_guard.prompted {
-        return;
-    }
-    state_guard.prompted = true;
-    let Ok(report) = check else { return };
-    // Drop the lock before showing the modal — `MessageDialog::show_modal`
-    // runs a nested wxWidgets event loop, and any UI-thread callback that
-    // re-enters `render_self_update_status` while the modal is open would
-    // deadlock on a still-held mutex.
-    drop(state_guard);
-
-    let title = localizer.text("wizard-self-update-prompt-title").value;
-    let current = report.current_version.to_string();
-    let latest = report.latest_version.to_string();
-    let body = localizer
-        .format(
-            "wizard-self-update-prompt-body",
-            &[("current", current.as_str()), ("latest", latest.as_str())],
-        )
-        .value;
-
-    // Pull the frame from the UI-thread-local rather than from the
-    // captured `widgets` so we don't have to send a non-`Send` `Frame`
-    // through the `call_after` closure that wraps this function. The
-    // closure runs on the UI thread, so the thread-local was populated
-    // by `run()` before any worker fired.
-    with_ui_frame(|frame| {
-        let dialog = MessageDialog::builder(frame, &body, &title)
-            .with_style(
-                MessageDialogStyle::YesNo
-                    | MessageDialogStyle::IconQuestion
-                    | MessageDialogStyle::Centre,
-            )
-            .build();
-
-        if dialog.show_modal() == ID_YES {
-            start_self_update_apply(
-                widgets.done_status,
-                widgets.self_update_status,
-                Arc::clone(model),
-            );
-        }
-    });
 }
 
 /// `wx/defs.h`: `WXK_SPACE = 32` (just the ASCII value). Kept around as a
@@ -489,391 +441,7 @@ const PACKAGE_COL_LABEL: u32 = 1;
 /// wxdragon-sys, and the prize is screen-reader-correct native checkboxes
 /// (UIA Toggle pattern on each tree row).
 #[cfg(target_os = "windows")]
-mod native_tree_checkboxes {
-    use super::TreeItemId;
-    use std::ffi::c_void;
-
-    pub const GWL_STYLE: i32 = -16;
-    pub const TVS_CHECKBOXES: u32 = 0x0100;
-    const TV_FIRST: u32 = 0x1100;
-    const TVM_SETITEMW: u32 = TV_FIRST + 63;
-    const TVM_GETITEMW: u32 = TV_FIRST + 62;
-    const TVM_SETIMAGELIST: u32 = TV_FIRST + 9;
-    const TVM_HITTEST: u32 = TV_FIRST + 17;
-    const TVSIL_STATE: usize = 2;
-    const TVIF_HANDLE: u32 = 0x0010;
-    const TVIF_STATE: u32 = 0x0008;
-    const TVIS_STATEIMAGEMASK: u32 = 0xF000;
-    pub const TVHT_ONITEMSTATEICON: u32 = 0x0040;
-
-    /// Themed checkbox state ids. See `BP_CHECKBOX` (= 3) of `BUTTON`
-    /// theme class in `<vsstyle.h>`. We use the "normal" variants because
-    /// the tree control overlays its own selection/hover effects on top.
-    const BP_CHECKBOX: i32 = 3;
-    const CBS_UNCHECKEDNORMAL: i32 = 1;
-    const CBS_CHECKEDNORMAL: i32 = 5;
-    const CBS_MIXEDNORMAL: i32 = 9;
-    const TS_TRUE: i32 = 1;
-
-    /// `DrawFrameControl` flags used as the unthemed fallback when
-    /// `OpenThemeData("BUTTON")` returns null (classic theme / no themes).
-    const DFC_BUTTON: u32 = 4;
-    const DFCS_BUTTONCHECK: u32 = 0x0000;
-    const DFCS_CHECKED: u32 = 0x0400;
-    const DFCS_BUTTON3STATE: u32 = 0x0008;
-
-    /// `ImageList_Create` flags: 32-bit color + mask channel.
-    const ILC_COLOR32: u32 = 0x0020;
-    const ILC_MASK: u32 = 0x0001;
-
-    /// State-image indices we use. `TVS_CHECKBOXES` indices are 1-based
-    /// (index 0 means "no state image"). `Mixed` is what the parent
-    /// "Packages" group shows when only some children are checked.
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum TriState {
-        Unchecked,
-        Checked,
-        Mixed,
-    }
-
-    impl TriState {
-        fn state_image_index(self) -> u32 {
-            match self {
-                TriState::Unchecked => 1,
-                TriState::Checked => 2,
-                TriState::Mixed => 3,
-            }
-        }
-    }
-
-    /// Layout-compatible mirror of `TVITEMW` from `<commctrl.h>`.
-    #[repr(C)]
-    struct Tvitemw {
-        mask: u32,
-        h_item: *mut c_void,
-        state: u32,
-        state_mask: u32,
-        text: *mut u16,
-        text_max: i32,
-        image: i32,
-        selected_image: i32,
-        children: i32,
-        l_param: isize,
-    }
-
-    #[repr(C)]
-    struct RectStruct {
-        left: i32,
-        top: i32,
-        right: i32,
-        bottom: i32,
-    }
-
-    #[repr(C)]
-    struct SizeStruct {
-        cx: i32,
-        cy: i32,
-    }
-
-    unsafe extern "system" {
-        fn GetWindowLongPtrW(h_wnd: *mut c_void, n_index: i32) -> isize;
-        fn SetWindowLongPtrW(h_wnd: *mut c_void, n_index: i32, dw_new_long: isize) -> isize;
-        fn SendMessageW(h_wnd: *mut c_void, msg: u32, w_param: usize, l_param: isize) -> isize;
-        fn GetDC(h_wnd: *mut c_void) -> *mut c_void;
-        fn ReleaseDC(h_wnd: *mut c_void, hdc: *mut c_void) -> i32;
-        fn DrawFrameControl(
-            hdc: *mut c_void,
-            lprc: *const RectStruct,
-            type_: u32,
-            state: u32,
-        ) -> i32;
-        fn FillRect(hdc: *mut c_void, lprc: *const RectStruct, hbr: *mut c_void) -> i32;
-    }
-
-    #[link(name = "gdi32")]
-    unsafe extern "system" {
-        fn CreateCompatibleDC(hdc: *mut c_void) -> *mut c_void;
-        fn DeleteDC(hdc: *mut c_void) -> i32;
-        fn CreateCompatibleBitmap(hdc: *mut c_void, cx: i32, cy: i32) -> *mut c_void;
-        fn DeleteObject(obj: *mut c_void) -> i32;
-        fn SelectObject(hdc: *mut c_void, obj: *mut c_void) -> *mut c_void;
-        fn CreateSolidBrush(color: u32) -> *mut c_void;
-    }
-
-    #[link(name = "uxtheme")]
-    unsafe extern "system" {
-        fn OpenThemeData(h_wnd: *mut c_void, classlist: *const u16) -> *mut c_void;
-        fn CloseThemeData(htheme: *mut c_void) -> i32;
-        fn DrawThemeBackground(
-            htheme: *mut c_void,
-            hdc: *mut c_void,
-            partid: i32,
-            stateid: i32,
-            prect: *const RectStruct,
-            pcliprect: *const RectStruct,
-        ) -> i32;
-        fn GetThemePartSize(
-            htheme: *mut c_void,
-            hdc: *mut c_void,
-            partid: i32,
-            stateid: i32,
-            prc: *const RectStruct,
-            esize: i32,
-            psz: *mut SizeStruct,
-        ) -> i32;
-    }
-
-    #[link(name = "comctl32")]
-    unsafe extern "system" {
-        fn ImageList_Create(cx: i32, cy: i32, flags: u32, initial: i32, grow: i32) -> *mut c_void;
-        fn ImageList_AddMasked(himl: *mut c_void, hbm_image: *mut c_void, cr_mask: u32) -> i32;
-        fn ImageList_Destroy(himl: *mut c_void) -> i32;
-    }
-
-    /// OR-in the `TVS_CHECKBOXES` style on an existing tree's `HWND` AND
-    /// install our own 3-image state list so the synthetic Packages group
-    /// can show an indeterminate ("half-checked") state when only some of
-    /// its children are checked. The native control by default creates a
-    /// 2-image list (unchecked, checked); we replace it with a 3-image
-    /// list (unchecked, checked, mixed). The first two come from the
-    /// `BUTTON` theme via `DrawThemeBackground` so they match the rest of
-    /// the OS's checkboxes; the third uses `CBS_MIXEDNORMAL` to draw the
-    /// system's standard mixed-state checkbox glyph.
-    pub fn enable_checkboxes(hwnd: *mut c_void) {
-        if hwnd.is_null() {
-            return;
-        }
-        unsafe {
-            let style = GetWindowLongPtrW(hwnd, GWL_STYLE);
-            if (style as u32 & TVS_CHECKBOXES) == 0 {
-                SetWindowLongPtrW(hwnd, GWL_STYLE, style | TVS_CHECKBOXES as isize);
-            }
-        }
-        install_tristate_state_image_list(hwnd);
-    }
-
-    /// Build a 3-image `HIMAGELIST` containing themed unchecked + checked +
-    /// mixed checkbox glyphs and install it as the tree's state image
-    /// list. Replaces (and frees) whatever list `TVS_CHECKBOXES` may have
-    /// auto-created.
-    fn install_tristate_state_image_list(hwnd: *mut c_void) {
-        // BGR magenta serves as the transparency key for the image list:
-        // anywhere we leave magenta is treated as transparent on draw.
-        const MAGENTA_BGR: u32 = 0x00FF00FF;
-
-        let class: Vec<u16> = "BUTTON".encode_utf16().chain(std::iter::once(0)).collect();
-        let htheme = unsafe { OpenThemeData(hwnd, class.as_ptr()) };
-
-        // Determine checkbox glyph size from the theme (DPI-aware) when
-        // available; fall back to a sensible default otherwise.
-        let mut size = SizeStruct { cx: 13, cy: 13 };
-        if !htheme.is_null() {
-            unsafe {
-                let _ = GetThemePartSize(
-                    htheme,
-                    std::ptr::null_mut(),
-                    BP_CHECKBOX,
-                    CBS_UNCHECKEDNORMAL,
-                    std::ptr::null(),
-                    TS_TRUE,
-                    &mut size,
-                );
-            }
-        }
-        let cx = size.cx.max(13);
-        let cy = size.cy.max(13);
-
-        let himl = unsafe { ImageList_Create(cx, cy, ILC_COLOR32 | ILC_MASK, 3, 0) };
-        if himl.is_null() {
-            if !htheme.is_null() {
-                unsafe {
-                    CloseThemeData(htheme);
-                }
-            }
-            return;
-        }
-
-        let states = [CBS_UNCHECKEDNORMAL, CBS_CHECKEDNORMAL, CBS_MIXEDNORMAL];
-
-        unsafe {
-            let hdc_screen = GetDC(std::ptr::null_mut());
-            let hdc_mem = CreateCompatibleDC(hdc_screen);
-            let key_brush = CreateSolidBrush(MAGENTA_BGR);
-
-            for state in &states {
-                let hbm = CreateCompatibleBitmap(hdc_screen, cx, cy);
-                let prev_bm = SelectObject(hdc_mem, hbm);
-
-                // Fill with magenta — anything DrawThemeBackground (or the
-                // unthemed fallback) leaves untouched stays magenta and
-                // becomes transparent in the image list.
-                let rc = RectStruct {
-                    left: 0,
-                    top: 0,
-                    right: cx,
-                    bottom: cy,
-                };
-                let _ = FillRect(hdc_mem, &rc, key_brush);
-
-                if !htheme.is_null() {
-                    let _ = DrawThemeBackground(
-                        htheme,
-                        hdc_mem,
-                        BP_CHECKBOX,
-                        *state,
-                        &rc,
-                        std::ptr::null(),
-                    );
-                } else {
-                    let dfcs = match *state {
-                        CBS_UNCHECKEDNORMAL => DFCS_BUTTONCHECK,
-                        CBS_CHECKEDNORMAL => DFCS_BUTTONCHECK | DFCS_CHECKED,
-                        CBS_MIXEDNORMAL => DFCS_BUTTON3STATE | DFCS_CHECKED,
-                        _ => DFCS_BUTTONCHECK,
-                    };
-                    let _ = DrawFrameControl(hdc_mem, &rc, DFC_BUTTON, dfcs);
-                }
-
-                SelectObject(hdc_mem, prev_bm);
-                let _ = ImageList_AddMasked(himl, hbm, MAGENTA_BGR);
-                DeleteObject(hbm);
-            }
-
-            DeleteObject(key_brush);
-            DeleteDC(hdc_mem);
-            ReleaseDC(std::ptr::null_mut(), hdc_screen);
-
-            if !htheme.is_null() {
-                CloseThemeData(htheme);
-            }
-
-            // Hand the new image list to the tree control. The control
-            // takes ownership of the new list and returns the old one for
-            // us to destroy.
-            let old_himl = SendMessageW(hwnd, TVM_SETIMAGELIST, TVSIL_STATE, himl as isize);
-            if old_himl != 0 {
-                ImageList_Destroy(old_himl as *mut c_void);
-            }
-        }
-    }
-
-    #[repr(C)]
-    struct TvHitTestPoint {
-        x: i32,
-        y: i32,
-    }
-
-    /// Layout-compatible mirror of `TVHITTESTINFO` from `<commctrl.h>`.
-    #[repr(C)]
-    struct TvHitTestInfo {
-        pt: TvHitTestPoint,
-        flags: u32,
-        h_item: *mut c_void,
-    }
-
-    /// Send `TVM_HITTEST` to the native tree control and return the hit
-    /// item handle plus the result flags. `(x, y)` is in the tree's
-    /// client-area coordinates (which is what `wxEVT_LEFT_*` mouse-event
-    /// positions report on the bound window).
-    pub fn hit_test(hwnd: *mut c_void, x: i32, y: i32) -> (u32, *mut c_void) {
-        if hwnd.is_null() {
-            return (0, std::ptr::null_mut());
-        }
-        let mut info = TvHitTestInfo {
-            pt: TvHitTestPoint { x, y },
-            flags: 0,
-            h_item: std::ptr::null_mut(),
-        };
-        unsafe {
-            SendMessageW(hwnd, TVM_HITTEST, 0, &mut info as *mut _ as isize);
-        }
-        (info.flags, info.h_item)
-    }
-
-    /// Read the native `HTREEITEM` out of a wxdragon `TreeItemId`. Relies
-    /// on:
-    /// 1. `TreeItemId { ptr: *mut wxd_TreeItemId_t }` being a single-field
-    ///    `repr(Rust)` struct — its layout matches the inner pointer.
-    /// 2. `wxd_TreeItemId_t*` being a `reinterpret_cast` of `wxTreeItemId*`
-    ///    (confirmed in wxdragon-sys/cpp/src/treectrl.cpp).
-    /// 3. `wxTreeItemId` having `void* m_pItem` as its only non-static
-    ///    member with no vtable.
-    fn htreeitem_from(item: &TreeItemId) -> *mut c_void {
-        // SAFETY: see the contract above. Reading the first pointer-sized
-        // word of the `TreeItemId` wrapper yields its private `ptr` field;
-        // reading the first word of that yields `wxTreeItemId::m_pItem`.
-        let inner: *mut c_void = unsafe { std::mem::transmute_copy(item) };
-        if inner.is_null() {
-            return std::ptr::null_mut();
-        }
-        unsafe { *(inner as *const *mut c_void) }
-    }
-
-    pub fn set_check_state(hwnd: *mut c_void, item: &TreeItemId, checked: bool) {
-        let state = if checked {
-            TriState::Checked
-        } else {
-            TriState::Unchecked
-        };
-        set_check_state_tri(hwnd, item, state);
-    }
-
-    /// Set the state image index (1, 2, or 3 — see `TriState`) for the
-    /// given tree item. Used both for leaf rows (only `Checked` /
-    /// `Unchecked`) and the synthetic Packages group (any of the three).
-    pub fn set_check_state_tri(hwnd: *mut c_void, item: &TreeItemId, state: TriState) {
-        if hwnd.is_null() {
-            return;
-        }
-        let h_item = htreeitem_from(item);
-        if h_item.is_null() {
-            return;
-        }
-        let state_value = state.state_image_index() << 12;
-        let mut tvi = Tvitemw {
-            mask: TVIF_STATE | TVIF_HANDLE,
-            h_item,
-            state: state_value,
-            state_mask: TVIS_STATEIMAGEMASK,
-            text: std::ptr::null_mut(),
-            text_max: 0,
-            image: 0,
-            selected_image: 0,
-            children: 0,
-            l_param: 0,
-        };
-        unsafe {
-            SendMessageW(hwnd, TVM_SETITEMW, 0, &mut tvi as *mut _ as isize);
-        }
-    }
-
-    pub fn get_check_state(hwnd: *mut c_void, item: &TreeItemId) -> bool {
-        if hwnd.is_null() {
-            return false;
-        }
-        let h_item = htreeitem_from(item);
-        if h_item.is_null() {
-            return false;
-        }
-        let mut tvi = Tvitemw {
-            mask: TVIF_STATE | TVIF_HANDLE,
-            h_item,
-            state: 0,
-            state_mask: TVIS_STATEIMAGEMASK,
-            text: std::ptr::null_mut(),
-            text_max: 0,
-            image: 0,
-            selected_image: 0,
-            children: 0,
-            l_param: 0,
-        };
-        unsafe {
-            SendMessageW(hwnd, TVM_GETITEMW, 0, &mut tvi as *mut _ as isize);
-        }
-        // State image index 2 = checked.
-        ((tvi.state & TVIS_STATEIMAGEMASK) >> 12) == 2
-    }
-}
+mod native_tree_checkboxes;
 
 /// State carried across [`ProgressEvent`] notifications during a wizard
 /// install. Holds the totals the install handler pre-computed up front
@@ -2712,27 +2280,29 @@ fn format_row_label(summary: &str, _selected: bool) -> String {
     summary.to_string()
 }
 
-/// Windows-only: aggregate the per-row `selected` flags into a tristate
-/// for the synthetic "Packages" group node. Unavailable rows don't count
-/// for either side because they can't enter the install plan and toggling
-/// them is a no-op — we only look at the rows the user can actually flip.
+/// Windows-only: compute a tristate from a filtered iterator of
+/// `(actionable, selected)` pairs. Rows that aren't actionable are
+/// excluded from the aggregate; an empty actionable-set renders as
+/// Unchecked.
 #[cfg(target_os = "windows")]
-fn compute_packages_group_tristate(rows: &[crate::PackageRow]) -> native_tree_checkboxes::TriState {
+fn compute_group_tristate(
+    items: impl Iterator<Item = (bool, bool)>,
+) -> native_tree_checkboxes::TriState {
     let mut any = false;
     let mut all = true;
     let mut any_checked = false;
-    for row in rows.iter().filter(|r| r.available_for_target) {
+    for (actionable, selected) in items {
+        if !actionable {
+            continue;
+        }
         any = true;
-        if row.selected {
+        if selected {
             any_checked = true;
         } else {
             all = false;
         }
     }
     if !any {
-        // No selectable rows at all (everything's unavailable for this
-        // target). Render the group as unchecked rather than mixed —
-        // there's nothing to toggle.
         return native_tree_checkboxes::TriState::Unchecked;
     }
     if all {
@@ -2744,40 +2314,24 @@ fn compute_packages_group_tristate(rows: &[crate::PackageRow]) -> native_tree_ch
     }
 }
 
+/// Windows-only: aggregate the per-row `selected` flags into a tristate
+/// for the synthetic "Packages" group node. Unavailable rows don't count.
+#[cfg(target_os = "windows")]
+fn compute_packages_group_tristate(rows: &[crate::PackageRow]) -> native_tree_checkboxes::TriState {
+    compute_group_tristate(rows.iter().map(|r| (r.available_for_target, r.selected)))
+}
+
 /// Windows-only: aggregate the per-row `selected` flags of every
 /// actionable [`ConfigurationRow`] into a tristate for the synthetic
-/// "Configuration" group node. Same convention as
-/// `compute_packages_group_tristate` — unavailable rows AND
-/// already-applied rows are excluded (the user can't toggle either),
-/// and an empty actionable-set renders as Unchecked.
+/// "Configuration" group node.
 #[cfg(target_os = "windows")]
 fn compute_configuration_group_tristate(
     rows: &[crate::ConfigurationRow],
 ) -> native_tree_checkboxes::TriState {
-    let mut any = false;
-    let mut all = true;
-    let mut any_checked = false;
-    for row in rows
-        .iter()
-        .filter(|r| r.available_for_target && !r.already_applied)
-    {
-        any = true;
-        if row.selected {
-            any_checked = true;
-        } else {
-            all = false;
-        }
-    }
-    if !any {
-        return native_tree_checkboxes::TriState::Unchecked;
-    }
-    if all {
-        native_tree_checkboxes::TriState::Checked
-    } else if any_checked {
-        native_tree_checkboxes::TriState::Mixed
-    } else {
-        native_tree_checkboxes::TriState::Unchecked
-    }
+    compute_group_tristate(
+        rows.iter()
+            .map(|r| (r.available_for_target && !r.already_applied, r.selected)),
+    )
 }
 
 /// Spawn the deferred latest-version fetch on a background thread. Each
@@ -2808,75 +2362,6 @@ fn spawn_version_check_worker(package_ids: Vec<String>) {
         }
         wxdragon::call_after(Box::new(move || {
             dispatch_version_check_event(VersionCheckEvent::Finished);
-        }));
-    });
-}
-
-/// Trigger the self-update apply pipeline on a worker thread, routing
-/// progress (start, summary, relaunch / error) to both the Done page's
-/// `done_status` text control and the always-visible `self_update_status`
-/// status bar. Two surfaces because the apply can be invoked from two
-/// places: the Done page button (where `done_status` is the natural
-/// detail surface and `self_update_status` is a redundant short-form),
-/// and the once-per-session "FRABBIT update available" prompt at startup
-/// (where the user is on the Target step and only `self_update_status`
-/// is visible). The duplication keeps both call sites simple — neither
-/// has to know which surface their user can see.
-///
-/// Takes individual widget handles rather than the full `WizardWidgets`
-/// because that struct now holds a `Frame` (for parenting modal
-/// dialogs) and `Frame` isn't `Send` — capturing the whole struct
-/// into the spawned worker would break the closure's `Send` bound.
-fn start_self_update_apply(
-    done_status: TextCtrl,
-    self_update_status: StatusBar,
-    model: Arc<WizardModel>,
-) {
-    append_done_status(&done_status, &model.text.done_self_update_apply_running);
-    self_update_status.set_status_text(&model.text.done_self_update_apply_running, 0);
-    let model_for_thread = Arc::clone(&model);
-    std::thread::spawn(move || {
-        let result = run_wizard_self_update_apply();
-        wxdragon::call_after(Box::new(move || match result {
-            Ok(report) => {
-                with_ui_localizer(|localizer| {
-                    let summary = format_self_update_apply_summary(localizer, &report);
-                    append_done_status(&done_status, &summary);
-                    self_update_status.set_status_text(&summary, 0);
-                });
-                if !report.replaced_files.is_empty() {
-                    match relaunch_frabbit_after_apply() {
-                        Ok(pid) => {
-                            let msg = format!(
-                                "{}: PID {}",
-                                model_for_thread.text.done_self_update_relaunch_prefix, pid
-                            );
-                            append_done_status(&done_status, &msg);
-                            self_update_status.set_status_text(&msg, 0);
-                            // Mirror relaunch_with_locale: hand off to the new
-                            // process and exit, otherwise the pre-update GUI
-                            // sticks around next to the freshly-launched copy.
-                            std::process::exit(0);
-                        }
-                        Err(error) => {
-                            let msg = format!(
-                                "{}: {}",
-                                model_for_thread.text.done_self_update_error_prefix, error
-                            );
-                            append_done_status(&done_status, &msg);
-                            self_update_status.set_status_text(&msg, 0);
-                        }
-                    }
-                }
-            }
-            Err(error) => {
-                let msg = format!(
-                    "{}: {}",
-                    model_for_thread.text.done_self_update_error_prefix, error
-                );
-                append_done_status(&done_status, &msg);
-                self_update_status.set_status_text(&msg, 0);
-            }
         }));
     });
 }

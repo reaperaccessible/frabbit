@@ -12,19 +12,19 @@ use crate::error::{FrabbitError, IoPathContext, Result};
 use crate::hash::sha256_file;
 use crate::hfs::{fetch_file_list, file_url as hfs_file_url};
 use crate::latest::{
-    CSI_GITHUB_LATEST_URL, FFMPEG_GYAN_VERSION_URL, FFMPEG_GYAN_X64_ARCHIVE_URL,
-    FFMPEG_SUPPORTED_MAJOR, FFMPEG_TORDONA_ARM64_RELEASES_URL, JAWS_FOR_REAPER_HFS_BASE,
-    JAWS_FOR_REAPER_HFS_FOLDER, OSARA_UPDATE_URL, REAKONTROL_GITHUB_LATEST_URL,
-    REAPACK_GITHUB_LATEST_URL, REAPER_DOWNLOAD_URL, SURGE_XT_NIGHTLY_URL, SWS_HOME_URL,
-    parse_ffmpeg_gyan_release_version, parse_github_latest_release_json, parse_osara_update_json,
-    parse_reaper_latest_version, parse_sws_latest_version, pick_ffmpeg_tordona_release,
-    pick_jaws_for_reaper_version, reakontrol_version_from_asset_name,
-    surge_xt_version_from_macos_asset, surge_xt_version_from_windows_asset,
+    FFMPEG_GYAN_VERSION_URL, FFMPEG_GYAN_X64_ARCHIVE_URL, FFMPEG_SUPPORTED_MAJOR,
+    FFMPEG_TORDONA_ARM64_RELEASES_URL, JAWS_FOR_REAPER_HFS_BASE, JAWS_FOR_REAPER_HFS_FOLDER,
+    OSARA_UPDATE_URL, REAKONTROL_GITHUB_LATEST_URL, REAPACK_GITHUB_LATEST_URL, REAPER_DOWNLOAD_URL,
+    SURGE_XT_NIGHTLY_URL, SWS_HOME_URL, parse_ffmpeg_gyan_release_version,
+    parse_github_latest_release_json, parse_osara_update_json, parse_reaper_latest_version,
+    parse_sws_latest_version, pick_ffmpeg_tordona_release, pick_jaws_for_reaper_version,
+    reakontrol_version_from_asset_name, surge_xt_version_from_macos_asset,
+    surge_xt_version_from_windows_asset,
 };
 use crate::model::{Architecture, Platform};
 use crate::package::{
-    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
-    PACKAGE_REAPACK, PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
+    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
+    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS, embedded_package_manifest,
 };
 use crate::progress::{ProgressEvent, ProgressReporter};
 use crate::version::Version;
@@ -108,14 +108,7 @@ pub fn resolve_latest_artifacts(
             PACKAGE_JAWS_SCRIPTS => resolve_jaws_scripts_artifact(&client, platform, architecture)?,
             PACKAGE_FFMPEG => resolve_ffmpeg_artifact(&client, platform, architecture)?,
             PACKAGE_SURGE_XT => resolve_surge_xt_artifact(&client, platform, architecture)?,
-            PACKAGE_CSI => resolve_csi_artifact(&client)?,
-            _ => {
-                return Err(FrabbitError::NoArtifactFound {
-                    package_id: package_id.clone(),
-                    platform,
-                    architecture,
-                });
-            }
+            _ => resolve_generic_artifact(&client, package_id, platform, architecture)?,
         };
         artifacts.push(artifact);
     }
@@ -138,12 +131,19 @@ pub fn expected_artifact_kind(
         PACKAGE_JAWS_SCRIPTS => Ok(ArtifactKind::Installer),
         PACKAGE_FFMPEG => expected_ffmpeg_artifact_kind(platform, architecture),
         PACKAGE_SURGE_XT => Ok(expected_surge_xt_artifact_kind(platform)),
-        PACKAGE_CSI => Ok(ArtifactKind::Archive),
-        _ => Err(FrabbitError::NoArtifactFound {
-            package_id: package_id.to_string(),
-            platform,
-            architecture,
-        }),
+        _ => {
+            let manifest = embedded_package_manifest();
+            if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
+                if let Some(kind) = spec.artifact_kind_override {
+                    return Ok(kind);
+                }
+            }
+            Err(FrabbitError::NoArtifactFound {
+                package_id: package_id.to_string(),
+                platform,
+                architecture,
+            })
+        }
     }
 }
 
@@ -1208,18 +1208,66 @@ fn invalid_file_url(input: &str) -> FrabbitError {
     }
 }
 
-/// CSI: fixed zip URL, version from GitHub releases `/latest` JSON.
-fn resolve_csi_artifact(client: &Client) -> Result<ArtifactDescriptor> {
-    let text = http_get_text(client, CSI_GITHUB_LATEST_URL)?;
-    let version = parse_github_latest_release_json(&text, CSI_GITHUB_LATEST_URL)?;
+/// Manifest-driven artifact resolver. Reads `github_release_api_url`,
+/// `artifact_download_url`, `artifact_kind_override`, and `artifact_file_name`
+/// from the embedded manifest and constructs an `ArtifactDescriptor`.
+fn resolve_generic_artifact(
+    client: &Client,
+    package_id: &str,
+    platform: Platform,
+    architecture: Architecture,
+) -> Result<ArtifactDescriptor> {
+    let manifest = embedded_package_manifest();
+    let spec = manifest
+        .packages
+        .iter()
+        .find(|p| p.id == package_id)
+        .ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: package_id.to_string(),
+            platform,
+            architecture,
+        })?;
+
+    let api_url =
+        spec.github_release_api_url
+            .as_deref()
+            .ok_or_else(|| FrabbitError::NoArtifactFound {
+                package_id: package_id.to_string(),
+                platform,
+                architecture,
+            })?;
+    let download_url_template =
+        spec.artifact_download_url
+            .as_deref()
+            .ok_or_else(|| FrabbitError::NoArtifactFound {
+                package_id: package_id.to_string(),
+                platform,
+                architecture,
+            })?;
+    let kind = spec
+        .artifact_kind_override
+        .ok_or_else(|| FrabbitError::NoArtifactFound {
+            package_id: package_id.to_string(),
+            platform,
+            architecture,
+        })?;
+
+    let body = http_get_text(client, api_url)?;
+    let version = parse_github_latest_release_json(&body, api_url)?;
+
+    let download_url = download_url_template.replace("{version}", version.raw());
+    let file_name = spec.artifact_file_name.clone().unwrap_or_else(|| {
+        file_name_from_url(&download_url).unwrap_or_else(|| "artifact".to_string())
+    });
+
     Ok(ArtifactDescriptor {
-        package_id: PACKAGE_CSI.to_string(),
+        package_id: package_id.to_string(),
         version,
-        platform: Platform::Windows,
-        architecture: Architecture::X64,
-        kind: ArtifactKind::Archive,
-        url: crate::csi::CSI_RELEASE_URL.to_string(),
-        file_name: "CSI.zip".to_string(),
+        platform,
+        architecture,
+        kind,
+        url: download_url,
+        file_name,
     })
 }
 

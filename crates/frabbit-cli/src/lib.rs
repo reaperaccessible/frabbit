@@ -25,14 +25,8 @@ use frabbit_core::report::{default_report_path, save_json_and_text_reports};
 use frabbit_core::resource::{
     ResourceInitActionKind, ResourceInitReport, initialize_resource_path,
 };
-use frabbit_core::rollback::{
-    BackupSet, RestoreBackupActionKind, RestoreBackupOptions, RestoreBackupReport,
-    list_backup_sets, restore_backup_set,
-};
 use frabbit_core::self_update::{
-    ApplySelfUpdateOptions, DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateApplyReport,
-    SelfUpdateCheckReport, SelfUpdateStageReport, apply_self_update, check_self_update,
-    default_self_update_staging_dir, relaunch_current_executable, stage_self_update,
+    DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateCheckReport, check_self_update,
 };
 use frabbit_core::setup::{SetupOptions, SetupReport, execute_setup_operation};
 use serde::Serialize;
@@ -118,28 +112,6 @@ enum Command {
         target_app_path: Option<PathBuf>,
         #[arg(long)]
         portable: bool,
-        #[arg(long)]
-        apply: bool,
-        #[arg(long)]
-        allow_reaper_running: bool,
-        #[arg(long)]
-        report_path: Option<PathBuf>,
-        #[arg(long)]
-        save_report: bool,
-        #[arg(long)]
-        json: bool,
-    },
-    Backups {
-        #[arg(long)]
-        resource_path: PathBuf,
-        #[arg(long)]
-        json: bool,
-    },
-    RestoreBackup {
-        #[arg(long)]
-        resource_path: PathBuf,
-        #[arg(long)]
-        backup_id: String,
         #[arg(long)]
         apply: bool,
         #[arg(long)]
@@ -292,26 +264,6 @@ enum SelfUpdateCommand {
     Check {
         #[arg(long, default_value = DEFAULT_SELF_UPDATE_MANIFEST_URL)]
         manifest_url: String,
-        #[arg(long)]
-        json: bool,
-    },
-    Stage {
-        #[arg(long, default_value = DEFAULT_SELF_UPDATE_MANIFEST_URL)]
-        manifest_url: String,
-        #[arg(long)]
-        staging_dir: Option<PathBuf>,
-        #[arg(long)]
-        json: bool,
-    },
-    Apply {
-        #[arg(long, default_value = DEFAULT_SELF_UPDATE_MANIFEST_URL)]
-        manifest_url: String,
-        #[arg(long)]
-        staging_dir: Option<PathBuf>,
-        #[arg(long)]
-        install_root: Option<PathBuf>,
-        #[arg(long)]
-        restart: bool,
         #[arg(long)]
         json: bool,
     },
@@ -537,47 +489,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                 print_resource_init_report(&report);
             }
         }
-        Command::Backups {
-            resource_path,
-            json,
-        } => {
-            let backup_sets = list_backup_sets(&resource_path)?;
-            if json {
-                println!("{}", serde_json::to_string_pretty(&backup_sets)?);
-            } else {
-                print_backup_sets(&backup_sets);
-            }
-        }
-        Command::RestoreBackup {
-            resource_path,
-            backup_id,
-            apply,
-            allow_reaper_running,
-            report_path,
-            save_report,
-            json,
-        } => {
-            let report = restore_backup_set(
-                &resource_path,
-                &backup_id,
-                &RestoreBackupOptions {
-                    dry_run: !apply,
-                    allow_reaper_running,
-                },
-            )?;
-            let report_path = selected_report_path(
-                Some(&resource_path),
-                report_path,
-                save_report,
-                "restore-backup",
-            )?;
-            save_optional_report(report_path.as_deref(), &report)?;
-            if json {
-                println!("{}", serde_json::to_string_pretty(&report)?);
-            } else {
-                print_restore_backup_report(&report);
-            }
-        }
         Command::InstallExtension {
             resource_path,
             target_app_path,
@@ -784,52 +695,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{}", serde_json::to_string_pretty(&report)?);
                 } else {
                     print_self_update_report(&report);
-                }
-            }
-            SelfUpdateCommand::Stage {
-                manifest_url,
-                staging_dir,
-                json,
-            } => {
-                let platform =
-                    Platform::current().ok_or(frabbit_core::FrabbitError::UnsupportedPlatform)?;
-                let staging_dir = staging_dir.unwrap_or_else(default_self_update_staging_dir);
-                let report = stage_self_update(platform, &manifest_url, &staging_dir)?;
-                if json {
-                    println!("{}", serde_json::to_string_pretty(&report)?);
-                } else {
-                    print_self_update_stage_report(&report);
-                }
-            }
-            SelfUpdateCommand::Apply {
-                manifest_url,
-                staging_dir,
-                install_root,
-                restart,
-                json,
-            } => {
-                let platform =
-                    Platform::current().ok_or(frabbit_core::FrabbitError::UnsupportedPlatform)?;
-                let staging_dir = staging_dir.unwrap_or_else(default_self_update_staging_dir);
-                let stage = stage_self_update(platform, &manifest_url, &staging_dir)?;
-                let report = apply_self_update(
-                    &stage,
-                    &ApplySelfUpdateOptions {
-                        install_root,
-                        install_target_basename: None,
-                    },
-                )?;
-                if json {
-                    println!("{}", serde_json::to_string_pretty(&report)?);
-                } else {
-                    print_self_update_apply_report(&report);
-                }
-                if restart && !report.replaced_files.is_empty() {
-                    let pid = relaunch_current_executable()?;
-                    if !json {
-                        println!("Relaunched FRABBIT with PID {pid}; exiting current process.");
-                    }
-                    return Ok(());
                 }
             }
         },
@@ -1187,52 +1052,6 @@ fn print_resource_init_report(report: &ResourceInitReport) {
     }
 }
 
-fn print_backup_sets(backup_sets: &[BackupSet]) {
-    if backup_sets.is_empty() {
-        println!("No backup sets found.");
-        return;
-    }
-
-    for backup_set in backup_sets {
-        println!("{}", backup_set.id);
-        println!("  Path: {}", backup_set.path.display());
-        if let Some(created_at) = &backup_set.created_at {
-            println!("  Created: {created_at}");
-        }
-        if let Some(reason) = &backup_set.reason {
-            println!("  Reason: {reason}");
-        }
-        if let Some(manifest_path) = &backup_set.manifest_path {
-            println!("  Manifest: {}", manifest_path.display());
-        }
-        println!("  Files: {}", backup_set.files.len());
-        for file in &backup_set.files {
-            println!("    {}", file.display());
-        }
-    }
-}
-
-fn print_restore_backup_report(report: &RestoreBackupReport) {
-    println!("Resource path: {}", report.resource_path.display());
-    println!("Backup id: {}", report.backup_id);
-    println!("Backup path: {}", report.backup_path.display());
-    println!("Dry run: {}", yes_no(report.dry_run));
-    print_preflight_report(&report.preflight);
-    for action in &report.actions {
-        let verb = match action.action {
-            RestoreBackupActionKind::WouldRestore => "Would restore",
-            RestoreBackupActionKind::Restored => "Restored",
-        };
-        println!("  {verb}: {}", action.target_path.display());
-        println!("    Source: {}", action.source_path.display());
-        if let Some(current_backup_path) = &action.current_backup_path {
-            println!("    Current file backup: {}", current_backup_path.display());
-        }
-        println!("    Size: {}", action.size);
-        println!("    SHA-256: {}", action.sha256);
-    }
-}
-
 fn print_package_operation_report(report: &PackageOperationReport) {
     println!("Resource path: {}", report.resource_path.display());
     println!("Dry run: {}", yes_no(report.dry_run));
@@ -1516,49 +1335,6 @@ fn print_self_update_report(report: &SelfUpdateCheckReport) {
     println!("Asset SHA-256: {}", report.asset.sha256);
 }
 
-fn print_self_update_stage_report(report: &SelfUpdateStageReport) {
-    print_self_update_report(&report.check);
-    println!("Staging directory: {}", report.staging_dir.display());
-    println!(
-        "Staged asset: {}",
-        report
-            .staged_asset_path
-            .as_ref()
-            .map(|path| path.display().to_string())
-            .unwrap_or_else(|| "not staged".to_string())
-    );
-    println!("Downloaded: {}", yes_no(report.downloaded));
-    println!(
-        "Reused existing staged file: {}",
-        yes_no(report.reused_existing_file)
-    );
-    println!("Ready to apply: {}", yes_no(report.ready_to_apply));
-    if let Some(sha256) = report.verified_sha256.as_ref() {
-        println!("Verified SHA-256: {sha256}");
-    }
-    println!("Status: {}", report.status_message);
-}
-
-fn print_self_update_apply_report(report: &SelfUpdateApplyReport) {
-    print_self_update_stage_report(&report.stage);
-    println!("Install root: {}", report.install_root.display());
-    println!("Replaced files: {}", report.replaced_files.len());
-    for replaced in &report.replaced_files {
-        println!(
-            "  {} (rollback: {})",
-            replaced.install_path.display(),
-            replaced.backup_path.display()
-        );
-    }
-    if !report.skipped_files.is_empty() {
-        println!("Skipped files (no matching install target):");
-        for path in &report.skipped_files {
-            println!("  {}", path.display());
-        }
-    }
-    println!("Status: {}", report.status_message);
-}
-
 fn portability_status_label(status: PortabilityCheckStatus) -> &'static str {
     match status {
         PortabilityCheckStatus::Passed => "passed",
@@ -1577,7 +1353,7 @@ mod tests {
 
     use clap::Parser;
 
-    use super::{Cli, Command, DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateCommand};
+    use super::{Cli, Command, SelfUpdateCommand};
 
     #[test]
     fn setup_command_parses_target_app_path() {
@@ -1726,34 +1502,6 @@ mod tests {
                         manifest_url,
                         "https://example.test/frabbit-update-stable.json"
                     );
-                    assert!(!json);
-                }
-                other => panic!("unexpected self-update command: {other:?}"),
-            },
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn self_update_stage_command_parses_staging_dir() {
-        let cli = Cli::try_parse_from([
-            "frabbit",
-            "self-update",
-            "stage",
-            "--staging-dir",
-            "C:\\Temp\\FRABBIT-Update",
-        ])
-        .unwrap();
-
-        match cli.command {
-            Command::SelfUpdate { command } => match command {
-                SelfUpdateCommand::Stage {
-                    staging_dir,
-                    manifest_url,
-                    json,
-                } => {
-                    assert_eq!(staging_dir, Some(PathBuf::from("C:\\Temp\\FRABBIT-Update")));
-                    assert_eq!(manifest_url, DEFAULT_SELF_UPDATE_MANIFEST_URL);
                     assert!(!json);
                 }
                 other => panic!("unexpected self-update command: {other:?}"),

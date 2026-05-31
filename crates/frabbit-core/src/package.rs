@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::artifact::ArtifactKind;
 use crate::model::{Architecture, Platform};
 
 pub const PACKAGE_REAPER: &str = "reaper";
@@ -13,6 +14,18 @@ pub const PACKAGE_JAWS_SCRIPTS: &str = "jaws-scripts";
 pub const PACKAGE_FFMPEG: &str = "ffmpeg";
 pub const PACKAGE_SURGE_XT: &str = "surge-xt";
 pub const PACKAGE_CSI: &str = "csi";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ZipRoute {
+    pub zip_prefix: String,
+    pub destination: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReapackRepo {
+    pub name: String,
+    pub url: String,
+}
 
 pub const BUILTIN_PACKAGE_MANIFEST_ID: &str = "builtin-packages.json";
 const BUILTIN_PACKAGE_MANIFEST: &str = include_str!("../embedded/packages/builtin-packages.json");
@@ -50,6 +63,22 @@ pub struct PackageSpec {
     pub backup_policy: BackupPolicy,
     pub user_plugin_prefixes: Vec<String>,
     pub user_plugin_suffixes: Vec<String>,
+    #[serde(default)]
+    pub github_release_api_url: Option<String>,
+    #[serde(default)]
+    pub artifact_download_url: Option<String>,
+    #[serde(default)]
+    pub artifact_kind_override: Option<ArtifactKind>,
+    #[serde(default)]
+    pub artifact_file_name: Option<String>,
+    #[serde(default)]
+    pub version_file_documents_relative: Option<String>,
+    #[serde(default)]
+    pub post_install_zip_routes: Vec<ZipRoute>,
+    #[serde(default)]
+    pub post_install_reapack_repo: Option<ReapackRepo>,
+    #[serde(default)]
+    pub post_install_version_file: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,6 +119,22 @@ pub struct EmbeddedPackageSpec {
     pub backup_policy: BackupPolicy,
     pub user_plugin_prefixes: Vec<String>,
     pub user_plugin_suffixes: PlatformSuffixes,
+    #[serde(default)]
+    pub github_release_api_url: Option<String>,
+    #[serde(default)]
+    pub artifact_download_url: Option<String>,
+    #[serde(default)]
+    pub artifact_kind_override: Option<ArtifactKind>,
+    #[serde(default)]
+    pub artifact_file_name: Option<String>,
+    #[serde(default)]
+    pub version_file_documents_relative: Option<String>,
+    #[serde(default)]
+    pub post_install_zip_routes: Vec<ZipRoute>,
+    #[serde(default)]
+    pub post_install_reapack_repo: Option<ReapackRepo>,
+    #[serde(default)]
+    pub post_install_version_file: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -150,9 +195,6 @@ pub enum LatestVersionProvider {
     /// leading date numerics make `Version::cmp_lenient` a correct
     /// newer/older predicate without a dedicated comparator.
     SurgeXtNightly,
-    /// GitHub releases `/latest` JSON for `ReaperAccessible/CSI`. The
-    /// `tag_name` field (stripped of a leading `v`) is the version.
-    CsiGithubRelease,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -182,9 +224,6 @@ pub enum ArtifactProvider {
     /// resolver scans the same JSON the latest-version provider reads,
     /// so both sides see the same date/sha pair.
     SurgeXtNightly,
-    /// Fixed URL zip from `ReaperAccessible/CSI/releases/latest/download/CSI.zip`.
-    /// Version comes from the GitHub releases JSON (`tag_name`).
-    CsiGithubReleaseZip,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -211,10 +250,6 @@ pub enum PackageDetector {
     /// FFmpeg N reports as Keep when the latest supported major is also
     /// N, and as Update when the user is on an older major.
     FfmpegLibavformatMajor,
-    /// Read the `.frabbit-version` file in
-    /// `%USERPROFILE%\Documents\CSI For Behringer X-Touch Universal\`
-    /// to detect an existing CSI installation placed by FRABBIT.
-    CsiVersionFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -400,6 +435,14 @@ impl EmbeddedPackageSpec {
             backup_policy: self.backup_policy,
             user_plugin_prefixes: self.user_plugin_prefixes.clone(),
             user_plugin_suffixes: self.user_plugin_suffixes.for_platform(platform),
+            github_release_api_url: self.github_release_api_url.clone(),
+            artifact_download_url: self.artifact_download_url.clone(),
+            artifact_kind_override: self.artifact_kind_override,
+            artifact_file_name: self.artifact_file_name.clone(),
+            version_file_documents_relative: self.version_file_documents_relative.clone(),
+            post_install_zip_routes: self.post_install_zip_routes.clone(),
+            post_install_reapack_repo: self.post_install_reapack_repo.clone(),
+            post_install_version_file: self.post_install_version_file.clone(),
         }
     }
 }
