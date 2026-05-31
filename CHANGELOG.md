@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.12.0] - 2026-05-31
+
+- Simplification majeure: -2479 lignes de code
+- Paquets declaratifs: ajouter un paquet simple = JSON + locales, zero Rust
+- Self-update simplifie: verification de version uniquement, plus de staging/apply
+- Rollback reduit au minimum (backup manifest)
+- Signature.rs supprime
+- Module native_tree_checkboxes extrait de wx_app.rs
+- 16 cles de locale mortes supprimees
+
 ## [1.11.0] - 2026-05-31
 
 - CSI integre dans le systeme de paquets complet (comme REAPER, OSARA, SWS)
