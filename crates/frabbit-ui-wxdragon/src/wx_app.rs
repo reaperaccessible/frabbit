@@ -126,7 +126,7 @@ use crate::{ConfigurationRow, recompute_configuration_row_availability};
 use crate::{
     KeymapChoice, PackageRow, TargetRow, UiBootstrapOptions, WizardInstallOptions, WizardModel,
     WizardOutcomeReport, apply_checkbox_state_to_package_row,
-    build_review_preview_for_package_rows, csi_selected_for_rows, custom_portable_target_row,
+    build_review_preview_for_package_rows, custom_portable_target_row,
     execute_wizard_install_with_progress, format_self_update_apply_summary,
     format_self_update_check_summary, install_request_from_target_and_rows, keymap_note,
     load_wizard_model, localized_package_display_name, localizer_from_options,
@@ -889,11 +889,8 @@ struct ProgressUiState {
     total_packages: usize,
     /// Total opted-in configuration steps. Each contributes one phase.
     total_configuration_steps: usize,
-    /// Whether CSI installation was requested. Adds 2 phases (download
-    /// + install) to the total when true.
-    install_csi: bool,
     /// Phases finished so far across all packages, configuration
-    /// steps, and CSI.
+    /// steps.
     completed_phases: usize,
     /// Bytes downloaded for the in-flight download. Reset to 0 on each
     /// `DownloadStarted`; ignored when no download is active.
@@ -909,11 +906,10 @@ struct ProgressUiState {
 }
 
 impl ProgressUiState {
-    fn new(total_packages: usize, total_configuration_steps: usize, install_csi: bool) -> Self {
+    fn new(total_packages: usize, total_configuration_steps: usize) -> Self {
         Self {
             total_packages,
             total_configuration_steps,
-            install_csi,
             completed_phases: 0,
             current_download_bytes: 0,
             current_download_total: None,
@@ -927,8 +923,7 @@ impl ProgressUiState {
     /// (download + install) when enabled. Always at least 1 so the
     /// percentage math doesn't divide by zero on a no-op run.
     fn total_phases(&self) -> usize {
-        let csi_phases = if self.install_csi { 2 } else { 0 };
-        (self.total_packages * 2 + self.total_configuration_steps + csi_phases).max(1)
+        (self.total_packages * 2 + self.total_configuration_steps).max(1)
     }
 
     /// Gauge value in 0..=100. Combines completed phases with the byte
@@ -1131,41 +1126,6 @@ fn apply_progress_event_to_ui(
                     .value,
             );
         }
-        ProgressEvent::CsiDownloadStarted => {
-            state.download_active = true;
-            status_line = Some(
-                localizer
-                    .text("wizard-progress-status-csi-downloading")
-                    .value,
-            );
-            log_line = Some(
-                localizer
-                    .text("wizard-progress-log-csi-download-started")
-                    .value,
-            );
-        }
-        ProgressEvent::CsiDownloadCompleted => {
-            state.download_active = false;
-            state.completed_phases += 1;
-            status_line = Some(
-                localizer
-                    .text("wizard-progress-status-csi-installing")
-                    .value,
-            );
-            log_line = Some(
-                localizer
-                    .text("wizard-progress-log-csi-download-completed")
-                    .value,
-            );
-        }
-        ProgressEvent::CsiInstallCompleted => {
-            state.completed_phases += 1;
-            log_line = Some(
-                localizer
-                    .text("wizard-progress-log-csi-install-completed")
-                    .value,
-            );
-        }
     });
 
     widgets.progress_gauge.set_value(state.percentage());
@@ -1212,7 +1172,6 @@ struct WizardWidgets {
     package_details: TextCtrl,
     keymap_choice_dropdown: Choice,
     keymap_note: TextCtrl,
-    csi_checkbox: CheckBox,
     reapack_ack_confirm: CheckBox,
     review_text: TextCtrl,
     progress_status: StaticText,
@@ -1517,7 +1476,6 @@ pub fn run() {
                                 &widgets.keymap_choice_dropdown,
                                 model.platform,
                             ),
-                            csi_selected_for_rows(&rows, &checked),
                         );
                         review_can_install.set(review_preview.can_install);
                         widgets
@@ -1651,7 +1609,6 @@ pub fn run() {
                                     &widgets.keymap_choice_dropdown,
                                     model.platform,
                                 ),
-                                install_csi: csi_selected_for_rows(&rows, &selected_packages),
                                 ..WizardInstallOptions::default()
                             },
                         )
@@ -1837,7 +1794,6 @@ pub fn run() {
                 let progress_state = Arc::new(Mutex::new(ProgressUiState::new(
                     request.package_ids.len(),
                     request.configuration_step_ids.len(),
-                    request.install_csi,
                 )));
                 let progress_widgets = widgets;
                 let progress_state_for_reporter = Arc::clone(&progress_state);
@@ -2131,7 +2087,7 @@ fn add_pages(
     );
 
     let packages_page = Panel::builder(book).build();
-    let (package_checklist, package_details, keymap_choice_dropdown, keymap_note, csi_checkbox) =
+    let (package_checklist, package_details, keymap_choice_dropdown, keymap_note) =
         build_packages_page(
             &packages_page,
             model,
@@ -2188,7 +2144,6 @@ fn add_pages(
         package_details,
         keymap_choice_dropdown,
         keymap_note,
-        csi_checkbox,
         reapack_ack_confirm,
         review_text,
         progress_status,
@@ -2994,7 +2949,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, Choice, TextCtrl, CheckBox) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -3486,21 +3441,8 @@ fn build_packages_page(
         });
     }
 
-    // CSI is now a row in the package tree — keep a hidden checkbox to
-    // satisfy the WizardWidgets struct without showing a redundant control.
-    let csi_checkbox = CheckBox::builder(page)
-        .with_label(&model.text.packages_csi_label)
-        .build();
-    csi_checkbox.show(false);
-
     page.set_sizer(sizer, true);
-    (
-        tree,
-        details,
-        keymap_choice_dropdown,
-        keymap_note,
-        csi_checkbox,
-    )
+    (tree, details, keymap_choice_dropdown, keymap_note)
 }
 
 /// Windows-only: which top-level group a tree item belongs to, if any.
@@ -3961,7 +3903,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, Choice, TextCtrl, CheckBox) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -4123,21 +4065,8 @@ fn build_packages_page(
         });
     }
 
-    // CSI checkbox — not available on non-Windows but struct requires it
-    let csi_checkbox = CheckBox::builder(page)
-        .with_label(&model.text.packages_csi_label)
-        .build();
-    csi_checkbox.set_name(&model.text.packages_csi_label);
-    csi_checkbox.enable(false);
-
     page.set_sizer(sizer, true);
-    (
-        tree,
-        details,
-        keymap_choice_dropdown,
-        keymap_note,
-        csi_checkbox,
-    )
+    (tree, details, keymap_choice_dropdown, keymap_note)
 }
 
 /// Non-Windows: build the `CustomDataViewTreeModel` that backs the packages

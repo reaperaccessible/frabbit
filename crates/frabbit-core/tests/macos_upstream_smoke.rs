@@ -36,7 +36,6 @@ fn smoke_setup_options(target_app_path: PathBuf, lock_path: PathBuf) -> SetupOpt
         force_reinstall_packages: Vec::new(),
         configuration_step_ids: Vec::new(),
         active_locale: "fr-FR".to_string(),
-        install_csi: false,
     }
 }
 

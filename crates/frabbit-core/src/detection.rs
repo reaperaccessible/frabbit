@@ -8,8 +8,8 @@ use crate::model::{
     ComponentDetection, Confidence, Evidence, Installation, InstallationKind, Platform,
 };
 use crate::package::{
-    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
-    PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs,
+    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
+    PACKAGE_REAPACK, PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs,
 };
 use crate::reapack::package_owner_for_file;
 use crate::receipt::{ReceiptVerification, load_install_state, verify_package_receipt};
@@ -222,6 +222,25 @@ fn detect_version_from_files_with_probes(
     package_id: &str,
     uninstall_display_version: fn(&str) -> Option<String>,
 ) -> Result<Option<(crate::version::Version, String, Confidence, Vec<String>)>> {
+    // CSI: version comes from the `.frabbit-version` file written by
+    // FRABBIT's CSI installer in Documents/CSI For Behringer X-Touch Universal/.
+    if package_id == PACKAGE_CSI {
+        if let Some(version_string) = crate::csi::installed_csi_version() {
+            if let Ok(version) = crate::version::Version::parse(&version_string) {
+                return Ok(Some((
+                    version,
+                    "csi-version-file".to_string(),
+                    Confidence::High,
+                    vec![
+                        "Version came from .frabbit-version in the CSI Documents folder."
+                            .to_string(),
+                    ],
+                )));
+            }
+        }
+        return Ok(None);
+    }
+
     // FFmpeg: the libavformat / libavcodec / etc. DLLs carry their
     // *library* major (62.3.100 for libavformat 62) in VS_FIXEDFILEINFO,
     // not the FFmpeg release version, so the generic file-version probe

@@ -3,9 +3,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use crate::error::{FrabbitError, IoPathContext, Result};
-use crate::progress::{ProgressEvent, ProgressReporter};
 
-const CSI_RELEASE_URL: &str =
+pub const CSI_RELEASE_URL: &str =
     "https://github.com/reaperaccessible/CSI/releases/latest/download/CSI.zip";
 
 const CSI_REAPACK_REPO_URL: &str = "https://github.com/reaperaccessible/CSI/raw/main/index.xml";
@@ -22,68 +21,6 @@ pub fn csi_reapack_repo_url() -> &'static str {
 
 pub fn csi_reapack_repo_name() -> &'static str {
     CSI_REAPACK_REPO_NAME
-}
-
-pub fn install_csi(resource_path: &Path, progress: &ProgressReporter) -> Result<()> {
-    let documents_dir = documents_folder()?;
-    let csi_dest = documents_dir.join(CSI_FOLDER_NAME);
-
-    progress.report(ProgressEvent::CsiDownloadStarted);
-    let zip_bytes = download_csi_zip()?;
-    progress.report(ProgressEvent::CsiDownloadCompleted);
-
-    let reader = std::io::Cursor::new(&zip_bytes);
-    let mut archive = zip::ZipArchive::new(reader).map_err(|e| FrabbitError::RemoteData {
-        url: CSI_RELEASE_URL.to_string(),
-        message: format!("failed to open CSI zip: {e}"),
-    })?;
-
-    extract_csi_archive(&mut archive, &csi_dest, resource_path)?;
-
-    let version = env!("CARGO_PKG_VERSION");
-    let version_file = csi_dest.join(VERSION_FILE_NAME);
-    fs::create_dir_all(&csi_dest).with_path(&csi_dest)?;
-    fs::write(&version_file, version).with_path(&version_file)?;
-
-    progress.report(ProgressEvent::CsiInstallCompleted);
-    Ok(())
-}
-
-fn download_csi_zip() -> Result<Vec<u8>> {
-    let client = reqwest::blocking::Client::builder()
-        .user_agent(concat!(
-            "FRABBIT/",
-            env!("CARGO_PKG_VERSION"),
-            " (+https://github.com/ReaperAccessible/frabbit)"
-        ))
-        .build()
-        .map_err(|e| FrabbitError::RemoteData {
-            url: CSI_RELEASE_URL.to_string(),
-            message: format!("failed to build HTTP client: {e}"),
-        })?;
-
-    let response = client
-        .get(CSI_RELEASE_URL)
-        .send()
-        .map_err(|e| FrabbitError::RemoteData {
-            url: CSI_RELEASE_URL.to_string(),
-            message: format!("failed to download CSI: {e}"),
-        })?;
-
-    if !response.status().is_success() {
-        return Err(FrabbitError::RemoteData {
-            url: CSI_RELEASE_URL.to_string(),
-            message: format!("HTTP {}", response.status()),
-        });
-    }
-
-    response
-        .bytes()
-        .map(|b| b.to_vec())
-        .map_err(|e| FrabbitError::RemoteData {
-            url: CSI_RELEASE_URL.to_string(),
-            message: format!("failed to read response: {e}"),
-        })
 }
 
 fn extract_csi_archive(
@@ -178,4 +115,40 @@ pub fn installed_csi_version() -> Option<String> {
     fs::read_to_string(&version_file)
         .ok()
         .map(|s| s.trim().to_string())
+}
+
+/// Post-install hook called after the DLL is in UserPlugins. Extracts
+/// the remaining archive contents (CSI/ config folder, Documents
+/// folder) from the already-cached zip and registers the ReaPack CSI
+/// repository.
+pub fn post_install_csi_extras(
+    cached_zip_path: &Path,
+    resource_path: &Path,
+    version: &str,
+) -> Result<()> {
+    let documents_dir = documents_folder()?;
+    let csi_dest = documents_dir.join(CSI_FOLDER_NAME);
+
+    let zip_bytes = fs::read(cached_zip_path).with_path(cached_zip_path)?;
+    let reader = std::io::Cursor::new(&zip_bytes);
+    let mut archive = zip::ZipArchive::new(reader).map_err(|e| FrabbitError::RemoteData {
+        url: CSI_RELEASE_URL.to_string(),
+        message: format!("failed to open CSI zip: {e}"),
+    })?;
+
+    extract_csi_archive(&mut archive, &csi_dest, resource_path)?;
+
+    // Write version file
+    fs::create_dir_all(&csi_dest).with_path(&csi_dest)?;
+    let version_file = csi_dest.join(VERSION_FILE_NAME);
+    fs::write(&version_file, version).with_path(&version_file)?;
+
+    // Register the CSI ReaPack repository
+    let _ = crate::reapack::upsert_remote(
+        resource_path,
+        csi_reapack_repo_name(),
+        csi_reapack_repo_url(),
+    );
+
+    Ok(())
 }

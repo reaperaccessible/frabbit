@@ -4,8 +4,8 @@ use serde_json::Value;
 use crate::error::{FrabbitError, Result};
 use crate::hfs::{HfsListEntry, fetch_file_list, parse_get_file_list_response};
 use crate::package::{
-    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
-    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
+    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
+    PACKAGE_REAPACK, PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
 };
 use crate::plan::AvailablePackage;
 use crate::version::Version;
@@ -61,6 +61,8 @@ pub const FFMPEG_SUPPORTED_MAJOR: u64 = 8;
 /// nightlies.
 pub const SURGE_XT_NIGHTLY_URL: &str =
     "https://api.github.com/repos/surge-synthesizer/surge/releases/tags/Nightly";
+pub const CSI_GITHUB_LATEST_URL: &str =
+    "https://api.github.com/repos/reaperaccessible/CSI/releases/latest";
 
 /// HFS root that hosts the JAWS-for-REAPER scripts archive (rejetto HFS).
 pub const JAWS_FOR_REAPER_HFS_BASE: &str = "https://hoard.reaperaccessibility.com";
@@ -222,7 +224,7 @@ fn build_http_client() -> Result<Client> {
         })
 }
 
-fn providers() -> [(&'static str, &'static str, VersionParser); 7] {
+fn providers() -> [(&'static str, &'static str, VersionParser); 8] {
     [
         (
             PACKAGE_REAPER,
@@ -258,6 +260,11 @@ fn providers() -> [(&'static str, &'static str, VersionParser); 7] {
             PACKAGE_SURGE_XT,
             SURGE_XT_NIGHTLY_URL,
             parse_surge_xt_nightly_release as VersionParser,
+        ),
+        (
+            PACKAGE_CSI,
+            CSI_GITHUB_LATEST_URL,
+            parse_github_latest_release_json as VersionParser,
         ),
     ]
 }

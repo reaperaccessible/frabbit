@@ -292,6 +292,13 @@ fn automation_support_dispatch(
     if package_id == crate::package::PACKAGE_REAKONTROL && matches!(kind, ArtifactKind::Archive) {
         return PackageAutomationSupport::Direct;
     }
+    // CSI ships as a .zip with DLL + config folders. The Direct
+    // archive extraction handles the DLL via user_plugin_prefixes;
+    // a post-install hook runs after to extract the rest (CSI/ →
+    // resource, docs → Documents, ReaPack repo).
+    if package_id == crate::package::PACKAGE_CSI && matches!(kind, ArtifactKind::Archive) {
+        return PackageAutomationSupport::Direct;
+    }
     // FFmpeg ships as a `.7z` whose `bin/` we extract directly into
     // UserPlugins — no upstream installer to launch, no user prompt to
     // dismiss. Same automation class as the per-file extension-binary
@@ -651,6 +658,16 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
             .zip(cached_artifacts.iter())
             .zip(&install_report.actions)
         {
+            // CSI post-install: after the DLL is in UserPlugins, extract
+            // the remaining archive contents (CSI/ folder, Documents, etc.)
+            // and register the ReaPack repository.
+            if cached.descriptor.package_id == crate::package::PACKAGE_CSI && !options.dry_run {
+                crate::csi::post_install_csi_extras(
+                    &cached.path,
+                    resource_path,
+                    &cached.descriptor.version.to_string(),
+                )?;
+            }
             items.push(PackageOperationItem {
                 package_id: cached.descriptor.package_id.clone(),
                 plan_action: planned.plan_action,

@@ -189,6 +189,28 @@
         "windows": [],
         "macos": []
       }
+    },
+    {
+      "id": "csi",
+      "display_name": "CSI (Control Surface Integrator)",
+      "display_name_key": "package-csi",
+      "display_description_key": "package-csi-description",
+      "package_kind": "user_plugin_binary",
+      "required": false,
+      "recommended": false,
+      "supported_platforms": ["windows"],
+      "supported_architectures": ["x64"],
+      "latest_version_provider": "csi_github_release",
+      "artifact_provider": "csi_github_release_zip",
+      "detectors": ["frabbit_receipt", "user_plugin_file", "csi_version_file"],
+      "install_steps": ["copy_user_plugin_binary"],
+      "uninstall_steps": ["remove_user_plugin_binary"],
+      "backup_policy": "backup_overwritten_files",
+      "user_plugin_prefixes": ["reaper_csurf_integrator"],
+      "user_plugin_suffixes": {
+        "windows": [".dll"],
+        "macos": []
+      }
     }
   ]
 }

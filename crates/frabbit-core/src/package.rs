@@ -12,6 +12,7 @@ pub const PACKAGE_REAKONTROL: &str = "reakontrol";
 pub const PACKAGE_JAWS_SCRIPTS: &str = "jaws-scripts";
 pub const PACKAGE_FFMPEG: &str = "ffmpeg";
 pub const PACKAGE_SURGE_XT: &str = "surge-xt";
+pub const PACKAGE_CSI: &str = "csi";
 
 pub const BUILTIN_PACKAGE_MANIFEST_ID: &str = "builtin-packages.json";
 const BUILTIN_PACKAGE_MANIFEST: &str = include_str!("../embedded/packages/builtin-packages.json");
@@ -149,6 +150,9 @@ pub enum LatestVersionProvider {
     /// leading date numerics make `Version::cmp_lenient` a correct
     /// newer/older predicate without a dedicated comparator.
     SurgeXtNightly,
+    /// GitHub releases `/latest` JSON for `ReaperAccessible/CSI`. The
+    /// `tag_name` field (stripped of a leading `v`) is the version.
+    CsiGithubRelease,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -178,6 +182,9 @@ pub enum ArtifactProvider {
     /// resolver scans the same JSON the latest-version provider reads,
     /// so both sides see the same date/sha pair.
     SurgeXtNightly,
+    /// Fixed URL zip from `ReaperAccessible/CSI/releases/latest/download/CSI.zip`.
+    /// Version comes from the GitHub releases JSON (`tag_name`).
+    CsiGithubReleaseZip,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -204,6 +211,10 @@ pub enum PackageDetector {
     /// FFmpeg N reports as Keep when the latest supported major is also
     /// N, and as Update when the user is on an older major.
     FfmpegLibavformatMajor,
+    /// Read the `.frabbit-version` file in
+    /// `%USERPROFILE%\Documents\CSI For Behringer X-Touch Universal\`
+    /// to detect an existing CSI installation placed by FRABBIT.
+    CsiVersionFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -457,7 +468,7 @@ mod tests {
         let manifest = embedded_package_manifest();
 
         assert_eq!(manifest.schema_version, 1);
-        assert_eq!(manifest.packages.len(), 8);
+        assert_eq!(manifest.packages.len(), 9);
         assert!(
             manifest
                 .packages

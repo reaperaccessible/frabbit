@@ -27,12 +27,6 @@ use frabbit_core::operation::{
     PackageAutomationSupport, PackageOperationStatus, PlannedExecutionKind,
     package_automation_support, preview_manual_instruction,
 };
-/// Virtual package ID for CSI — not part of the package manifest, but
-/// rendered as a tree row alongside real packages. The install pipeline
-/// routes this through `SetupOptions::install_csi` instead of the normal
-/// artifact download/install path.
-pub const PACKAGE_CSI: &str = "csi";
-
 use frabbit_core::package::{
     HostCapabilities, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_SURGE_XT, PackageSpec,
     builtin_package_specs, detect_host_capabilities, host_supports_package,
@@ -139,13 +133,6 @@ pub struct WizardText {
     pub packages_keymap_unavailable_note: String,
     pub packages_keymap_preserve_note: String,
     pub packages_keymap_replace_note: String,
-    pub packages_csi_label: String,
-    pub packages_csi_note: String,
-    pub review_csi_heading: String,
-    pub review_csi_will_install: String,
-    pub review_csi_not_selected: String,
-    pub summary_csi_installed: String,
-    pub summary_csi_not_selected: String,
     pub package_details_handling_prefix: String,
     pub package_handling_automatic: String,
     pub package_handling_unattended: String,
@@ -322,7 +309,6 @@ pub struct WizardInstallOptions {
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
     pub keymap_choice: KeymapChoice,
-    pub install_csi: bool,
     pub cache_dir: Option<PathBuf>,
 }
 
@@ -333,7 +319,6 @@ impl Default for WizardInstallOptions {
             allow_reaper_running: false,
             stage_unsupported: true,
             keymap_choice: KeymapChoice::Osara,
-            install_csi: false,
             cache_dir: None,
         }
     }
@@ -363,8 +348,6 @@ pub struct WizardInstallRequest {
     pub configuration_step_ids: Vec<String>,
     /// Active locale, used to select the correct ReaPack repository.
     pub active_locale: String,
-    /// Install CSI (Control Surface Integrator).
-    pub install_csi: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -662,13 +645,6 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
             .value,
         packages_keymap_preserve_note: localizer.text("wizard-packages-keymap-preserve-note").value,
         packages_keymap_replace_note: localizer.text("wizard-packages-keymap-replace-note").value,
-        packages_csi_label: localizer.text("wizard-packages-csi-label").value,
-        packages_csi_note: localizer.text("wizard-packages-csi-note").value,
-        review_csi_heading: localizer.text("wizard-review-csi-heading").value,
-        review_csi_will_install: localizer.text("wizard-review-csi-will-install").value,
-        review_csi_not_selected: localizer.text("wizard-review-csi-not-selected").value,
-        summary_csi_installed: localizer.text("wizard-summary-csi-installed").value,
-        summary_csi_not_selected: localizer.text("wizard-summary-csi-not-selected").value,
         package_details_handling_prefix: localizer
             .text("wizard-package-details-handling-prefix")
             .value,
@@ -944,7 +920,7 @@ pub fn install_request_from_target_and_rows(
                 .to_string(),
         });
     }
-    let osara_selected = package_ids.iter().any(|id| id == PACKAGE_OSARA);
+    let _osara_selected = package_ids.iter().any(|id| id == PACKAGE_OSARA);
     // A row is "force reinstall" when the user has the box checked but
     // the original detection said the package was already current — i.e.
     // the plan would normally Keep it, but the user explicitly opted in
@@ -975,7 +951,6 @@ pub fn install_request_from_target_and_rows(
         allow_reaper_running: options.allow_reaper_running,
         stage_unsupported: options.stage_unsupported,
         keymap_choice: options.keymap_choice,
-        install_csi: csi_selected_for_rows(package_rows, selected_package_indices),
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
         configuration_step_ids,
@@ -993,23 +968,11 @@ pub fn package_ids_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> V
         let Some(row) = package_rows.get(*index) else {
             continue;
         };
-        // Skip the virtual CSI row — it's not a real package and is
-        // handled separately via `install_csi`.
-        if row.package_id == PACKAGE_CSI {
-            continue;
-        }
         if !package_ids.contains(&row.package_id) {
             package_ids.push(row.package_id.clone());
         }
     }
     package_ids
-}
-
-pub fn csi_selected_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> bool {
-    indices
-        .iter()
-        .filter_map(|index| package_rows.get(*index))
-        .any(|row| row.package_id == PACKAGE_CSI)
 }
 
 pub fn osara_selected_for_rows(package_rows: &[PackageRow], indices: &[usize]) -> bool {
@@ -1116,7 +1079,6 @@ pub fn build_review_preview_for_package_rows(
     package_rows: &[PackageRow],
     notes: &[String],
     keymap_choice: KeymapChoice,
-    install_csi: bool,
 ) -> WizardReviewPreview {
     let Some(target) = target else {
         return WizardReviewPreview {
@@ -1182,12 +1144,6 @@ pub fn build_review_preview_for_package_rows(
             KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
             _ => model.text.review_keymap_replace.clone(),
         });
-    }
-
-    if install_csi {
-        lines.push(String::new());
-        lines.push(model.text.review_csi_heading.clone());
-        lines.push(model.text.review_csi_will_install.clone());
     }
 
     if !notes.is_empty() {
@@ -1309,55 +1265,6 @@ pub fn wizard_package_plan_for_target_with_available(
                 mark_row_unavailable(&localizer, row, "wizard-package-row-unavailable-portable");
             }
         }
-    }
-
-    // Append a virtual CSI row — Windows only. CSI is not part of the
-    // package manifest (it has its own download/extract pipeline), but
-    // it appears in the tree as a regular row so users can tick it
-    // alongside REAPER, OSARA, SWS, etc.
-    if model.platform == Platform::Windows {
-        let csi_display_name = localizer.text("package-csi").value;
-        let csi_description = localizer.text("package-csi-description").value;
-        let csi_installed = frabbit_core::csi::installed_csi_version();
-        let csi_action = if csi_installed.is_some() {
-            PlanActionKind::Keep
-        } else {
-            PlanActionKind::Install
-        };
-        let csi_action_label = action_label(&localizer, csi_action);
-        let unknown_version = localizer.text("detect-version-unknown").value;
-        let csi_installed_text = csi_installed.unwrap_or_else(|| unknown_version.clone());
-        let csi_available_text = unknown_version;
-        let csi_summary = localizer
-            .format(
-                "wizard-package-row",
-                &[
-                    ("package", csi_display_name.as_str()),
-                    ("action", csi_action_label.as_str()),
-                    ("installed", csi_installed_text.as_str()),
-                    ("available", csi_available_text.as_str()),
-                ],
-            )
-            .value;
-        let csi_details = format!("{csi_summary}\n\n{csi_description}");
-        package_rows.push(PackageRow {
-            package_id: PACKAGE_CSI.to_string(),
-            display_name: csi_display_name,
-            description: csi_description,
-            selected: false,
-            summary: csi_summary,
-            details: csi_details,
-            installed_version: csi_installed_text,
-            available_version: csi_available_text,
-            action: PlanActionKind::Keep,
-            action_label: csi_action_label,
-            original_action: csi_action,
-            reason: String::new(),
-            handling_summary: String::new(),
-            manual_attention_expected: false,
-            available_for_target: true,
-            unavailability_reason: None,
-        });
     }
 
     let can_install = package_rows.iter().any(|row| {
@@ -1661,7 +1568,6 @@ pub fn execute_wizard_install_with_progress(
             force_reinstall_packages: request.force_reinstall_packages.clone(),
             configuration_step_ids: request.configuration_step_ids.clone(),
             active_locale: request.active_locale.clone(),
-            install_csi: request.install_csi,
         },
         progress,
     )
@@ -1810,7 +1716,7 @@ pub fn wizard_outcome_report_from_success(
     request: &WizardInstallRequest,
     report: &SetupReport,
 ) -> WizardOutcomeReport {
-    let summary = summarize_setup_report(model, report, request.install_csi);
+    let summary = summarize_setup_report(model, report);
     WizardOutcomeReport {
         status: WizardOutcomeStatus::Success,
         resource_path: report.resource_path.clone(),
@@ -1980,11 +1886,7 @@ pub fn save_wizard_setup_report(report: &SetupReport) -> Result<PathBuf> {
     Ok(saved.text_path)
 }
 
-pub fn summarize_setup_report(
-    model: &WizardModel,
-    report: &SetupReport,
-    install_csi: bool,
-) -> WizardInstallSummary {
+pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> WizardInstallSummary {
     let localizer = localizer_from_options(&model.bootstrap_options).ok();
     let created_resources = report
         .resource_init
@@ -2342,18 +2244,6 @@ pub fn summarize_setup_report(
             format!("  Status: {status_label}"),
         ));
     }
-
-    let csi_status = if install_csi {
-        model.text.summary_csi_installed.clone()
-    } else {
-        model.text.summary_csi_not_selected.clone()
-    };
-    detail_lines.push(format_localized_message(
-        localizer.as_ref(),
-        "wizard-summary-csi",
-        &[("status", csi_status.clone())],
-        format!("CSI (Control Surface Integrator): {csi_status}"),
-    ));
 
     WizardInstallSummary {
         status_line: format_localized_message(
@@ -3823,7 +3713,6 @@ mod tests {
                 allow_reaper_running: true,
                 stage_unsupported: false,
                 keymap_choice: KeymapChoice::Osara,
-                install_csi: false,
                 cache_dir: Some(PathBuf::from("C:/cache")),
             },
         )
@@ -4208,7 +4097,6 @@ mod tests {
             &model.package_rows,
             &model.notes,
             KeymapChoice::Osara,
-            false,
         );
 
         assert!(preview.lines.iter().any(|line| line == "KeyMaps"));
@@ -4335,7 +4223,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report, false);
+        let summary = super::summarize_setup_report(&model, &report);
 
         assert!(
             summary
@@ -4461,7 +4349,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report, false);
+        let summary = super::summarize_setup_report(&model, &report);
 
         assert!(
             summary
@@ -4547,7 +4435,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report, false);
+        let summary = super::summarize_setup_report(&model, &report);
 
         assert!(
             summary
@@ -4854,7 +4742,6 @@ mod tests {
             force_reinstall_packages: Vec::new(),
             configuration_step_ids: Vec::new(),
             active_locale: "fr-FR".to_string(),
-            install_csi: false,
         }
     }
 }

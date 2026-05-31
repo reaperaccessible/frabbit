@@ -75,12 +75,6 @@ pub enum ProgressEvent {
     /// A configuration step finished. As with `InstallCompleted`, errors
     /// short-circuit instead of firing this variant.
     ConfigurationCompleted { step_id: String },
-    /// CSI download is starting.
-    CsiDownloadStarted,
-    /// CSI download finished; extraction/install is about to begin.
-    CsiDownloadCompleted,
-    /// CSI extraction and installation finished successfully.
-    CsiInstallCompleted,
 }
 
 /// A `Send + Sync` handle to the user-supplied progress callback. Cheap
