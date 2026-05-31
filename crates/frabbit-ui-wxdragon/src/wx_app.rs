@@ -1126,6 +1126,21 @@ fn apply_progress_event_to_ui(
                     .value,
             );
         }
+        ProgressEvent::CsiDownloadStarted => {
+            state.download_active = true;
+            status_line = Some(localizer.text("wizard-progress-status-csi-downloading").value);
+            log_line = Some(localizer.text("wizard-progress-log-csi-download-started").value);
+        }
+        ProgressEvent::CsiDownloadCompleted => {
+            state.download_active = false;
+            state.completed_phases += 1;
+            status_line = Some(localizer.text("wizard-progress-status-csi-installing").value);
+            log_line = Some(localizer.text("wizard-progress-log-csi-download-completed").value);
+        }
+        ProgressEvent::CsiInstallCompleted => {
+            state.completed_phases += 1;
+            log_line = Some(localizer.text("wizard-progress-log-csi-install-completed").value);
+        }
     });
 
     widgets.progress_gauge.set_value(state.percentage());
@@ -1477,6 +1492,7 @@ pub fn run() {
                                 &widgets.keymap_choice_dropdown,
                                 model.platform,
                             ),
+                            widgets.csi_checkbox.get_value(),
                         );
                         review_can_install.set(review_preview.can_install);
                         widgets
@@ -3450,6 +3466,11 @@ fn build_packages_page(
         .build();
     csi_checkbox.set_name(&model.text.packages_csi_label);
     sizer.add(&csi_checkbox, 0, SizerFlag::All | SizerFlag::Expand, 6);
+
+    let csi_note = StaticText::builder(page)
+        .with_label(&model.text.packages_csi_note)
+        .build();
+    sizer.add(&csi_note, 0, SizerFlag::Left | SizerFlag::Bottom | SizerFlag::Right | SizerFlag::Expand, 6);
 
     page.set_sizer(sizer, true);
     (

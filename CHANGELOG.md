@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.10.0] - 2026-05-30
+
+- Integration CSI complete: progression en temps reel, resume/review, rapport Done
+- Fichier de version .frabbit-version ecrit apres installation CSI
+- Evenements de progression CsiDownloadStarted/CsiDownloadCompleted/CsiInstallCompleted
+- Page Review affiche la section CSI quand la case est cochee
+- Rapport de fin (Done) inclut le statut CSI dans les details
+- CLI: ajout du flag --install-csi pour la commande Setup
+- Locales FR/EN: ajout des textes review, progression et resume CSI
+
 ## [1.9.0] - 2026-05-30
 
 - Ajout case a cocher CSI (Control Surface Integrator) pour X-Touch Universal

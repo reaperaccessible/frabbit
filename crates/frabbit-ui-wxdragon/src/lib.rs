@@ -135,6 +135,11 @@ pub struct WizardText {
     pub packages_keymap_replace_note: String,
     pub packages_csi_label: String,
     pub packages_csi_note: String,
+    pub review_csi_heading: String,
+    pub review_csi_will_install: String,
+    pub review_csi_not_selected: String,
+    pub summary_csi_installed: String,
+    pub summary_csi_not_selected: String,
     pub package_details_handling_prefix: String,
     pub package_handling_automatic: String,
     pub package_handling_unattended: String,
@@ -653,6 +658,11 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         packages_keymap_replace_note: localizer.text("wizard-packages-keymap-replace-note").value,
         packages_csi_label: localizer.text("wizard-packages-csi-label").value,
         packages_csi_note: localizer.text("wizard-packages-csi-note").value,
+        review_csi_heading: localizer.text("wizard-review-csi-heading").value,
+        review_csi_will_install: localizer.text("wizard-review-csi-will-install").value,
+        review_csi_not_selected: localizer.text("wizard-review-csi-not-selected").value,
+        summary_csi_installed: localizer.text("wizard-summary-csi-installed").value,
+        summary_csi_not_selected: localizer.text("wizard-summary-csi-not-selected").value,
         package_details_handling_prefix: localizer
             .text("wizard-package-details-handling-prefix")
             .value,
@@ -1088,6 +1098,7 @@ pub fn build_review_preview_for_package_rows(
     package_rows: &[PackageRow],
     notes: &[String],
     keymap_choice: KeymapChoice,
+    install_csi: bool,
 ) -> WizardReviewPreview {
     let Some(target) = target else {
         return WizardReviewPreview {
@@ -1153,6 +1164,12 @@ pub fn build_review_preview_for_package_rows(
             KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
             _ => model.text.review_keymap_replace.clone(),
         });
+    }
+
+    if install_csi {
+        lines.push(String::new());
+        lines.push(model.text.review_csi_heading.clone());
+        lines.push(model.text.review_csi_will_install.clone());
     }
 
     if !notes.is_empty() {
@@ -1726,7 +1743,7 @@ pub fn wizard_outcome_report_from_success(
     request: &WizardInstallRequest,
     report: &SetupReport,
 ) -> WizardOutcomeReport {
-    let summary = summarize_setup_report(model, report);
+    let summary = summarize_setup_report(model, report, request.install_csi);
     WizardOutcomeReport {
         status: WizardOutcomeStatus::Success,
         resource_path: report.resource_path.clone(),
@@ -1896,7 +1913,7 @@ pub fn save_wizard_setup_report(report: &SetupReport) -> Result<PathBuf> {
     Ok(saved.text_path)
 }
 
-pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> WizardInstallSummary {
+pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport, install_csi: bool) -> WizardInstallSummary {
     let localizer = localizer_from_options(&model.bootstrap_options).ok();
     let created_resources = report
         .resource_init
@@ -2254,6 +2271,18 @@ pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> Wiza
             format!("  Status: {status_label}"),
         ));
     }
+
+    let csi_status = if install_csi {
+        model.text.summary_csi_installed.clone()
+    } else {
+        model.text.summary_csi_not_selected.clone()
+    };
+    detail_lines.push(format_localized_message(
+        localizer.as_ref(),
+        "wizard-summary-csi",
+        &[("status", csi_status.clone())],
+        format!("CSI (Control Surface Integrator): {csi_status}"),
+    ));
 
     WizardInstallSummary {
         status_line: format_localized_message(
@@ -4108,6 +4137,7 @@ mod tests {
             &model.package_rows,
             &model.notes,
             KeymapChoice::Osara,
+            false,
         );
 
         assert!(preview.lines.iter().any(|line| line == "KeyMaps"));
@@ -4234,7 +4264,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary = super::summarize_setup_report(&model, &report, false);
 
         assert!(
             summary
@@ -4360,7 +4390,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary = super::summarize_setup_report(&model, &report, false);
 
         assert!(
             summary
@@ -4446,7 +4476,7 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary = super::summarize_setup_report(&model, &report, false);
 
         assert!(
             summary

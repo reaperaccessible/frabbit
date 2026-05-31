@@ -154,7 +154,7 @@ pub fn execute_setup_operation_with_progress(
             crate::csi::csi_reapack_repo_name(),
             crate::csi::csi_reapack_repo_url(),
         );
-        crate::csi::install_csi(resource_path)?;
+        crate::csi::install_csi(resource_path, progress)?;
     }
 
     Ok(SetupReport {
@@ -248,7 +248,7 @@ pub fn execute_resolved_setup_operation_with_progress(
             crate::csi::csi_reapack_repo_name(),
             crate::csi::csi_reapack_repo_url(),
         );
-        crate::csi::install_csi(resource_path)?;
+        crate::csi::install_csi(resource_path, progress)?;
     }
 
     Ok(SetupReport {

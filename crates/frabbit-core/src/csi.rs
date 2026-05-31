@@ -3,6 +3,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use crate::error::{FrabbitError, IoPathContext, Result};
+use crate::progress::{ProgressEvent, ProgressReporter};
 
 const CSI_RELEASE_URL: &str =
     "https://github.com/reaperaccessible/CSI/releases/latest/download/CSI.zip";
@@ -23,11 +24,14 @@ pub fn csi_reapack_repo_name() -> &'static str {
     CSI_REAPACK_REPO_NAME
 }
 
-pub fn install_csi(resource_path: &Path) -> Result<()> {
+pub fn install_csi(resource_path: &Path, progress: &ProgressReporter) -> Result<()> {
     let documents_dir = documents_folder()?;
     let csi_dest = documents_dir.join(CSI_FOLDER_NAME);
 
+    progress.report(ProgressEvent::CsiDownloadStarted);
     let zip_bytes = download_csi_zip()?;
+    progress.report(ProgressEvent::CsiDownloadCompleted);
+
     let reader = std::io::Cursor::new(&zip_bytes);
     let mut archive = zip::ZipArchive::new(reader).map_err(|e| FrabbitError::RemoteData {
         url: CSI_RELEASE_URL.to_string(),
@@ -36,6 +40,12 @@ pub fn install_csi(resource_path: &Path) -> Result<()> {
 
     extract_csi_archive(&mut archive, &csi_dest, resource_path)?;
 
+    let version = env!("CARGO_PKG_VERSION");
+    let version_file = csi_dest.join(VERSION_FILE_NAME);
+    fs::create_dir_all(&csi_dest).with_path(&csi_dest)?;
+    fs::write(&version_file, version).with_path(&version_file)?;
+
+    progress.report(ProgressEvent::CsiInstallCompleted);
     Ok(())
 }
 

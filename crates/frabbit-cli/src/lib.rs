@@ -226,6 +226,8 @@ enum Command {
         preserve_osara_keymap: bool,
         #[arg(long)]
         accept_reapack_donation_notice: bool,
+        #[arg(long)]
+        install_csi: bool,
         #[arg(long = "config-step")]
         config_step: Vec<String>,
         #[arg(long = "skip-config-step")]
@@ -686,6 +688,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             stage_unsupported,
             preserve_osara_keymap,
             accept_reapack_donation_notice,
+            install_csi,
             config_step,
             skip_config_step,
             report_path,
@@ -728,7 +731,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                     force_reinstall_packages: Vec::new(),
                     configuration_step_ids,
                     active_locale: active_locale.clone(),
-                    install_csi: false,
+                    install_csi,
                 },
             )?;
             let report_path =
