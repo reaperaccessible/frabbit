@@ -1172,6 +1172,7 @@ struct WizardWidgets {
     package_details: TextCtrl,
     keymap_choice_dropdown: Choice,
     keymap_note: TextCtrl,
+    csi_checkbox: CheckBox,
     reapack_ack_confirm: CheckBox,
     review_text: TextCtrl,
     progress_status: StaticText,
@@ -1609,6 +1610,7 @@ pub fn run() {
                                     &widgets.keymap_choice_dropdown,
                                     model.platform,
                                 ),
+                                install_csi: widgets.csi_checkbox.get_value(),
                                 ..WizardInstallOptions::default()
                             },
                         )
@@ -2087,7 +2089,7 @@ fn add_pages(
     );
 
     let packages_page = Panel::builder(book).build();
-    let (package_checklist, package_details, keymap_choice_dropdown, keymap_note) =
+    let (package_checklist, package_details, keymap_choice_dropdown, keymap_note, csi_checkbox) =
         build_packages_page(
             &packages_page,
             model,
@@ -2144,6 +2146,7 @@ fn add_pages(
         package_details,
         keymap_choice_dropdown,
         keymap_note,
+        csi_checkbox,
         reapack_ack_confirm,
         review_text,
         progress_status,
@@ -2949,7 +2952,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl, CheckBox) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -3441,8 +3444,21 @@ fn build_packages_page(
         });
     }
 
+    // CSI checkbox — Windows only
+    let csi_checkbox = CheckBox::builder(page)
+        .with_label(&model.text.packages_csi_label)
+        .build();
+    csi_checkbox.set_name(&model.text.packages_csi_label);
+    sizer.add(&csi_checkbox, 0, SizerFlag::All | SizerFlag::Expand, 6);
+
     page.set_sizer(sizer, true);
-    (tree, details, keymap_choice_dropdown, keymap_note)
+    (
+        tree,
+        details,
+        keymap_choice_dropdown,
+        keymap_note,
+        csi_checkbox,
+    )
 }
 
 /// Windows-only: which top-level group a tree item belongs to, if any.
@@ -3903,7 +3919,7 @@ fn build_packages_page(
     configuration_rows: Rc<RefCell<Vec<crate::ConfigurationRow>>>,
     package_items: PackagesStateCell,
     can_install: Rc<Cell<bool>>,
-) -> (PackagesView, TextCtrl, Choice, TextCtrl) {
+) -> (PackagesView, TextCtrl, Choice, TextCtrl, CheckBox) {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
         page,
@@ -4065,8 +4081,21 @@ fn build_packages_page(
         });
     }
 
+    // CSI checkbox — not available on non-Windows but struct requires it
+    let csi_checkbox = CheckBox::builder(page)
+        .with_label(&model.text.packages_csi_label)
+        .build();
+    csi_checkbox.set_name(&model.text.packages_csi_label);
+    csi_checkbox.enable(false);
+
     page.set_sizer(sizer, true);
-    (tree, details, keymap_choice_dropdown, keymap_note)
+    (
+        tree,
+        details,
+        keymap_choice_dropdown,
+        keymap_note,
+        csi_checkbox,
+    )
 }
 
 /// Non-Windows: build the `CustomDataViewTreeModel` that backs the packages

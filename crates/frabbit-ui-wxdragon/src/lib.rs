@@ -133,6 +133,8 @@ pub struct WizardText {
     pub packages_keymap_unavailable_note: String,
     pub packages_keymap_preserve_note: String,
     pub packages_keymap_replace_note: String,
+    pub packages_csi_label: String,
+    pub packages_csi_note: String,
     pub package_details_handling_prefix: String,
     pub package_handling_automatic: String,
     pub package_handling_unattended: String,
@@ -309,6 +311,7 @@ pub struct WizardInstallOptions {
     pub allow_reaper_running: bool,
     pub stage_unsupported: bool,
     pub keymap_choice: KeymapChoice,
+    pub install_csi: bool,
     pub cache_dir: Option<PathBuf>,
 }
 
@@ -319,6 +322,7 @@ impl Default for WizardInstallOptions {
             allow_reaper_running: false,
             stage_unsupported: true,
             keymap_choice: KeymapChoice::Osara,
+            install_csi: false,
             cache_dir: None,
         }
     }
@@ -647,6 +651,8 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
             .value,
         packages_keymap_preserve_note: localizer.text("wizard-packages-keymap-preserve-note").value,
         packages_keymap_replace_note: localizer.text("wizard-packages-keymap-replace-note").value,
+        packages_csi_label: localizer.text("wizard-packages-csi-label").value,
+        packages_csi_note: localizer.text("wizard-packages-csi-note").value,
         package_details_handling_prefix: localizer
             .text("wizard-package-details-handling-prefix")
             .value,
@@ -953,11 +959,11 @@ pub fn install_request_from_target_and_rows(
         allow_reaper_running: options.allow_reaper_running,
         stage_unsupported: options.stage_unsupported,
         keymap_choice: options.keymap_choice,
+        install_csi: options.install_csi,
         cache_dir: options.cache_dir.unwrap_or_else(default_cache_dir),
         force_reinstall_packages,
         configuration_step_ids,
         active_locale: model.current_language.clone(),
-        install_csi: false,
     })
 }
 
@@ -3717,6 +3723,7 @@ mod tests {
                 allow_reaper_running: true,
                 stage_unsupported: false,
                 keymap_choice: KeymapChoice::Osara,
+                install_csi: false,
                 cache_dir: Some(PathBuf::from("C:/cache")),
             },
         )

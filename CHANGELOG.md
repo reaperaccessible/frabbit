@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.0] - 2026-05-30
+
+- Ajout case a cocher CSI (Control Surface Integrator) pour X-Touch Universal
+- Installation CSI: DLL + config + dossier Documents
+- Depot ReaPack CSI ajoute automatiquement
+
 ## [1.8.0] - 2026-05-30
 
 - Release complete: Windows x64 + macOS universel
