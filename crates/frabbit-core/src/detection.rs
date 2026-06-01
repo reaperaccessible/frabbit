@@ -222,6 +222,41 @@ fn detect_version_from_files_with_probes(
     package_id: &str,
     uninstall_display_version: fn(&str) -> Option<String>,
 ) -> Result<Option<(crate::version::Version, String, Confidence, Vec<String>)>> {
+    // CSI-style date-based detection: when the manifest opts into
+    // `compare_by_file_mtime`, take the on-disk DLL's modification time
+    // as the "installed version" formatted as `YYYY.MM.DD`. Compared
+    // against the GitHub release `published_at` date by latest.rs.
+    {
+        let manifest = embedded_package_manifest();
+        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
+            if spec.compare_by_file_mtime {
+                for file in files {
+                    if let Ok(meta) = std::fs::metadata(file) {
+                        if let Ok(mtime) = meta.modified() {
+                            if let Ok(duration) = mtime.duration_since(std::time::UNIX_EPOCH) {
+                                let secs = duration.as_secs() as i64;
+                                let date_version =
+                                    crate::date_version::unix_timestamp_to_version(secs);
+                                if let Ok(version) = crate::version::Version::parse(&date_version) {
+                                    return Ok(Some((
+                                        version,
+                                        "file-mtime".to_string(),
+                                        Confidence::High,
+                                        vec![format!(
+                                            "Version is the file modification date of {}",
+                                            file.display()
+                                        )],
+                                    )));
+                                }
+                            }
+                        }
+                    }
+                }
+                return Ok(None);
+            }
+        }
+    }
+
     // Generic manifest-driven version detection: if the manifest defines
     // `version_file_documents_relative` for this package, read the version
     // file from Documents and return early.

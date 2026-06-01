@@ -3,6 +3,7 @@ pub mod archive;
 pub mod artifact;
 pub mod configuration;
 pub mod csi;
+pub mod date_version;
 pub mod detection;
 pub mod disk_image;
 pub mod error;

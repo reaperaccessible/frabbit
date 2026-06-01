@@ -106,7 +106,11 @@ pub fn fetch_latest_versions() -> Result<Vec<AvailablePackage>> {
         }
         if let Some(api_url) = &spec.github_release_api_url {
             let body = http_get_text(&client, api_url)?;
-            let version = parse_github_latest_release_json(&body, api_url)?;
+            let version = if spec.version_from_github_published_at {
+                parse_github_published_at_as_version(&body, api_url)?
+            } else {
+                parse_github_latest_release_json(&body, api_url)?
+            };
             packages.push(AvailablePackage {
                 package_id: spec.id.clone(),
                 version: Some(version),
@@ -138,6 +142,9 @@ pub fn fetch_latest_for_package(package_id: &str) -> Result<Version> {
         if let Some(api_url) = &spec.github_release_api_url {
             let client = build_http_client()?;
             let body = http_get_text(&client, api_url)?;
+            if spec.version_from_github_published_at {
+                return parse_github_published_at_as_version(&body, api_url);
+            }
             return parse_github_latest_release_json(&body, api_url);
         }
     }
@@ -336,6 +343,31 @@ pub fn parse_github_latest_release_json(body: &str, url: &str) -> Result<Version
         });
     };
     Version::parse(tag_name.trim_start_matches('v'))
+}
+
+/// Parse the GitHub release JSON and return the `published_at` date
+/// formatted as a `YYYY.MM.DD` version. Used by packages whose upstream
+/// release tags aren't meaningful for newer/older comparisons (e.g. CSI,
+/// which rolls its `latest` tag for every prerelease build).
+pub fn parse_github_published_at_as_version(body: &str, url: &str) -> Result<Version> {
+    let value: Value = serde_json::from_str(body).map_err(|source| FrabbitError::RemoteData {
+        url: url.to_string(),
+        message: source.to_string(),
+    })?;
+    let Some(published_at) = value.get("published_at").and_then(Value::as_str) else {
+        return Err(FrabbitError::RemoteData {
+            url: url.to_string(),
+            message: "missing string field: published_at".to_string(),
+        });
+    };
+    let date_version =
+        crate::date_version::parse_iso8601_to_version(published_at).ok_or_else(|| {
+            FrabbitError::RemoteData {
+                url: url.to_string(),
+                message: format!("could not parse published_at: {published_at}"),
+            }
+        })?;
+    Version::parse(&date_version)
 }
 
 pub fn parse_reakontrol_snapshot_version(body: &str, url: &str) -> Result<Version> {

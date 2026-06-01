@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.0] - 2026-05-31
+
+- CSI: detection par date de modification du DLL
+- Comparaison: mtime du DLL local vs published_at du release GitHub
+- Nouveau champ manifeste: compare_by_file_mtime
+- Nouveau champ manifeste: version_from_github_published_at
+- Nouveau module date_version.rs pour conversion timestamps en YYYY.MM.DD
+
 ## [1.12.0] - 2026-05-31
 
 - Simplification majeure: -2479 lignes de code

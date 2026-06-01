@@ -79,6 +79,10 @@ pub struct PackageSpec {
     pub post_install_reapack_repo: Option<ReapackRepo>,
     #[serde(default)]
     pub post_install_version_file: Option<String>,
+    #[serde(default)]
+    pub compare_by_file_mtime: bool,
+    #[serde(default)]
+    pub version_from_github_published_at: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -135,6 +139,10 @@ pub struct EmbeddedPackageSpec {
     pub post_install_reapack_repo: Option<ReapackRepo>,
     #[serde(default)]
     pub post_install_version_file: Option<String>,
+    #[serde(default)]
+    pub compare_by_file_mtime: bool,
+    #[serde(default)]
+    pub version_from_github_published_at: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -443,6 +451,8 @@ impl EmbeddedPackageSpec {
             post_install_zip_routes: self.post_install_zip_routes.clone(),
             post_install_reapack_repo: self.post_install_reapack_repo.clone(),
             post_install_version_file: self.post_install_version_file.clone(),
+            compare_by_file_mtime: self.compare_by_file_mtime,
+            version_from_github_published_at: self.version_from_github_published_at,
         }
     }
 }
