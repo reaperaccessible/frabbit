@@ -158,7 +158,10 @@ pub(crate) fn detect_component_with_probes(
     // truth — any stray DLL in UserPlugins from an old manual install
     // is ignored. The installer itself will overwrite those files on its
     // next run (gated by its own confirmation page).
-    if spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
+    if spec
+        .detectors
+        .contains(&PackageDetector::InnoSetupRegistry)
+    {
         if let Some(detection) =
             detect_inno_setup_vendor_install(spec, platform, uninstall_display_version)
         {

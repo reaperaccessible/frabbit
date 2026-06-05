@@ -1532,6 +1532,25 @@ fn planned_verification_paths(
     target_app_path: Option<&Path>,
     keymap_choice: KeymapChoice,
 ) -> Vec<PathBuf> {
+    // Packages whose presence is authoritatively confirmed by an
+    // Inno Setup uninstall registry key don't need a filesystem-based
+    // post-install verification. The detection pass after the install
+    // re-reads the registry; if the key is missing the package shows up
+    // as not-installed, which is the correct failure signal.
+    let manifest = crate::package::embedded_package_manifest();
+    if let Some(spec) = manifest
+        .packages
+        .iter()
+        .find(|p| p.id == artifact.package_id)
+    {
+        if spec
+            .detectors
+            .contains(&crate::package::PackageDetector::InnoSetupRegistry)
+        {
+            return Vec::new();
+        }
+    }
+
     let mut paths = match artifact.package_id.as_str() {
         crate::package::PACKAGE_REAPER => {
             reaper::verification_paths(resource_path, target_app_path)

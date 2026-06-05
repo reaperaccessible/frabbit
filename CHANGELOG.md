@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.14.2] - 2026-06-05
+
+- Fix detection CSI: la cle registre Inno Setup est maintenant autoritaire. Si la cle est absente, CSI est "non installe" peu importe les fichiers presents dans UserPlugins (un vieux DLL CSI 2.0 ne fait plus dire "Version inconnue, aucune mise a jour disponible")
+- Fix verification post-install: les paquets detectes via inno_setup_registry ne passent plus par la verification fichier (qui echouait sur le fallback generique resource_path). La detection registre apres install est la preuve d'install reussie
+
 ## [1.14.1] - 2026-06-05
 
 - Fix: les installateurs configures via `installer_silent_args` sont maintenant promus PlannedUnattended -> AvailableUnattended et reellement executes par FRABBIT (CSI etait telecharge mais jamais lance en v1.14.0)
