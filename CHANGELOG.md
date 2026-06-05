@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.14.1] - 2026-06-05
+
+- Fix: les installateurs configures via `installer_silent_args` sont maintenant promus PlannedUnattended -> AvailableUnattended et reellement executes par FRABBIT (CSI etait telecharge mais jamais lance en v1.14.0)
+
 ## [1.14.0] - 2026-06-05
 
 - CSI: migration vers le nouvel installeur Inno Setup CSIInstaller.exe (v7.0.1-test)

@@ -313,6 +313,21 @@ fn automation_support_dispatch(
     if let Some(verdict) = per_package {
         return verdict;
     }
+    // Manifest-driven unattended-installer support: when the manifest
+    // declares `installer_silent_args`, FRABBIT knows how to run the
+    // installer silently. Promote PlannedUnattended → AvailableUnattended
+    // so the install pipeline actually executes the installer instead of
+    // staging it as deferred.
+    if matches!(kind, ArtifactKind::Installer) {
+        let manifest = crate::package::embedded_package_manifest();
+        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
+            if !spec.installer_silent_args.is_empty() {
+                return PackageAutomationSupport::AvailableUnattended(
+                    PlannedAutomationKind::VendorInstaller,
+                );
+            }
+        }
+    }
     match kind {
         ArtifactKind::Installer => {
             PackageAutomationSupport::PlannedUnattended(PlannedAutomationKind::VendorInstaller)
