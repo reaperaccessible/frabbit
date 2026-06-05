@@ -1285,7 +1285,7 @@ fn mark_row_unavailable(localizer: &Localizer, row: &mut PackageRow, reason_key:
     row.available_for_target = false;
     row.selected = false;
     row.action = PlanActionKind::Keep;
-    row.action_label = action_label(localizer, PlanActionKind::Keep);
+    row.action_label = action_label_for_row(localizer, PlanActionKind::Keep, row.original_action);
     let summary = localizer
         .format(
             "wizard-package-row",
@@ -1329,7 +1329,7 @@ pub fn apply_checkbox_state_to_package_row(
     } else {
         PlanActionKind::Keep
     };
-    let action_label = action_label(&localizer, new_action);
+    let action_label = action_label_for_row(&localizer, new_action, row.original_action);
     let summary = localizer
         .format(
             "wizard-package-row",
@@ -2490,7 +2490,7 @@ fn package_rows(
             } else {
                 PlanActionKind::Keep
             };
-            let action_label = action_label(localizer, initial_action);
+            let action_label = action_label_for_row(localizer, initial_action, action.action);
             let summary = localizer
                 .format(
                     "wizard-package-row",
@@ -2911,6 +2911,26 @@ fn action_label(localizer: &Localizer, action: PlanActionKind) -> String {
     localizer.text(key).value
 }
 
+/// Row-aware variant of `action_label`. The default `action-keep` label
+/// ("No update available") makes sense when the package is already on
+/// disk and the plan has nothing to do. It is misleading, however, when
+/// the row is *uninstalled* (`original_action == Install`) and currently
+/// unticked (`action == Keep`): nothing is installed, so "no update
+/// available" reads as if the package were already current. In that case
+/// fall back to the dedicated `action-available` key
+/// ("Available to install") so the label matches the row's true state.
+fn action_label_for_row(
+    localizer: &Localizer,
+    action: PlanActionKind,
+    original_action: PlanActionKind,
+) -> String {
+    if matches!(action, PlanActionKind::Keep) && matches!(original_action, PlanActionKind::Install)
+    {
+        return localizer.text("action-available").value;
+    }
+    action_label(localizer, action)
+}
+
 fn yes_no(localizer: &Localizer, value: bool) -> String {
     if value {
         localizer.text("common-yes").value
@@ -3311,10 +3331,15 @@ mod tests {
 
         let summary = super::apply_checkbox_state_to_package_row(&model, &mut row, false).unwrap();
         assert_eq!(row.action, PlanActionKind::Keep);
-        assert_eq!(row.action_label, "No update available");
+        // Unchecking an uninstalled-and-recommended Install row leaves the
+        // package not on disk. The row-aware label must reflect that
+        // ("Available to install") instead of the generic Keep label
+        // ("No update available") which only makes sense when something
+        // is already installed.
+        assert_eq!(row.action_label, "Available to install");
         assert!(!row.selected);
-        assert!(summary.contains("No update available"));
-        assert!(row.summary.contains("No update available"));
+        assert!(summary.contains("Available to install"));
+        assert!(row.summary.contains("Available to install"));
 
         // Re-checking restores the original install action because the
         // package was originally not installed.
@@ -3390,7 +3415,8 @@ mod tests {
         let row = &model.package_rows[0];
         // The plan's action stays available on `original_action`; the row's
         // current `action` mirrors the auto-untick (Keep) so the row label
-        // reads "No update available" instead of "Will be installed" while unselected.
+        // reads "Available to install" (via `action_label_for_row`) while
+        // unselected, instead of "Will be installed".
         assert_eq!(row.original_action, PlanActionKind::Install);
         assert_eq!(row.action, PlanActionKind::Keep);
         assert!(!row.selected);
@@ -3427,7 +3453,8 @@ mod tests {
 
         let reapack = &model.package_rows[0];
         // Plan's action lives on `original_action`; the unticked row's
-        // current `action` is Keep so the visible row label says "No update available".
+        // current `action` is Keep so the visible row label says
+        // "Available to install" (via `action_label_for_row`).
         assert_eq!(reapack.original_action, PlanActionKind::Install);
         assert_eq!(reapack.action, PlanActionKind::Keep);
         assert!(!reapack.selected, "ReaPack row should start unticked");

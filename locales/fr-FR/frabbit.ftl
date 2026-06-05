@@ -7,6 +7,7 @@ common-no = non
 action-install = Sera installé
 action-update = Mise à jour disponible
 action-keep = Aucune mise à jour disponible
+action-available = Disponible à l'installation
 
 package-reaper = REAPER
 package-osara = OSARA

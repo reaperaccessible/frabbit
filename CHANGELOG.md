@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.14.3] - 2026-06-05
+
+- Fix libelle trompeur "Aucune mise a jour disponible" sur une ligne non cochee d'un paquet non installe: le libelle dit maintenant "Disponible a l'installation" (cle `action-available`), ce qui distingue clairement un paquet absent et opt-in d'un paquet deja a jour
+- Visibilite du re-install KeyMap: la mecanique existante (`apply_checkbox_state_to_package_row` + `force_reinstall_packages`) etait deja correcte, mais le nouveau libelle ci-dessus rend visible que la KeyMap deja installee redevient bien "Disponible" quand on la decoche
+- Fix `PostInstallVerificationFailed` sur les paquets Inno Setup: `receipt_paths_for_artifact` court-circuite maintenant les paquets detectes par `inno_setup_registry` (comme le faisait deja `planned_verification_paths`). La cle de registre Uninstall est la preuve d'install, FRABBIT ne tient plus de recus fichiers pour ces paquets
+
 ## [1.14.2] - 2026-06-05
 
 - Fix detection CSI: la cle registre Inno Setup est maintenant autoritaire. Si la cle est absente, CSI est "non installe" peu importe les fichiers presents dans UserPlugins (un vieux DLL CSI 2.0 ne fait plus dire "Version inconnue, aucune mise a jour disponible")

@@ -982,6 +982,30 @@ fn receipt_paths_for_artifact(
     target_app_path: Option<&Path>,
     keymap_choice: KeymapChoice,
 ) -> Result<Vec<PathBuf>> {
+    // Packages identified by Inno Setup uninstall registry key don't need
+    // filesystem receipt paths — the registry key itself is the
+    // authoritative install proof. The Inno uninstaller handles file
+    // cleanup on uninstall, so FRABBIT doesn't track per-file receipts.
+    // Mirrors the same short-circuit in `planned_verification_paths`;
+    // without it CSI (and any future Inno-installed package) hits the
+    // empty-paths branch below and bubbles up `PostInstallVerificationFailed`
+    // even when the install really did land.
+    {
+        let manifest = crate::package::embedded_package_manifest();
+        if let Some(spec) = manifest
+            .packages
+            .iter()
+            .find(|p| p.id == artifact.package_id)
+        {
+            if spec
+                .detectors
+                .contains(&crate::package::PackageDetector::InnoSetupRegistry)
+            {
+                return Ok(Vec::new());
+            }
+        }
+    }
+
     let effective_target_app_path =
         effective_target_app_path(artifact, resource_path, target_app_path);
     let mut paths = Vec::new();
