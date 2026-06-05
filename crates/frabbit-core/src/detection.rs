@@ -8,8 +8,9 @@ use crate::model::{
     ComponentDetection, Confidence, Evidence, Installation, InstallationKind, Platform,
 };
 use crate::package::{
-    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
-    PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs, embedded_package_manifest,
+    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
+    PACKAGE_REAPACK, PACKAGE_SURGE_XT, PACKAGE_SWS, PackageDetector, PackageSpec,
+    builtin_package_specs, embedded_package_manifest,
 };
 use crate::reapack::package_owner_for_file;
 use crate::receipt::{ReceiptVerification, load_install_state, verify_package_receipt};
@@ -180,6 +181,19 @@ pub(crate) fn detect_component_with_probes(
                 return Ok(detection);
             }
         }
+        // CSI is installed by the upstream Inno Setup installer; if its
+        // UserPlugins DLL wasn't located by the per-file scan (e.g. the
+        // installer hasn't dropped it yet, or the user pointed FRABBIT at
+        // a different resource path than the installer targeted), probe
+        // the Inno Setup uninstall registry key directly. This mirrors
+        // the Surge XT vendor-files fallback above.
+        if spec.id == PACKAGE_CSI {
+            if let Some(detection) =
+                detect_inno_setup_vendor_install(spec, platform, uninstall_display_version)
+            {
+                return Ok(detection);
+            }
+        }
         return Ok(ComponentDetection::not_installed(
             spec.id.clone(),
             spec.display_name.clone(),
@@ -222,68 +236,31 @@ fn detect_version_from_files_with_probes(
     package_id: &str,
     uninstall_display_version: fn(&str) -> Option<String>,
 ) -> Result<Option<(crate::version::Version, String, Confidence, Vec<String>)>> {
-    // CSI-style date-based detection: when the manifest opts into
-    // `compare_by_file_mtime`, take the on-disk DLL's modification time
-    // as the "installed version" formatted as `YYYY.MM.DD`. Compared
-    // against the GitHub release `published_at` date by latest.rs.
+    // Inno Setup registry detection: when the manifest declares the
+    // `inno_setup_registry` detector and supplies `inno_setup_app_id`,
+    // read `DisplayVersion` from the installer's uninstall registry key.
     {
         let manifest = embedded_package_manifest();
         if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-            if spec.compare_by_file_mtime {
-                for file in files {
-                    if let Ok(meta) = std::fs::metadata(file) {
-                        if let Ok(mtime) = meta.modified() {
-                            if let Ok(duration) = mtime.duration_since(std::time::UNIX_EPOCH) {
-                                let secs = duration.as_secs() as i64;
-                                let date_version =
-                                    crate::date_version::unix_timestamp_to_version(secs);
-                                if let Ok(version) = crate::version::Version::parse(&date_version) {
-                                    return Ok(Some((
-                                        version,
-                                        "file-mtime".to_string(),
-                                        Confidence::High,
-                                        vec![format!(
-                                            "Version is the file modification date of {}",
-                                            file.display()
-                                        )],
-                                    )));
-                                }
-                            }
-                        }
-                    }
-                }
-                return Ok(None);
-            }
-        }
-    }
-
-    // Generic manifest-driven version detection: if the manifest defines
-    // `version_file_documents_relative` for this package, read the version
-    // file from Documents and return early.
-    {
-        let manifest = embedded_package_manifest();
-        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-            if let Some(rel_path) = &spec.version_file_documents_relative {
-                if let Ok(userprofile) = std::env::var("USERPROFILE") {
-                    let version_file = std::path::PathBuf::from(userprofile)
-                        .join("Documents")
-                        .join(rel_path);
-                    if let Ok(contents) = std::fs::read_to_string(&version_file) {
-                        let trimmed = contents.trim();
-                        if let Ok(version) = crate::version::Version::parse(trimmed) {
+            if spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
+                if let Some(app_id) = &spec.inno_setup_app_id {
+                    let key = format!("{app_id}_is1");
+                    if let Some(raw) = uninstall_display_version(&key) {
+                        if let Ok(version) = crate::version::Version::parse(&raw) {
                             return Ok(Some((
                                 version,
-                                "manifest-version-file".to_string(),
+                                "inno-setup-registry".to_string(),
                                 Confidence::High,
                                 vec![format!(
-                                    "Version came from .frabbit-version in Documents/{rel_path}."
+                                    "Version came from the Inno Setup installer's uninstall registry key `{key}\\DisplayVersion`."
                                 )],
                             )));
                         }
                     }
+                    // Inno-Setup-managed packages without a registry hit are
+                    // not installed. Skip the rest of the probes.
+                    return Ok(None);
                 }
-                // If no version file found but this package uses a manifest
-                // version file, fall through to other probes.
             }
         }
     }
@@ -1136,6 +1113,44 @@ fn detect_jaws_scripts_via_uninstall_exe(spec: &PackageSpec) -> Option<Component
             "Version came from the JAWS-for-REAPER scripts vendor uninstaller's FileVersion resource."
                 .to_string(),
         ],
+    })
+}
+
+/// Read `DisplayVersion` from a package's Inno Setup uninstall key when
+/// the per-file UserPlugins scan returned nothing. Mirrors the
+/// `inno_setup_registry` detector branch in
+/// `detect_version_from_files_with_probes`, but lives in
+/// `detect_component_with_probes` so packages whose payload may not land
+/// in `<resource>/UserPlugins` (e.g. CSI's vendor installer puts
+/// auxiliary files outside the resource path entirely) still report as
+/// installed. Returns `None` on non-Windows or when the registry key is
+/// missing — the caller falls through to "not installed".
+fn detect_inno_setup_vendor_install(
+    spec: &PackageSpec,
+    platform: Platform,
+    uninstall_display_version: fn(&str) -> Option<String>,
+) -> Option<ComponentDetection> {
+    if !matches!(platform, Platform::Windows) {
+        return None;
+    }
+    if !spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
+        return None;
+    }
+    let app_id = spec.inno_setup_app_id.as_ref()?;
+    let key = format!("{app_id}_is1");
+    let raw = uninstall_display_version(&key)?;
+    let version = crate::version::Version::parse(&raw).ok()?;
+    Some(ComponentDetection {
+        package_id: spec.id.clone(),
+        display_name: spec.display_name.clone(),
+        installed: true,
+        version: Some(version),
+        detector: "inno-setup-registry".to_string(),
+        confidence: Confidence::High,
+        files: Vec::new(),
+        notes: vec![format!(
+            "Version came from the Inno Setup installer's uninstall registry key `{key}\\DisplayVersion`."
+        )],
     })
 }
 

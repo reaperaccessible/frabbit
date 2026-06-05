@@ -15,18 +15,6 @@ pub const PACKAGE_FFMPEG: &str = "ffmpeg";
 pub const PACKAGE_SURGE_XT: &str = "surge-xt";
 pub const PACKAGE_CSI: &str = "csi";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ZipRoute {
-    pub zip_prefix: String,
-    pub destination: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ReapackRepo {
-    pub name: String,
-    pub url: String,
-}
-
 pub const BUILTIN_PACKAGE_MANIFEST_ID: &str = "builtin-packages.json";
 const BUILTIN_PACKAGE_MANIFEST: &str = include_str!("../embedded/packages/builtin-packages.json");
 
@@ -71,18 +59,17 @@ pub struct PackageSpec {
     pub artifact_kind_override: Option<ArtifactKind>,
     #[serde(default)]
     pub artifact_file_name: Option<String>,
+    /// AppId GUID of an Inno Setup installer (matches its `[Setup] AppId=`),
+    /// without the `_is1` suffix. The `inno_setup_registry` detector
+    /// appends `_is1` to form the actual uninstall registry key name.
     #[serde(default)]
-    pub version_file_documents_relative: Option<String>,
+    pub inno_setup_app_id: Option<String>,
+    /// Command-line arguments to pass when running this package's vendor
+    /// installer silently. Used by the unattended-installer pipeline.
+    /// Defaults to the per-package hardcoded args (e.g. `/S` for NSIS) if
+    /// not specified. Inno Setup typically uses `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`.
     #[serde(default)]
-    pub post_install_zip_routes: Vec<ZipRoute>,
-    #[serde(default)]
-    pub post_install_reapack_repo: Option<ReapackRepo>,
-    #[serde(default)]
-    pub post_install_version_file: Option<String>,
-    #[serde(default)]
-    pub compare_by_file_mtime: bool,
-    #[serde(default)]
-    pub version_from_github_published_at: bool,
+    pub installer_silent_args: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -131,18 +118,12 @@ pub struct EmbeddedPackageSpec {
     pub artifact_kind_override: Option<ArtifactKind>,
     #[serde(default)]
     pub artifact_file_name: Option<String>,
+    /// See [`PackageSpec::inno_setup_app_id`].
     #[serde(default)]
-    pub version_file_documents_relative: Option<String>,
+    pub inno_setup_app_id: Option<String>,
+    /// See [`PackageSpec::installer_silent_args`].
     #[serde(default)]
-    pub post_install_zip_routes: Vec<ZipRoute>,
-    #[serde(default)]
-    pub post_install_reapack_repo: Option<ReapackRepo>,
-    #[serde(default)]
-    pub post_install_version_file: Option<String>,
-    #[serde(default)]
-    pub compare_by_file_mtime: bool,
-    #[serde(default)]
-    pub version_from_github_published_at: bool,
+    pub installer_silent_args: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -258,6 +239,11 @@ pub enum PackageDetector {
     /// FFmpeg N reports as Keep when the latest supported major is also
     /// N, and as Update when the user is on an older major.
     FfmpegLibavformatMajor,
+    /// Read `DisplayVersion` from the Inno Setup uninstall registry key
+    /// `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\<AppId>_is1`
+    /// (or HKLM fallback). Requires `inno_setup_app_id` to be set on the
+    /// PackageSpec. Inno Setup appends the `_is1` suffix itself.
+    InnoSetupRegistry,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -447,12 +433,8 @@ impl EmbeddedPackageSpec {
             artifact_download_url: self.artifact_download_url.clone(),
             artifact_kind_override: self.artifact_kind_override,
             artifact_file_name: self.artifact_file_name.clone(),
-            version_file_documents_relative: self.version_file_documents_relative.clone(),
-            post_install_zip_routes: self.post_install_zip_routes.clone(),
-            post_install_reapack_repo: self.post_install_reapack_repo.clone(),
-            post_install_version_file: self.post_install_version_file.clone(),
-            compare_by_file_mtime: self.compare_by_file_mtime,
-            version_from_github_published_at: self.version_from_github_published_at,
+            inno_setup_app_id: self.inno_setup_app_id.clone(),
+            installer_silent_args: self.installer_silent_args.clone(),
         }
     }
 }

@@ -1,6 +1,0 @@
-Zone: VST: FIN-MICRO (UJAM)
-Version: 2.0
-Date: 2025-08-14 19:57
-User: ReaperAccessible
-Email: reaperaccessible@gmail.com
-Generator version: 3.6

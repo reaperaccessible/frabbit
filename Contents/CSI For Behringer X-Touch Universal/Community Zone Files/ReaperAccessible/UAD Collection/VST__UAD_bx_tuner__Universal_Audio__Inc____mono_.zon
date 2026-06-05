@@ -1,9 +1,0 @@
-Zone "VST: UAD bx_tuner (Universal Audio, Inc.) (mono)"
-	FXParam 0 "Tuner On"
-	FXParam 1 "TnrMode"
-	FXParam 2 "Referenc"
-	FXParam 3 "Ballisti"
-	FXParam 4 "Bypass"
-	FXParam 5 "Wet"
-	FXParam 6 "Delta"
-ZoneEnd

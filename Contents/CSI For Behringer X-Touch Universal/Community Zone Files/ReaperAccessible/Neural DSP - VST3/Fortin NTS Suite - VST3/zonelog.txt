@@ -1,6 +1,0 @@
-Zone: VST3: Fortin NTS Suite (Neural DSP)
-Version: 2.0
-Date: 2025-08-14 15:52
-User: ReaperAccessible
-Email: reaperaccessible
-Generator version: 3.6

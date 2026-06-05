@@ -1,6 +1,0 @@
-Zone details:
-Page 1 :
-    - Section 1 : 8 parameters
-    - Section 2 : 7 parameters
-    - Section 3 : 7 parameters
-1 pages, 3 sections, 22 parameters

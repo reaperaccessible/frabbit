@@ -292,18 +292,6 @@ fn automation_support_dispatch(
     if package_id == crate::package::PACKAGE_REAKONTROL && matches!(kind, ArtifactKind::Archive) {
         return PackageAutomationSupport::Direct;
     }
-    // Manifest-driven archive packages: if the manifest defines
-    // `post_install_zip_routes` for this package, the archive pipeline
-    // handles the DLL via user_plugin_prefixes and the generic
-    // post-install hook extracts the rest.
-    if matches!(kind, ArtifactKind::Archive) {
-        let manifest = crate::package::embedded_package_manifest();
-        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-            if !spec.post_install_zip_routes.is_empty() {
-                return PackageAutomationSupport::Direct;
-            }
-        }
-    }
     // FFmpeg ships as a `.7z` whose `bin/` we extract directly into
     // UserPlugins — no upstream installer to launch, no user prompt to
     // dismiss. Same automation class as the per-file extension-binary
@@ -663,17 +651,6 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
             .zip(cached_artifacts.iter())
             .zip(&install_report.actions)
         {
-            // Generic manifest-driven post-install: extracts zip routes,
-            // writes version files, registers ReaPack repos. No-op for
-            // packages that don't define any post_install_* fields.
-            if !options.dry_run {
-                crate::generic_post_install::run_manifest_post_install(
-                    &cached.path,
-                    &cached.descriptor.package_id,
-                    resource_path,
-                    &cached.descriptor.version.to_string(),
-                )?;
-            }
             items.push(PackageOperationItem {
                 package_id: cached.descriptor.package_id.clone(),
                 plan_action: planned.plan_action,
@@ -1348,6 +1325,18 @@ fn installer_arguments_for_artifact(
     resource_path: &Path,
     target_app_path: Option<&Path>,
 ) -> Vec<String> {
+    // If the manifest specifies installer_silent_args, use them. Otherwise
+    // fall through to the per-package hardcoded defaults below.
+    let manifest = crate::package::embedded_package_manifest();
+    if let Some(spec) = manifest
+        .packages
+        .iter()
+        .find(|p| p.id == artifact.package_id)
+    {
+        if !spec.installer_silent_args.is_empty() {
+            return spec.installer_silent_args.clone();
+        }
+    }
     let per_package = match artifact.package_id.as_str() {
         crate::package::PACKAGE_REAPER => reaper::installer_arguments(
             artifact.kind,

@@ -1,8 +1,0 @@
-Zone LastTouchedFXParam
-  OnZoneActivation  Speak "Last Touched FX Param On"
-  OnZoneDeactivation  Speak "Last Touched FX Param Off"
-
-  DisplayUpper1  LastTouchedFXParamNameDisplay
-  DiplayLower1  LastTouchedFXParamValueDisplay
-  Fader1  LastTouchedFXParam
-ZoneEnd
