@@ -1316,17 +1316,25 @@ fn package_requires_elevation(
     resource_path: &Path,
     target_app_path: Option<&Path>,
 ) -> bool {
+    let verdict = package_requires_elevation_inner(artifact, resource_path, target_app_path);
+    debug_log(&format!(
+        "package_requires_elevation: package_id={}, kind={:?}, file_name={}, platform={:?}, verdict={}",
+        artifact.package_id, artifact.kind, artifact.file_name, artifact.platform, verdict
+    ));
+    verdict
+}
+
+fn package_requires_elevation_inner(
+    artifact: &ArtifactDescriptor,
+    resource_path: &Path,
+    target_app_path: Option<&Path>,
+) -> bool {
     if !matches!(artifact.platform, Platform::Windows) {
         return false;
     }
     if !matches!(artifact.kind, ArtifactKind::Installer) {
         return false;
     }
-    // Real vendor installers always ship as `.exe`; test fixtures use `.cmd`
-    // / `.bat` script-host helpers. ShellExecuteEx(runas) can't elevate a
-    // script-host helper and our tests have no UAC consent dialog, so gate
-    // elevation on the file extension before consulting the per-package
-    // rules.
     if !artifact.file_name.to_ascii_lowercase().ends_with(".exe") {
         return false;
     }
@@ -1334,18 +1342,53 @@ fn package_requires_elevation(
         crate::package::PACKAGE_JAWS_SCRIPTS => true,
         crate::package::PACKAGE_REAPER => !target_likely_portable(resource_path, target_app_path),
         _ => {
-            // Manifest-driven: read requires_elevation from the package
-            // spec. Lets new vendor installers opt into UAC elevation
-            // without touching this match.
             let manifest = crate::package::embedded_package_manifest();
-            manifest
+            let spec = manifest
                 .packages
                 .iter()
-                .find(|p| p.id == artifact.package_id)
-                .map(|spec| spec.requires_elevation)
-                .unwrap_or(false)
+                .find(|p| p.id == artifact.package_id);
+            debug_log(&format!(
+                "  manifest lookup for {}: found={}, requires_elevation={:?}",
+                artifact.package_id,
+                spec.is_some(),
+                spec.map(|s| s.requires_elevation)
+            ));
+            spec.map(|spec| spec.requires_elevation).unwrap_or(false)
         }
     }
+}
+
+/// Public wrapper used from sibling modules (upstream.rs).
+pub(crate) fn debug_log_public(message: &str) {
+    debug_log(message);
+}
+
+/// Append a debug line to %APPDATA%\REAPER\FRABBIT\logs\frabbit-debug.log
+/// to diagnose runtime behavior on user machines. Non-fatal if it fails.
+fn debug_log(message: &str) {
+    let _ = (|| -> std::io::Result<()> {
+        use std::io::Write;
+        let log_dir = std::env::var("APPDATA")
+            .map(|p| {
+                std::path::PathBuf::from(p)
+                    .join("REAPER")
+                    .join("FRABBIT")
+                    .join("logs")
+            })
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::NotFound, "no APPDATA"))?;
+        std::fs::create_dir_all(&log_dir)?;
+        let log_path = log_dir.join("frabbit-debug.log");
+        let mut f = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)?;
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        writeln!(f, "[{ts}] {message}")
+    })();
 }
 
 fn planned_execution_override_for_artifact(

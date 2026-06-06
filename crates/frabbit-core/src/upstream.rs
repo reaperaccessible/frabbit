@@ -119,9 +119,21 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
         });
     };
 
+    crate::operation::debug_log_public(&format!(
+        "execute_program_plan: program={}, args={:?}, requires_elevation={}",
+        program, plan.arguments, plan.requires_elevation
+    ));
+
     if plan.requires_elevation {
+        crate::operation::debug_log_public(&format!(
+            "  taking elevated path (ShellExecuteW runas) for {program}"
+        ));
         return execute_program_plan_elevated(plan, program);
     }
+
+    crate::operation::debug_log_public(&format!(
+        "  taking direct path (Command::new) for {program}"
+    ));
 
     let mut command = Command::new(program);
     command.args(&plan.arguments);
@@ -133,6 +145,10 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
         path: PathBuf::from(program),
         source,
     })?;
+    crate::operation::debug_log_public(&format!(
+        "  direct launch returned status={:?}",
+        status.code()
+    ));
     if !status.success() {
         // Windows exit code 1223 is `ERROR_CANCELLED`: the user clicked
         // "No" on the UAC elevation prompt (or it timed out / was
@@ -158,19 +174,33 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
 fn execute_program_plan_elevated(plan: &PlannedExecutionPlan, program: &str) -> Result<()> {
     use frabbit_platform::ElevationError;
 
+    crate::operation::debug_log_public(&format!(
+        "  calling frabbit_platform::run_elevated_and_wait({program}, {:?})",
+        plan.arguments
+    ));
+
     let exit_code = frabbit_platform::run_elevated_and_wait(
         Path::new(program),
         &plan.arguments,
         plan.working_directory.as_deref(),
     )
-    .map_err(|error| match error {
-        ElevationError::UserCancelledElevation { .. } => FrabbitError::UserCancelledElevation {
-            program: program.to_string(),
-        },
-        other => FrabbitError::InvalidPlannedExecution {
-            message: other.to_string(),
-        },
+    .map_err(|error| {
+        crate::operation::debug_log_public(&format!(
+            "  run_elevated_and_wait returned error: {error:?}"
+        ));
+        match error {
+            ElevationError::UserCancelledElevation { .. } => FrabbitError::UserCancelledElevation {
+                program: program.to_string(),
+            },
+            other => FrabbitError::InvalidPlannedExecution {
+                message: other.to_string(),
+            },
+        }
     })?;
+
+    crate::operation::debug_log_public(&format!(
+        "  run_elevated_and_wait returned exit_code={exit_code:?}"
+    ));
 
     match exit_code {
         Some(0) => Ok(()),

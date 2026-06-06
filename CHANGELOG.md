@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.14.5] - 2026-06-06
+
+- Instrumentation diagnostique: ajout de logs detailles dans %APPDATA%\REAPER\FRABBIT\logs\frabbit-debug.log pour le pipeline de lancement d'installeur (package_requires_elevation, execute_program_plan, execute_program_plan_elevated). Permet de diagnostiquer pourquoi un installeur n'est pas execute sur certaines machines (UAC, MOTW/SmartScreen, etc.). Aucun changement de comportement.
+
 ## [1.14.4] - 2026-06-05
 
 - Fix CSI: lancement avec elevation UAC (champ manifeste `requires_elevation: true`). Avant, FRABBIT lancait l'installateur Inno Setup en mode silencieux sans elevation, Windows declenchait son "Installer Detection" sur l'.exe et annulait silencieusement le lancement. Maintenant, le prompt UAC officiel s'affiche et l'utilisateur peut accepter.
