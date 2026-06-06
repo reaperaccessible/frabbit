@@ -70,6 +70,17 @@ pub struct PackageSpec {
     /// not specified. Inno Setup typically uses `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`.
     #[serde(default)]
     pub installer_silent_args: Vec<String>,
+    /// Whether the vendor installer needs UAC elevation. When `true`,
+    /// FRABBIT launches the installer via `ShellExecuteEx` with verb
+    /// `runas`, which surfaces the standard Windows UAC prompt. Some
+    /// installers (Inno Setup with `PrivilegesRequired=lowest`, NSIS
+    /// without `RequestExecutionLevel`) appear not to need elevation
+    /// but Windows still triggers Installer Detection on the `.exe`
+    /// filename heuristics and cancels the launch silently when the
+    /// prompt is not handled — declaring elevation explicitly avoids
+    /// that silent-cancel trap.
+    #[serde(default)]
+    pub requires_elevation: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -124,6 +135,9 @@ pub struct EmbeddedPackageSpec {
     /// See [`PackageSpec::installer_silent_args`].
     #[serde(default)]
     pub installer_silent_args: Vec<String>,
+    /// See [`PackageSpec::requires_elevation`].
+    #[serde(default)]
+    pub requires_elevation: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -435,6 +449,7 @@ impl EmbeddedPackageSpec {
             artifact_file_name: self.artifact_file_name.clone(),
             inno_setup_app_id: self.inno_setup_app_id.clone(),
             installer_silent_args: self.installer_silent_args.clone(),
+            requires_elevation: self.requires_elevation,
         }
     }
 }

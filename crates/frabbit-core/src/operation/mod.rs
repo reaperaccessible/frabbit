@@ -1333,7 +1333,18 @@ fn package_requires_elevation(
     match artifact.package_id.as_str() {
         crate::package::PACKAGE_JAWS_SCRIPTS => true,
         crate::package::PACKAGE_REAPER => !target_likely_portable(resource_path, target_app_path),
-        _ => false,
+        _ => {
+            // Manifest-driven: read requires_elevation from the package
+            // spec. Lets new vendor installers opt into UAC elevation
+            // without touching this match.
+            let manifest = crate::package::embedded_package_manifest();
+            manifest
+                .packages
+                .iter()
+                .find(|p| p.id == artifact.package_id)
+                .map(|spec| spec.requires_elevation)
+                .unwrap_or(false)
+        }
     }
 }
 

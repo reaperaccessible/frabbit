@@ -206,6 +206,7 @@
       "artifact_file_name": "CSIInstaller.exe",
       "inno_setup_app_id": "{8C0F7E2D-4A1B-4D8E-9F3C-B6E2A7D5F1C8}",
       "installer_silent_args": ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
+      "requires_elevation": true,
       "install_steps": ["run_upstream_installer"],
       "uninstall_steps": [],
       "detectors": ["inno_setup_registry"],

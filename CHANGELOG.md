@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.14.4] - 2026-06-05
+
+- Fix CSI: lancement avec elevation UAC (champ manifeste `requires_elevation: true`). Avant, FRABBIT lancait l'installateur Inno Setup en mode silencieux sans elevation, Windows declenchait son "Installer Detection" sur l'.exe et annulait silencieusement le lancement. Maintenant, le prompt UAC officiel s'affiche et l'utilisateur peut accepter.
+- Nouveau champ manifeste `requires_elevation: bool` (data-driven): n'importe quel paquet futur peut s'opt-in a l'elevation UAC en ajoutant ce champ, sans modification de code Rust.
+
 ## [1.14.3] - 2026-06-05
 
 - Fix libelle trompeur "Aucune mise a jour disponible" sur une ligne non cochee d'un paquet non installe: le libelle dit maintenant "Disponible a l'installation" (cle `action-available`), ce qui distingue clairement un paquet absent et opt-in d'un paquet deja a jour
