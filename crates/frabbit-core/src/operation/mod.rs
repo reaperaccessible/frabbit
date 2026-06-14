@@ -313,21 +313,6 @@ fn automation_support_dispatch(
     if let Some(verdict) = per_package {
         return verdict;
     }
-    // Manifest-driven unattended-installer support: when the manifest
-    // declares `installer_silent_args`, FRABBIT knows how to run the
-    // installer silently. Promote PlannedUnattended → AvailableUnattended
-    // so the install pipeline actually executes the installer instead of
-    // staging it as deferred.
-    if matches!(kind, ArtifactKind::Installer) {
-        let manifest = crate::package::embedded_package_manifest();
-        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-            if !spec.installer_silent_args.is_empty() {
-                return PackageAutomationSupport::AvailableUnattended(
-                    PlannedAutomationKind::VendorInstaller,
-                );
-            }
-        }
-    }
     match kind {
         ArtifactKind::Installer => {
             PackageAutomationSupport::PlannedUnattended(PlannedAutomationKind::VendorInstaller)
@@ -982,30 +967,6 @@ fn receipt_paths_for_artifact(
     target_app_path: Option<&Path>,
     keymap_choice: KeymapChoice,
 ) -> Result<Vec<PathBuf>> {
-    // Packages identified by Inno Setup uninstall registry key don't need
-    // filesystem receipt paths — the registry key itself is the
-    // authoritative install proof. The Inno uninstaller handles file
-    // cleanup on uninstall, so FRABBIT doesn't track per-file receipts.
-    // Mirrors the same short-circuit in `planned_verification_paths`;
-    // without it CSI (and any future Inno-installed package) hits the
-    // empty-paths branch below and bubbles up `PostInstallVerificationFailed`
-    // even when the install really did land.
-    {
-        let manifest = crate::package::embedded_package_manifest();
-        if let Some(spec) = manifest
-            .packages
-            .iter()
-            .find(|p| p.id == artifact.package_id)
-        {
-            if spec
-                .detectors
-                .contains(&crate::package::PackageDetector::InnoSetupRegistry)
-            {
-                return Ok(Vec::new());
-            }
-        }
-    }
-
     let effective_target_app_path =
         effective_target_app_path(artifact, resource_path, target_app_path);
     let mut paths = Vec::new();
@@ -1316,19 +1277,6 @@ fn package_requires_elevation(
     resource_path: &Path,
     target_app_path: Option<&Path>,
 ) -> bool {
-    let verdict = package_requires_elevation_inner(artifact, resource_path, target_app_path);
-    debug_log(&format!(
-        "package_requires_elevation: package_id={}, kind={:?}, file_name={}, platform={:?}, verdict={}",
-        artifact.package_id, artifact.kind, artifact.file_name, artifact.platform, verdict
-    ));
-    verdict
-}
-
-fn package_requires_elevation_inner(
-    artifact: &ArtifactDescriptor,
-    resource_path: &Path,
-    target_app_path: Option<&Path>,
-) -> bool {
     if !matches!(artifact.platform, Platform::Windows) {
         return false;
     }
@@ -1341,54 +1289,8 @@ fn package_requires_elevation_inner(
     match artifact.package_id.as_str() {
         crate::package::PACKAGE_JAWS_SCRIPTS => true,
         crate::package::PACKAGE_REAPER => !target_likely_portable(resource_path, target_app_path),
-        _ => {
-            let manifest = crate::package::embedded_package_manifest();
-            let spec = manifest
-                .packages
-                .iter()
-                .find(|p| p.id == artifact.package_id);
-            debug_log(&format!(
-                "  manifest lookup for {}: found={}, requires_elevation={:?}",
-                artifact.package_id,
-                spec.is_some(),
-                spec.map(|s| s.requires_elevation)
-            ));
-            spec.map(|spec| spec.requires_elevation).unwrap_or(false)
-        }
+        _ => false,
     }
-}
-
-/// Public wrapper used from sibling modules (upstream.rs).
-pub(crate) fn debug_log_public(message: &str) {
-    debug_log(message);
-}
-
-/// Append a debug line to %APPDATA%\REAPER\FRABBIT\logs\frabbit-debug.log
-/// to diagnose runtime behavior on user machines. Non-fatal if it fails.
-fn debug_log(message: &str) {
-    let _ = (|| -> std::io::Result<()> {
-        use std::io::Write;
-        let log_dir = std::env::var("APPDATA")
-            .map(|p| {
-                std::path::PathBuf::from(p)
-                    .join("REAPER")
-                    .join("FRABBIT")
-                    .join("logs")
-            })
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::NotFound, "no APPDATA"))?;
-        std::fs::create_dir_all(&log_dir)?;
-        let log_path = log_dir.join("frabbit-debug.log");
-        let mut f = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&log_path)?;
-        use std::time::{SystemTime, UNIX_EPOCH};
-        let ts = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
-        writeln!(f, "[{ts}] {message}")
-    })();
 }
 
 fn planned_execution_override_for_artifact(
@@ -1418,18 +1320,6 @@ fn installer_arguments_for_artifact(
     resource_path: &Path,
     target_app_path: Option<&Path>,
 ) -> Vec<String> {
-    // If the manifest specifies installer_silent_args, use them. Otherwise
-    // fall through to the per-package hardcoded defaults below.
-    let manifest = crate::package::embedded_package_manifest();
-    if let Some(spec) = manifest
-        .packages
-        .iter()
-        .find(|p| p.id == artifact.package_id)
-    {
-        if !spec.installer_silent_args.is_empty() {
-            return spec.installer_silent_args.clone();
-        }
-    }
     let per_package = match artifact.package_id.as_str() {
         crate::package::PACKAGE_REAPER => reaper::installer_arguments(
             artifact.kind,
@@ -1610,25 +1500,6 @@ fn planned_verification_paths(
     target_app_path: Option<&Path>,
     keymap_choice: KeymapChoice,
 ) -> Vec<PathBuf> {
-    // Packages whose presence is authoritatively confirmed by an
-    // Inno Setup uninstall registry key don't need a filesystem-based
-    // post-install verification. The detection pass after the install
-    // re-reads the registry; if the key is missing the package shows up
-    // as not-installed, which is the correct failure signal.
-    let manifest = crate::package::embedded_package_manifest();
-    if let Some(spec) = manifest
-        .packages
-        .iter()
-        .find(|p| p.id == artifact.package_id)
-    {
-        if spec
-            .detectors
-            .contains(&crate::package::PackageDetector::InnoSetupRegistry)
-        {
-            return Vec::new();
-        }
-    }
-
     let mut paths = match artifact.package_id.as_str() {
         crate::package::PACKAGE_REAPER => {
             reaper::verification_paths(resource_path, target_app_path)

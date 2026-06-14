@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::artifact::ArtifactKind;
 use crate::model::{Architecture, Platform};
 
 pub const PACKAGE_REAPER: &str = "reaper";
@@ -13,7 +12,6 @@ pub const PACKAGE_REAKONTROL: &str = "reakontrol";
 pub const PACKAGE_JAWS_SCRIPTS: &str = "jaws-scripts";
 pub const PACKAGE_FFMPEG: &str = "ffmpeg";
 pub const PACKAGE_SURGE_XT: &str = "surge-xt";
-pub const PACKAGE_CSI: &str = "csi";
 
 pub const BUILTIN_PACKAGE_MANIFEST_ID: &str = "builtin-packages.json";
 const BUILTIN_PACKAGE_MANIFEST: &str = include_str!("../embedded/packages/builtin-packages.json");
@@ -51,36 +49,6 @@ pub struct PackageSpec {
     pub backup_policy: BackupPolicy,
     pub user_plugin_prefixes: Vec<String>,
     pub user_plugin_suffixes: Vec<String>,
-    #[serde(default)]
-    pub github_release_api_url: Option<String>,
-    #[serde(default)]
-    pub artifact_download_url: Option<String>,
-    #[serde(default)]
-    pub artifact_kind_override: Option<ArtifactKind>,
-    #[serde(default)]
-    pub artifact_file_name: Option<String>,
-    /// AppId GUID of an Inno Setup installer (matches its `[Setup] AppId=`),
-    /// without the `_is1` suffix. The `inno_setup_registry` detector
-    /// appends `_is1` to form the actual uninstall registry key name.
-    #[serde(default)]
-    pub inno_setup_app_id: Option<String>,
-    /// Command-line arguments to pass when running this package's vendor
-    /// installer silently. Used by the unattended-installer pipeline.
-    /// Defaults to the per-package hardcoded args (e.g. `/S` for NSIS) if
-    /// not specified. Inno Setup typically uses `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`.
-    #[serde(default)]
-    pub installer_silent_args: Vec<String>,
-    /// Whether the vendor installer needs UAC elevation. When `true`,
-    /// FRABBIT launches the installer via `ShellExecuteEx` with verb
-    /// `runas`, which surfaces the standard Windows UAC prompt. Some
-    /// installers (Inno Setup with `PrivilegesRequired=lowest`, NSIS
-    /// without `RequestExecutionLevel`) appear not to need elevation
-    /// but Windows still triggers Installer Detection on the `.exe`
-    /// filename heuristics and cancels the launch silently when the
-    /// prompt is not handled — declaring elevation explicitly avoids
-    /// that silent-cancel trap.
-    #[serde(default)]
-    pub requires_elevation: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,23 +89,6 @@ pub struct EmbeddedPackageSpec {
     pub backup_policy: BackupPolicy,
     pub user_plugin_prefixes: Vec<String>,
     pub user_plugin_suffixes: PlatformSuffixes,
-    #[serde(default)]
-    pub github_release_api_url: Option<String>,
-    #[serde(default)]
-    pub artifact_download_url: Option<String>,
-    #[serde(default)]
-    pub artifact_kind_override: Option<ArtifactKind>,
-    #[serde(default)]
-    pub artifact_file_name: Option<String>,
-    /// See [`PackageSpec::inno_setup_app_id`].
-    #[serde(default)]
-    pub inno_setup_app_id: Option<String>,
-    /// See [`PackageSpec::installer_silent_args`].
-    #[serde(default)]
-    pub installer_silent_args: Vec<String>,
-    /// See [`PackageSpec::requires_elevation`].
-    #[serde(default)]
-    pub requires_elevation: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -253,11 +204,6 @@ pub enum PackageDetector {
     /// FFmpeg N reports as Keep when the latest supported major is also
     /// N, and as Update when the user is on an older major.
     FfmpegLibavformatMajor,
-    /// Read `DisplayVersion` from the Inno Setup uninstall registry key
-    /// `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\<AppId>_is1`
-    /// (or HKLM fallback). Requires `inno_setup_app_id` to be set on the
-    /// PackageSpec. Inno Setup appends the `_is1` suffix itself.
-    InnoSetupRegistry,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -443,13 +389,6 @@ impl EmbeddedPackageSpec {
             backup_policy: self.backup_policy,
             user_plugin_prefixes: self.user_plugin_prefixes.clone(),
             user_plugin_suffixes: self.user_plugin_suffixes.for_platform(platform),
-            github_release_api_url: self.github_release_api_url.clone(),
-            artifact_download_url: self.artifact_download_url.clone(),
-            artifact_kind_override: self.artifact_kind_override,
-            artifact_file_name: self.artifact_file_name.clone(),
-            inno_setup_app_id: self.inno_setup_app_id.clone(),
-            installer_silent_args: self.installer_silent_args.clone(),
-            requires_elevation: self.requires_elevation,
         }
     }
 }
@@ -518,7 +457,7 @@ mod tests {
         let manifest = embedded_package_manifest();
 
         assert_eq!(manifest.schema_version, 1);
-        assert_eq!(manifest.packages.len(), 9);
+        assert_eq!(manifest.packages.len(), 8);
         assert!(
             manifest
                 .packages

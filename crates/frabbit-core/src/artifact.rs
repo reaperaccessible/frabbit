@@ -24,7 +24,7 @@ use crate::latest::{
 use crate::model::{Architecture, Platform};
 use crate::package::{
     PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
-    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS, embedded_package_manifest,
+    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
 };
 use crate::progress::{ProgressEvent, ProgressReporter};
 use crate::version::Version;
@@ -108,7 +108,13 @@ pub fn resolve_latest_artifacts(
             PACKAGE_JAWS_SCRIPTS => resolve_jaws_scripts_artifact(&client, platform, architecture)?,
             PACKAGE_FFMPEG => resolve_ffmpeg_artifact(&client, platform, architecture)?,
             PACKAGE_SURGE_XT => resolve_surge_xt_artifact(&client, platform, architecture)?,
-            _ => resolve_generic_artifact(&client, package_id, platform, architecture)?,
+            _ => {
+                return Err(FrabbitError::NoArtifactFound {
+                    package_id: package_id.clone(),
+                    platform,
+                    architecture,
+                });
+            }
         };
         artifacts.push(artifact);
     }
@@ -131,19 +137,11 @@ pub fn expected_artifact_kind(
         PACKAGE_JAWS_SCRIPTS => Ok(ArtifactKind::Installer),
         PACKAGE_FFMPEG => expected_ffmpeg_artifact_kind(platform, architecture),
         PACKAGE_SURGE_XT => Ok(expected_surge_xt_artifact_kind(platform)),
-        _ => {
-            let manifest = embedded_package_manifest();
-            if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-                if let Some(kind) = spec.artifact_kind_override {
-                    return Ok(kind);
-                }
-            }
-            Err(FrabbitError::NoArtifactFound {
-                package_id: package_id.to_string(),
-                platform,
-                architecture,
-            })
-        }
+        _ => Err(FrabbitError::NoArtifactFound {
+            package_id: package_id.to_string(),
+            platform,
+            architecture,
+        }),
     }
 }
 
@@ -1206,69 +1204,6 @@ fn invalid_file_url(input: &str) -> FrabbitError {
         url: format!("file://{input}"),
         message: "invalid file URL path encoding".to_string(),
     }
-}
-
-/// Manifest-driven artifact resolver. Reads `github_release_api_url`,
-/// `artifact_download_url`, `artifact_kind_override`, and `artifact_file_name`
-/// from the embedded manifest and constructs an `ArtifactDescriptor`.
-fn resolve_generic_artifact(
-    client: &Client,
-    package_id: &str,
-    platform: Platform,
-    architecture: Architecture,
-) -> Result<ArtifactDescriptor> {
-    let manifest = embedded_package_manifest();
-    let spec = manifest
-        .packages
-        .iter()
-        .find(|p| p.id == package_id)
-        .ok_or_else(|| FrabbitError::NoArtifactFound {
-            package_id: package_id.to_string(),
-            platform,
-            architecture,
-        })?;
-
-    let api_url =
-        spec.github_release_api_url
-            .as_deref()
-            .ok_or_else(|| FrabbitError::NoArtifactFound {
-                package_id: package_id.to_string(),
-                platform,
-                architecture,
-            })?;
-    let download_url_template =
-        spec.artifact_download_url
-            .as_deref()
-            .ok_or_else(|| FrabbitError::NoArtifactFound {
-                package_id: package_id.to_string(),
-                platform,
-                architecture,
-            })?;
-    let kind = spec
-        .artifact_kind_override
-        .ok_or_else(|| FrabbitError::NoArtifactFound {
-            package_id: package_id.to_string(),
-            platform,
-            architecture,
-        })?;
-
-    let body = http_get_text(client, api_url)?;
-    let version = parse_github_latest_release_json(&body, api_url)?;
-
-    let download_url = download_url_template.replace("{version}", version.raw());
-    let file_name = spec.artifact_file_name.clone().unwrap_or_else(|| {
-        file_name_from_url(&download_url).unwrap_or_else(|| "artifact".to_string())
-    });
-
-    Ok(ArtifactDescriptor {
-        package_id: package_id.to_string(),
-        version,
-        platform,
-        architecture,
-        kind,
-        url: download_url,
-        file_name,
-    })
 }
 
 #[cfg(test)]

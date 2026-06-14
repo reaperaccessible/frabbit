@@ -8,9 +8,8 @@ use crate::model::{
     ComponentDetection, Confidence, Evidence, Installation, InstallationKind, Platform,
 };
 use crate::package::{
-    PACKAGE_CSI, PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL,
-    PACKAGE_REAPACK, PACKAGE_SURGE_XT, PACKAGE_SWS, PackageDetector, PackageSpec,
-    builtin_package_specs, embedded_package_manifest,
+    PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
+    PACKAGE_SURGE_XT, PACKAGE_SWS, PackageSpec, builtin_package_specs,
 };
 use crate::reapack::package_owner_for_file;
 use crate::receipt::{ReceiptVerification, load_install_state, verify_package_receipt};
@@ -152,24 +151,6 @@ pub(crate) fn detect_component_with_probes(
         ReceiptVerification::MissingReceipt | ReceiptVerification::MissingPackage => {}
     }
 
-    // Packages that declare `inno_setup_registry` as a detector are
-    // authoritatively identified by their Inno Setup uninstall registry
-    // key. The presence or absence of the registry key is the source of
-    // truth — any stray DLL in UserPlugins from an old manual install
-    // is ignored. The installer itself will overwrite those files on its
-    // next run (gated by its own confirmation page).
-    if spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
-        if let Some(detection) =
-            detect_inno_setup_vendor_install(spec, platform, uninstall_display_version)
-        {
-            return Ok(detection);
-        }
-        return Ok(ComponentDetection::not_installed(
-            spec.id.clone(),
-            spec.display_name.clone(),
-        ));
-    }
-
     let files = matching_user_plugin_files(resource_path, platform, spec)?;
     if files.is_empty() {
         // JAWS-for-REAPER scripts don't drop anything under
@@ -241,35 +222,6 @@ fn detect_version_from_files_with_probes(
     package_id: &str,
     uninstall_display_version: fn(&str) -> Option<String>,
 ) -> Result<Option<(crate::version::Version, String, Confidence, Vec<String>)>> {
-    // Inno Setup registry detection: when the manifest declares the
-    // `inno_setup_registry` detector and supplies `inno_setup_app_id`,
-    // read `DisplayVersion` from the installer's uninstall registry key.
-    {
-        let manifest = embedded_package_manifest();
-        if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-            if spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
-                if let Some(app_id) = &spec.inno_setup_app_id {
-                    let key = format!("{app_id}_is1");
-                    if let Some(raw) = uninstall_display_version(&key) {
-                        if let Ok(version) = crate::version::Version::parse(&raw) {
-                            return Ok(Some((
-                                version,
-                                "inno-setup-registry".to_string(),
-                                Confidence::High,
-                                vec![format!(
-                                    "Version came from the Inno Setup installer's uninstall registry key `{key}\\DisplayVersion`."
-                                )],
-                            )));
-                        }
-                    }
-                    // Inno-Setup-managed packages without a registry hit are
-                    // not installed. Skip the rest of the probes.
-                    return Ok(None);
-                }
-            }
-        }
-    }
-
     // FFmpeg: the libavformat / libavcodec / etc. DLLs carry their
     // *library* major (62.3.100 for libavformat 62) in VS_FIXEDFILEINFO,
     // not the FFmpeg release version, so the generic file-version probe
@@ -1118,44 +1070,6 @@ fn detect_jaws_scripts_via_uninstall_exe(spec: &PackageSpec) -> Option<Component
             "Version came from the JAWS-for-REAPER scripts vendor uninstaller's FileVersion resource."
                 .to_string(),
         ],
-    })
-}
-
-/// Read `DisplayVersion` from a package's Inno Setup uninstall key when
-/// the per-file UserPlugins scan returned nothing. Mirrors the
-/// `inno_setup_registry` detector branch in
-/// `detect_version_from_files_with_probes`, but lives in
-/// `detect_component_with_probes` so packages whose payload may not land
-/// in `<resource>/UserPlugins` (e.g. CSI's vendor installer puts
-/// auxiliary files outside the resource path entirely) still report as
-/// installed. Returns `None` on non-Windows or when the registry key is
-/// missing — the caller falls through to "not installed".
-fn detect_inno_setup_vendor_install(
-    spec: &PackageSpec,
-    platform: Platform,
-    uninstall_display_version: fn(&str) -> Option<String>,
-) -> Option<ComponentDetection> {
-    if !matches!(platform, Platform::Windows) {
-        return None;
-    }
-    if !spec.detectors.contains(&PackageDetector::InnoSetupRegistry) {
-        return None;
-    }
-    let app_id = spec.inno_setup_app_id.as_ref()?;
-    let key = format!("{app_id}_is1");
-    let raw = uninstall_display_version(&key)?;
-    let version = crate::version::Version::parse(&raw).ok()?;
-    Some(ComponentDetection {
-        package_id: spec.id.clone(),
-        display_name: spec.display_name.clone(),
-        installed: true,
-        version: Some(version),
-        detector: "inno-setup-registry".to_string(),
-        confidence: Confidence::High,
-        files: Vec::new(),
-        notes: vec![format!(
-            "Version came from the Inno Setup installer's uninstall registry key `{key}\\DisplayVersion`."
-        )],
     })
 }
 

@@ -189,33 +189,6 @@
         "windows": [],
         "macos": []
       }
-    },
-    {
-      "id": "csi",
-      "display_name": "CSI (Control Surface Integrator)",
-      "display_name_key": "package-csi",
-      "display_description_key": "package-csi-description",
-      "package_kind": "user_plugin_binary",
-      "required": false,
-      "recommended": false,
-      "supported_platforms": ["windows"],
-      "supported_architectures": ["x64"],
-      "github_release_api_url": "https://api.github.com/repos/reaperaccessible/CSI/releases/tags/v7.0.1-test",
-      "artifact_download_url": "https://github.com/reaperaccessible/CSI/releases/download/v7.0.1-test/CSIInstaller.exe",
-      "artifact_kind_override": "installer",
-      "artifact_file_name": "CSIInstaller.exe",
-      "inno_setup_app_id": "{8C0F7E2D-4A1B-4D8E-9F3C-B6E2A7D5F1C8}",
-      "installer_silent_args": ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
-      "requires_elevation": true,
-      "install_steps": ["run_upstream_installer"],
-      "uninstall_steps": [],
-      "detectors": ["inno_setup_registry"],
-      "user_plugin_prefixes": ["reaper_csurf_integrator"],
-      "user_plugin_suffixes": {
-        "windows": [".dll"],
-        "macos": []
-      },
-      "backup_policy": "none"
     }
   ]
 }

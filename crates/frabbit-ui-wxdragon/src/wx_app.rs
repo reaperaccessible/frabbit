@@ -487,8 +487,7 @@ impl ProgressUiState {
 
     /// Total phases the install will go through: every package emits a
     /// download phase *and* an install phase, every opted-in
-    /// configuration step emits one phase, and CSI adds 2 phases
-    /// (download + install) when enabled. Always at least 1 so the
+    /// configuration step emits one phase. Always at least 1 so the
     /// percentage math doesn't divide by zero on a no-op run.
     fn total_phases(&self) -> usize {
         (self.total_packages * 2 + self.total_configuration_steps).max(1)

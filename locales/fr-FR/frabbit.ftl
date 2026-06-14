@@ -278,6 +278,3 @@ wizard-planned-runner-extract-archive-copy-osara = Extraire l'archive et copier 
 wizard-planned-runner-mount-disk-image = Monter l'image disque et exécuter l'installateur contenu
 wizard-planned-runner-mount-disk-image-copy-app = Monter l'image disque et copier le paquet d'application contenu
 wizard-planned-runner-mount-disk-image-run-pkg = Monter l'image disque et exécuter l'installateur pkg contenu
-
-package-csi = CSI (Control Surface Integrator)
-package-csi-description = Intégration de surface de contrôle matérielle pour Behringer X-Touch Universal. Nécessite ReaPack.

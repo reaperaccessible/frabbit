@@ -5,7 +5,7 @@ use crate::error::{FrabbitError, Result};
 use crate::hfs::{HfsListEntry, fetch_file_list, parse_get_file_list_response};
 use crate::package::{
     PACKAGE_FFMPEG, PACKAGE_JAWS_SCRIPTS, PACKAGE_OSARA, PACKAGE_REAKONTROL, PACKAGE_REAPACK,
-    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS, embedded_package_manifest,
+    PACKAGE_REAPER, PACKAGE_SURGE_XT, PACKAGE_SWS,
 };
 use crate::plan::AvailablePackage;
 use crate::version::Version;
@@ -95,25 +95,6 @@ pub fn fetch_latest_versions() -> Result<Vec<AvailablePackage>> {
         version: Some(fetch_jaws_for_reaper_latest(&client)?),
     });
 
-    // Manifest-driven packages: any package with a `github_release_api_url`
-    // that isn't already covered by the hardcoded providers list.
-    let covered: std::collections::HashSet<&str> =
-        providers().iter().map(|(id, _, _)| *id).collect();
-    let manifest = embedded_package_manifest();
-    for spec in &manifest.packages {
-        if covered.contains(spec.id.as_str()) || spec.id == PACKAGE_JAWS_SCRIPTS {
-            continue;
-        }
-        if let Some(api_url) = &spec.github_release_api_url {
-            let body = http_get_text(&client, api_url)?;
-            let version = parse_github_latest_release_json(&body, api_url)?;
-            packages.push(AvailablePackage {
-                package_id: spec.id.clone(),
-                version: Some(version),
-            });
-        }
-    }
-
     Ok(packages)
 }
 
@@ -129,17 +110,6 @@ pub fn fetch_latest_for_package(package_id: &str) -> Result<Version> {
         let client = build_http_client()?;
         let body = http_get_text(&client, url)?;
         return parser(&body, url);
-    }
-
-    // Manifest-driven fallback: read `github_release_api_url` from the
-    // embedded manifest and parse the GitHub releases `/latest` JSON.
-    let manifest = embedded_package_manifest();
-    if let Some(spec) = manifest.packages.iter().find(|p| p.id == package_id) {
-        if let Some(api_url) = &spec.github_release_api_url {
-            let client = build_http_client()?;
-            let body = http_get_text(&client, api_url)?;
-            return parse_github_latest_release_json(&body, api_url);
-        }
     }
 
     Err(FrabbitError::RemoteData {

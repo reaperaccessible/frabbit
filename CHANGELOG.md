@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.15.0] - 2026-06-06
+
+- Suppression complete de CSI (Control Surface Integrator): entree manifeste, detecteur inno_setup_registry, champs manifeste inno_setup_app_id/installer_silent_args/requires_elevation/artifact_kind_override/artifact_file_name/artifact_download_url/github_release_api_url, fonction resolve_generic_artifact, fallback manifest-driven dans latest.rs, code de debug instrumentation v1.14.5
+- Le retrait est total: ne reste aucune mention de CSI dans le code, le manifeste ou les locales
+- Les autres paquets (REAPER, OSARA, SWS, ReaPack, ReaKontrol, JAWS scripts, FFmpeg, Surge XT) ne sont pas affectes
+
 ## [1.14.5] - 2026-06-06
 
 - Instrumentation diagnostique: ajout de logs detailles dans %APPDATA%\REAPER\FRABBIT\logs\frabbit-debug.log pour le pipeline de lancement d'installeur (package_requires_elevation, execute_program_plan, execute_program_plan_elevated). Permet de diagnostiquer pourquoi un installeur n'est pas execute sur certaines machines (UAC, MOTW/SmartScreen, etc.). Aucun changement de comportement.
