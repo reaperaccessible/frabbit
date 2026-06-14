@@ -143,7 +143,7 @@ wizard-review-package-heading = Paquets sélectionnés
 wizard-review-keymap-heading = KeyMaps
 wizard-review-keymap-preserve = Aucun KeyMap ne sera installé. Vos raccourcis clavier actuels seront préservés.
 wizard-review-keymap-replace = Le KeyMap sélectionné sera installé. Vos raccourcis clavier actuels seront sauvegardés avant remplacement.
-wizard-review-keymap-replace-named = Le KeyMap { $name } sera installé. Votre KeyMap actuel sera sauvegardé dans reaper-kb.ini.bak.
+wizard-review-keymap-replace-named = Le KeyMap { $name } sera installé. Votre KeyMap actuel sera sauvegardé dans le dossier KeyMaps.
 wizard-review-notes-heading = Notes
 wizard-review-preflight-prefix = Installation impossible pour le moment
 
@@ -272,6 +272,9 @@ wizard-summary-planned-execution-verify =   Vérifier : { $path }
 wizard-summary-manual-title = { $title } :
 wizard-summary-manual-step =   { $step }
 wizard-summary-manual-note =   Note : { $note }
+wizard-summary-keymap-installed = KeyMap installé : { $name }. L'ancien keymap a été sauvegardé dans le dossier KeyMaps.
+wizard-summary-status-finished-keymap-only = Terminé. KeyMap { $name } appliqué.
+wizard-summary-status-finished-with-keymap = Terminé. { $installed } élément(s) de paquet installé(s) ou vérifié(s) et KeyMap { $name } appliqué ; { $manual } nécessitent une attention manuelle.
 wizard-summary-status-finished = Terminé. { $installed } élément(s) de paquet installé(s) ou vérifié(s) ; { $manual } nécessitent une attention manuelle.
 
 wizard-planned-runner-launch-installer = Lancer l'installateur

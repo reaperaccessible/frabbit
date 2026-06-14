@@ -1091,12 +1091,15 @@ fn keymap_choice_display_name(choice: KeymapChoice) -> Option<&'static str> {
     }
 }
 
-/// Substitute `{ $name }` in the template loaded from
-/// `wizard-review-keymap-replace-named`. We use a plain string `replace`
-/// rather than re-invoking the Fluent localizer because the template is
-/// pre-resolved into [`WizardText`] at model construction time.
+/// Substitute the `{ $name }` placeholder in the template loaded from
+/// `wizard-review-keymap-replace-named`. We can't re-invoke Fluent here
+/// because the template is pre-resolved into [`WizardText`] at model
+/// construction time — and at that point Fluent collapses the placeholder
+/// to `{$name}` (no surrounding spaces) when no arg is bound. We accept
+/// both forms so the substitution works regardless of which Fluent version
+/// resolved the template.
 fn keymap_replace_message_named(template: &str, name: &str) -> String {
-    template.replace("{ $name }", name)
+    template.replace("{ $name }", name).replace("{$name}", name)
 }
 
 pub fn build_review_preview_for_package_rows(
@@ -1176,7 +1179,15 @@ pub fn build_review_preview_for_package_rows(
         }
     }
 
-    if osara_selected_for_rows(package_rows, selected_package_indices) || keymap_only {
+    // Show the KeyMap block in the review whenever a non-Preserve choice
+    // is selected, OR when OSARA is being installed (the OSARA package
+    // alone reaches into reaper-kb.ini, so the user must see what will
+    // happen to the keymap even when they picked "Preserve"). This covers
+    // every case: package + keymap, package alone with OSARA, keymap
+    // alone, and OSARA + Preserve.
+    let show_keymap_block = keymap_choice_display_name(keymap_choice).is_some()
+        || osara_selected_for_rows(package_rows, selected_package_indices);
+    if show_keymap_block {
         lines.push(String::new());
         lines.push(model.text.review_keymap_heading.clone());
         lines.push(match keymap_choice_display_name(keymap_choice) {
@@ -1654,7 +1665,7 @@ pub fn wizard_outcome_report_from_success(
     request: &WizardInstallRequest,
     report: &SetupReport,
 ) -> WizardOutcomeReport {
-    let summary = summarize_setup_report(model, report);
+    let summary = summarize_setup_report(model, report, request.keymap_choice);
     WizardOutcomeReport {
         status: WizardOutcomeStatus::Success,
         resource_path: report.resource_path.clone(),
@@ -1826,7 +1837,11 @@ pub fn save_wizard_setup_report(report: &SetupReport) -> Result<PathBuf> {
     Ok(saved.text_path)
 }
 
-pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> WizardInstallSummary {
+pub fn summarize_setup_report(
+    model: &WizardModel,
+    report: &SetupReport,
+    keymap_choice: KeymapChoice,
+) -> WizardInstallSummary {
     let localizer = localizer_from_options(&model.bootstrap_options).ok();
     let created_resources = report
         .resource_init
@@ -2185,8 +2200,43 @@ pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> Wiza
         ));
     }
 
-    WizardInstallSummary {
-        status_line: format_localized_message(
+    // If a replacement KeyMap was applied, mention it in the Done summary
+    // so the user sees the keymap-only install actually did something.
+    if let Some(name) = keymap_choice_display_name(keymap_choice) {
+        detail_lines.push(format_localized_message(
+            localizer.as_ref(),
+            "wizard-summary-keymap-installed",
+            &[("name", name.to_string())],
+            format!("KeyMap installed: {name}"),
+        ));
+    }
+
+    // Build the always-visible status line. Adapt the wording to what
+    // actually happened: packages only, packages + keymap, or keymap only.
+    let keymap_name = keymap_choice_display_name(keymap_choice);
+    let status_line = match (installed_or_checked, keymap_name) {
+        // Keymap-only install (no packages touched).
+        (0, Some(name)) => format_localized_message(
+            localizer.as_ref(),
+            "wizard-summary-status-finished-keymap-only",
+            &[("name", name.to_string())],
+            format!("Finished. KeyMap {name} applied."),
+        ),
+        // Packages installed AND a keymap applied.
+        (_, Some(name)) => format_localized_message(
+            localizer.as_ref(),
+            "wizard-summary-status-finished-with-keymap",
+            &[
+                ("installed", installed_or_checked.to_string()),
+                ("manual", manual_items.to_string()),
+                ("name", name.to_string()),
+            ],
+            format!(
+                "Finished. {installed_or_checked} package item(s) installed or checked and KeyMap {name} applied; {manual_items} require manual attention."
+            ),
+        ),
+        // Packages only (no keymap change). Existing message unchanged.
+        (_, None) => format_localized_message(
             localizer.as_ref(),
             "wizard-summary-status-finished",
             &[
@@ -2197,6 +2247,10 @@ pub fn summarize_setup_report(model: &WizardModel, report: &SetupReport) -> Wiza
                 "Finished. {installed_or_checked} package item(s) installed or checked; {manual_items} require manual attention."
             ),
         ),
+    };
+
+    WizardInstallSummary {
+        status_line,
         detail_lines,
     }
 }
@@ -4322,7 +4376,8 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary =
+            super::summarize_setup_report(&model, &report, super::KeymapChoice::PreserveCurrent);
 
         assert!(
             summary
@@ -4448,7 +4503,8 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary =
+            super::summarize_setup_report(&model, &report, super::KeymapChoice::PreserveCurrent);
 
         assert!(
             summary
@@ -4534,7 +4590,8 @@ mod tests {
             configuration_steps: Vec::new(),
         };
 
-        let summary = super::summarize_setup_report(&model, &report);
+        let summary =
+            super::summarize_setup_report(&model, &report, super::KeymapChoice::PreserveCurrent);
 
         assert!(
             summary

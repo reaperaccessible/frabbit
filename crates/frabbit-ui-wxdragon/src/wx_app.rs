@@ -4406,7 +4406,15 @@ fn keymap_choice_label(_model: &WizardModel, choice: KeymapChoice) -> String {
 }
 
 fn effective_can_install(plan_can_install: &Cell<bool>, review_can_install: &Cell<bool>) -> bool {
-    plan_can_install.get() && review_can_install.get()
+    // The Install button activates if EITHER source says it's OK to install:
+    //   - plan_can_install: at least one row has Install/Update action
+    //     (computed at package-plan build time)
+    //   - review_can_install: the Review page preview accepts the request,
+    //     which also covers the keymap-only case (no packages selected
+    //     but a replacement KeyMap is chosen)
+    // A pure AND would block keymap-only installs because the plan-side
+    // computation doesn't know about keymap selection.
+    plan_can_install.get() || review_can_install.get()
 }
 
 /// Windows: re-render the native TreeCtrl after a row replacement.

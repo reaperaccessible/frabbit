@@ -9,7 +9,7 @@ use crate::reapack::extract_scr_lines;
 use super::{
     KeymapChoice, PackageAutomationSupport, PlannedAutomationKind, PlannedExecutionKind,
     PlannedExecutionOverride, UnattendedPostInstallReport, backup_file_for_unattended_change,
-    replace_file_from_source, target_likely_portable,
+    target_likely_portable,
 };
 
 pub(super) const TITLE: &str = "OSARA";
@@ -216,35 +216,94 @@ pub(super) fn osara_manual_steps(
     steps
 }
 
-/// Copy the existing `reaper-kb.ini` to `<resource_path>/reaper-kb.ini.bak`
-/// before FRABBIT overwrites it with one of the bundled key maps.
-///
-/// This mirrors what the OSARA NSIS installer does — leaving a simple,
-/// well-known backup at the root of the REAPER resource folder that any
-/// user (or recovery script) can spot. It is in addition to the full
-/// timestamped backup set written under `FRABBIT/backups/...`.
-///
-/// Returns the backup path when a backup was created, or `None` when
-/// there was no existing `reaper-kb.ini` (fresh REAPER install — nothing
-/// to back up, and the absence is not an error).
-pub(crate) fn backup_reaper_kb_ini(resource_path: &Path) -> Result<Option<PathBuf>> {
-    let source = resource_path.join("reaper-kb.ini");
-    let backup = resource_path.join("reaper-kb.ini.bak");
-    if backup.exists() {
-        // Backup already exists (likely created earlier in the install
-        // pipeline, before any vendor installer touched reaper-kb.ini).
-        // Don't overwrite it — the original user file is what we want
-        // preserved. Subsequent calls (e.g. apply_keymap_step running
-        // after OSARA's NSIS installer has already overwritten the
-        // active reaper-kb.ini) must be no-ops, otherwise we'd save the
-        // OSARA-substituted version instead of the user's original.
-        return Ok(Some(backup));
+/// Returns the file name of the .ReaperKeyMap backup that should be
+/// created in <resource>/KeyMaps/ when this KeymapChoice's keymap
+/// replaces the user's current reaper-kb.ini. None for PreserveCurrent.
+fn replaced_backup_filename(choice: KeymapChoice) -> Option<&'static str> {
+    match choice {
+        KeymapChoice::PreserveCurrent => None,
+        KeymapChoice::Osara => Some("OSARAReplacedBackup.ReaperKeyMap"),
+        KeymapChoice::ReaperAccessibleWinUsa => {
+            Some("ReaperAccessibleUSAReplacedBackup.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrf => {
+            Some("ReaperAccessibleFRFRReplacedBackup.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrc => {
+            Some("ReaperAccessibleFRCAReplacedBackup.ReaperKeyMap")
+        }
     }
-    if !source.is_file() {
-        return Ok(None);
+}
+
+/// Returns the file name of the .ReaperKeyMap that should also be
+/// installed permanently in <resource>/KeyMaps/ as a reference copy.
+/// None for PreserveCurrent.
+fn keymap_reference_filename(choice: KeymapChoice) -> Option<&'static str> {
+    match choice {
+        KeymapChoice::PreserveCurrent => None,
+        KeymapChoice::Osara => Some("OSARA.ReaperKeyMap"),
+        KeymapChoice::ReaperAccessibleWinUsa => Some("ReaperAccessibleUSA.ReaperKeyMap"),
+        KeymapChoice::ReaperAccessibleWinFrf => Some("ReaperAccessibleFRFR.ReaperKeyMap"),
+        KeymapChoice::ReaperAccessibleWinFrc => Some("ReaperAccessibleFRCA.ReaperKeyMap"),
     }
-    std::fs::copy(&source, &backup).with_path(&backup)?;
-    Ok(Some(backup))
+}
+
+#[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
+pub(crate) struct KeymapApplyReport {
+    pub active_path: PathBuf,
+    pub reference_path: Option<PathBuf>,
+    pub backup_path: Option<PathBuf>,
+}
+
+/// Replicate OSARA's NSIS installer keymap behavior for a chosen variant.
+///
+/// Steps (from osara/installer/osara.nsi):
+/// 1. Always write the reference copy to <resource>/KeyMaps/<variant>.ReaperKeyMap
+/// 2. Delete any pre-existing backup at <resource>/KeyMaps/<variant>ReplacedBackup.ReaperKeyMap
+/// 3. If <resource>/reaper-kb.ini exists, RENAME it (move, not copy) to that backup path
+/// 4. Write the new <resource>/reaper-kb.ini with the chosen keymap content
+fn apply_keymap_osara_style(
+    resource_path: &Path,
+    choice: KeymapChoice,
+    keymap_bytes: &[u8],
+) -> Result<KeymapApplyReport> {
+    let keymaps_dir = resource_path.join("KeyMaps");
+    std::fs::create_dir_all(&keymaps_dir).with_path(&keymaps_dir)?;
+
+    // Step 1: reference copy
+    let reference_path = if let Some(ref_name) = keymap_reference_filename(choice) {
+        let ref_path = keymaps_dir.join(ref_name);
+        std::fs::write(&ref_path, keymap_bytes).with_path(&ref_path)?;
+        Some(ref_path)
+    } else {
+        None
+    };
+
+    let mut backup_path: Option<PathBuf> = None;
+    if let Some(backup_name) = replaced_backup_filename(choice) {
+        let backup_target = keymaps_dir.join(backup_name);
+        // Step 2: delete previous backup
+        if backup_target.exists() {
+            std::fs::remove_file(&backup_target).with_path(&backup_target)?;
+        }
+        // Step 3: rename current reaper-kb.ini -> backup
+        let active = resource_path.join("reaper-kb.ini");
+        if active.is_file() {
+            std::fs::rename(&active, &backup_target).with_path(&backup_target)?;
+            backup_path = Some(backup_target);
+        }
+    }
+
+    // Step 4: write new active reaper-kb.ini
+    let new_active = resource_path.join("reaper-kb.ini");
+    std::fs::write(&new_active, keymap_bytes).with_path(&new_active)?;
+
+    Ok(KeymapApplyReport {
+        active_path: new_active,
+        reference_path,
+        backup_path,
+    })
 }
 
 pub(crate) fn apply_osara_keymap_replacement(
@@ -260,11 +319,6 @@ pub(crate) fn apply_osara_keymap_replacement(
     let current_keymap = resource_path.join("reaper-kb.ini");
     let mut report = UnattendedPostInstallReport::default();
     let mut preserved_scr_lines: Vec<String> = Vec::new();
-
-    // OSARA-style sibling backup at the resource root (reaper-kb.ini.bak).
-    // Done before the timestamped FRABBIT/backups/... copy so that if the
-    // latter fails the user still has the simple sibling backup.
-    backup_reaper_kb_ini(resource_path)?;
 
     if current_keymap.is_file() {
         // Capture the existing SCR records before overwriting. ReaPack
@@ -288,28 +342,16 @@ pub(crate) fn apply_osara_keymap_replacement(
         report.backup_manifest_path = Some(backup_manifest_path);
     }
 
-    replace_file_from_source(&replacement_source, &current_keymap)?;
+    // Read replacement bytes then apply OSARA-style flow (reference,
+    // delete-old-backup, rename current to backup, write new active).
+    let keymap_bytes = std::fs::read(&replacement_source).with_path(&replacement_source)?;
+    apply_keymap_osara_style(resource_path, KeymapChoice::Osara, &keymap_bytes)?;
 
     if !preserved_scr_lines.is_empty() {
         append_lines_preserving_newline(&current_keymap, &preserved_scr_lines)?;
     }
 
     Ok(report)
-}
-
-pub(crate) fn keymap_file_name(choice: KeymapChoice) -> Option<&'static str> {
-    match choice {
-        KeymapChoice::ReaperAccessibleWinUsa => {
-            Some("KeyMap ReaperAccessible - Win - USA.ReaperKeyMap")
-        }
-        KeymapChoice::ReaperAccessibleWinFrf => {
-            Some("KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap")
-        }
-        KeymapChoice::ReaperAccessibleWinFrc => {
-            Some("KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap")
-        }
-        _ => None,
-    }
 }
 
 pub(crate) fn apply_keymap_from_bytes(
@@ -320,9 +362,6 @@ pub(crate) fn apply_keymap_from_bytes(
     let current_keymap = resource_path.join("reaper-kb.ini");
     let mut report = UnattendedPostInstallReport::default();
     let mut preserved_scr_lines: Vec<String> = Vec::new();
-
-    // OSARA-style sibling backup at the resource root (reaper-kb.ini.bak).
-    backup_reaper_kb_ini(resource_path)?;
 
     if current_keymap.is_file() {
         let raw = std::fs::read(&current_keymap).with_path(&current_keymap)?;
@@ -339,16 +378,10 @@ pub(crate) fn apply_keymap_from_bytes(
         report.backup_manifest_path = Some(backup_manifest_path);
     }
 
-    // Place the .ReaperKeyMap file in KeyMaps/ folder for future reimport
-    if let Some(file_name) = keymap_file_name(choice) {
-        let keymaps_dir = resource_path.join("KeyMaps");
-        std::fs::create_dir_all(&keymaps_dir).with_path(&keymaps_dir)?;
-        let keymap_file = keymaps_dir.join(file_name);
-        std::fs::write(&keymap_file, keymap_bytes).with_path(&keymap_file)?;
-    }
-
-    // Apply to reaper-kb.ini (make it active)
-    std::fs::write(&current_keymap, keymap_bytes).with_path(&current_keymap)?;
+    // OSARA-style: write reference into KeyMaps/, rename current
+    // reaper-kb.ini to <variant>ReplacedBackup.ReaperKeyMap (deleting
+    // any old backup first), then write the new active reaper-kb.ini.
+    apply_keymap_osara_style(resource_path, choice, keymap_bytes)?;
 
     if !preserved_scr_lines.is_empty() {
         append_lines_preserving_newline(&current_keymap, &preserved_scr_lines)?;
@@ -460,7 +493,7 @@ mod tests {
     }
 
     #[test]
-    fn osara_sibling_backup_file_is_created_at_resource_root() {
+    fn osara_keymap_backup_goes_to_keymaps_folder() {
         let dir = tempdir().unwrap();
         let resource_path = dir.path();
         seed_osara_replacement_source(resource_path, "osara keymap\r\n");
@@ -468,16 +501,17 @@ mod tests {
 
         apply_osara_keymap_replacement(resource_path).unwrap();
 
-        // OSARA-style sibling backup at <resource>/reaper-kb.ini.bak
-        let sibling_backup = resource_path.join("reaper-kb.ini.bak");
+        // OSARA-style backup lives inside KeyMaps/ with a variant-specific name.
+        let backup = resource_path
+            .join("KeyMaps")
+            .join("OSARAReplacedBackup.ReaperKeyMap");
         assert!(
-            sibling_backup.is_file(),
-            "expected reaper-kb.ini.bak at resource root"
+            backup.is_file(),
+            "expected KeyMaps/OSARAReplacedBackup.ReaperKeyMap"
         );
-        assert_eq!(
-            fs::read_to_string(&sibling_backup).unwrap(),
-            "ORIGINAL CONTENT\r\n"
-        );
+        assert_eq!(fs::read_to_string(&backup).unwrap(), "ORIGINAL CONTENT\r\n");
+        // Old-style sibling backup must NOT be created any more.
+        assert!(!resource_path.join("reaper-kb.ini.bak").exists());
         // And the active reaper-kb.ini now holds the new keymap.
         assert!(
             fs::read_to_string(resource_path.join("reaper-kb.ini"))
@@ -487,16 +521,28 @@ mod tests {
     }
 
     #[test]
-    fn no_sibling_backup_when_reaper_kb_ini_is_absent() {
+    fn no_keymaps_backup_when_reaper_kb_ini_is_absent() {
         let dir = tempdir().unwrap();
         let resource_path = dir.path();
         seed_osara_replacement_source(resource_path, "osara keymap\r\n");
 
         apply_osara_keymap_replacement(resource_path).unwrap();
 
-        // Fresh REAPER install: no original keymap, so no sibling backup.
-        assert!(!resource_path.join("reaper-kb.ini.bak").exists());
-        // The new keymap is still written.
+        // Fresh REAPER install: nothing to rename, so no backup file.
+        assert!(
+            !resource_path
+                .join("KeyMaps")
+                .join("OSARAReplacedBackup.ReaperKeyMap")
+                .exists()
+        );
+        // The reference copy is still installed in KeyMaps/.
+        assert!(
+            resource_path
+                .join("KeyMaps")
+                .join("OSARA.ReaperKeyMap")
+                .is_file()
+        );
+        // The new active keymap is still written.
         assert_eq!(
             fs::read_to_string(resource_path.join("reaper-kb.ini")).unwrap(),
             "osara keymap\r\n"
@@ -504,52 +550,35 @@ mod tests {
     }
 
     #[test]
-    fn sibling_backup_is_preserved_on_second_run() {
+    fn keymaps_backup_is_replaced_on_second_run() {
         let dir = tempdir().unwrap();
         let resource_path = dir.path();
         seed_osara_replacement_source(resource_path, "osara keymap\r\n");
 
-        // First run: capture v1 as the sibling backup.
+        // First run: V1 becomes the backup.
         fs::write(resource_path.join("reaper-kb.ini"), "V1\r\n").unwrap();
         apply_osara_keymap_replacement(resource_path).unwrap();
-        assert_eq!(
-            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
-            "V1\r\n"
-        );
+        let backup = resource_path
+            .join("KeyMaps")
+            .join("OSARAReplacedBackup.ReaperKeyMap");
+        assert_eq!(fs::read_to_string(&backup).unwrap(), "V1\r\n");
 
-        // Second run: the sibling backup must NOT be overwritten — the
-        // original user file is what we want preserved, even if the
-        // active reaper-kb.ini has since been mutated (e.g. by a vendor
-        // installer running mid-pipeline).
-        fs::write(resource_path.join("reaper-kb.ini"), "V2\r\n").unwrap();
+        // Second run: OSARA-style behavior deletes the old backup and
+        // replaces it with whatever reaper-kb.ini currently holds — so
+        // the freshly-applied keymap from the first run becomes the
+        // new backup. Matches OSARA's NSIS installer semantics.
+        // Seed a fresh source so the test stays deterministic.
+        seed_osara_replacement_source(resource_path, "osara keymap v2\r\n");
         apply_osara_keymap_replacement(resource_path).unwrap();
         assert_eq!(
-            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
-            "V1\r\n"
+            fs::read_to_string(&backup).unwrap(),
+            "osara keymap\r\n",
+            "second run must replace the backup with the previously-active keymap"
         );
     }
 
     #[test]
-    fn backup_does_not_overwrite_existing_bak() {
-        use super::backup_reaper_kb_ini;
-        let dir = tempdir().unwrap();
-        let resource_path = dir.path();
-        fs::write(resource_path.join("reaper-kb.ini"), "ORIGINAL").unwrap();
-        backup_reaper_kb_ini(resource_path).unwrap();
-        // Simulate a second pass after a vendor installer (e.g. OSARA NSIS)
-        // overwrote reaper-kb.ini: the second backup call must be a no-op
-        // so we keep the user's original, not the installer's substitute.
-        fs::write(resource_path.join("reaper-kb.ini"), "MODIFIED_BY_NSIS").unwrap();
-        backup_reaper_kb_ini(resource_path).unwrap();
-        let backup_content = fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap();
-        assert_eq!(
-            backup_content, "ORIGINAL",
-            "Backup must preserve the original, not the modified version"
-        );
-    }
-
-    #[test]
-    fn reaper_accessible_keymap_also_creates_sibling_backup() {
+    fn reaper_accessible_keymap_uses_variant_specific_backup_name() {
         use super::{KeymapChoice, apply_keymap_from_bytes};
         let dir = tempdir().unwrap();
         let resource_path = dir.path();
@@ -562,10 +591,56 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
-            "RA ORIGINAL\r\n"
+        let backup = resource_path
+            .join("KeyMaps")
+            .join("ReaperAccessibleUSAReplacedBackup.ReaperKeyMap");
+        assert!(
+            backup.is_file(),
+            "expected variant-specific backup name in KeyMaps/"
         );
+        assert_eq!(fs::read_to_string(&backup).unwrap(), "RA ORIGINAL\r\n");
+    }
+
+    #[test]
+    fn osara_keymap_writes_reference_copy_in_keymaps_folder() {
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        seed_osara_replacement_source(resource_path, "osara keymap\r\n");
+        fs::write(resource_path.join("reaper-kb.ini"), "OLD\r\n").unwrap();
+
+        apply_osara_keymap_replacement(resource_path).unwrap();
+
+        let reference = resource_path.join("KeyMaps").join("OSARA.ReaperKeyMap");
+        assert!(reference.is_file(), "KeyMaps/OSARA.ReaperKeyMap must exist");
+    }
+
+    #[test]
+    fn each_variant_uses_its_own_backup_name() {
+        use super::{KeymapChoice, apply_keymap_from_bytes};
+        let cases: &[(KeymapChoice, &str)] = &[
+            (
+                KeymapChoice::ReaperAccessibleWinUsa,
+                "ReaperAccessibleUSAReplacedBackup.ReaperKeyMap",
+            ),
+            (
+                KeymapChoice::ReaperAccessibleWinFrf,
+                "ReaperAccessibleFRFRReplacedBackup.ReaperKeyMap",
+            ),
+            (
+                KeymapChoice::ReaperAccessibleWinFrc,
+                "ReaperAccessibleFRCAReplacedBackup.ReaperKeyMap",
+            ),
+        ];
+        for (choice, expected_name) in cases {
+            let dir = tempdir().unwrap();
+            let resource_path = dir.path();
+            fs::write(resource_path.join("reaper-kb.ini"), "ORIG\r\n").unwrap();
+            apply_keymap_from_bytes(resource_path, b"new\r\n", *choice).unwrap();
+            assert!(
+                resource_path.join("KeyMaps").join(expected_name).is_file(),
+                "expected backup {expected_name} for {choice:?}"
+            );
+        }
     }
 
     #[test]

@@ -1127,6 +1127,7 @@ fn write_receipt_backup_manifest(
     )
 }
 
+#[allow(dead_code)]
 pub(super) fn replace_file_from_source(source_path: &Path, target_path: &Path) -> Result<()> {
     if let Some(parent) = target_path.parent() {
         std::fs::create_dir_all(parent).with_path(parent)?;
@@ -1146,6 +1147,7 @@ pub(super) fn replace_file_from_source(source_path: &Path, target_path: &Path) -
     std::fs::rename(&temp_path, target_path).with_path(target_path)
 }
 
+#[allow(dead_code)]
 fn temporary_target_path(target_path: &Path) -> PathBuf {
     let file_name = target_path
         .file_name()

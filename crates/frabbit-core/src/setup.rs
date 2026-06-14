@@ -111,15 +111,6 @@ pub fn execute_setup_operation_with_progress(
             target_app_path: options.target_app_path.clone(),
         },
     )?;
-    // Capture the user's original reaper-kb.ini BEFORE any vendor
-    // installer (e.g. OSARA's NSIS) gets a chance to overwrite it.
-    // `backup_reaper_kb_ini` is idempotent: the later
-    // `apply_keymap_step` call will see the .bak already exists and
-    // leave it alone, so the file we capture here is the one the user
-    // had before this FRABBIT run.
-    if !options.dry_run && options.keymap_choice.replaces_keymap() {
-        crate::operation::osara::backup_reaper_kb_ini(resource_path)?;
-    }
     let package_operation = execute_package_operation_with_progress(
         resource_path,
         package_ids,
@@ -200,13 +191,6 @@ pub fn execute_resolved_setup_operation_with_progress(
         .iter()
         .map(|artifact| artifact.package_id.clone())
         .collect();
-    // Capture the user's original reaper-kb.ini BEFORE any vendor
-    // installer (e.g. OSARA's NSIS) gets a chance to overwrite it.
-    // See the matching block in `execute_setup_operation_with_progress`
-    // for the full rationale.
-    if !options.dry_run && options.keymap_choice.replaces_keymap() {
-        crate::operation::osara::backup_reaper_kb_ini(resource_path)?;
-    }
     let package_operation = execute_resolved_package_operation_with_progress(
         resource_path,
         artifacts,
@@ -525,13 +509,24 @@ mod tests {
         .unwrap();
 
         assert!(!report.dry_run);
-        let backup = resource_path.join("reaper-kb.ini.bak");
+        // OSARA-style: backup lives inside KeyMaps/ with a variant-specific name.
+        let backup = resource_path
+            .join("KeyMaps")
+            .join("ReaperAccessibleUSAReplacedBackup.ReaperKeyMap");
         let kb_ini = resource_path.join("reaper-kb.ini");
-        assert!(backup.exists(), "backup must exist after keymap-only run");
+        assert!(
+            backup.exists(),
+            "variant-specific backup must exist after keymap-only run"
+        );
         assert_eq!(
             fs::read(&backup).unwrap(),
             b"USER_ORIGINAL",
             "backup must preserve user's original reaper-kb.ini"
+        );
+        // Old reaper-kb.ini.bak path must not be used any more.
+        assert!(
+            !resource_path.join("reaper-kb.ini.bak").exists(),
+            "legacy reaper-kb.ini.bak must no longer be created"
         );
         assert!(
             kb_ini.exists(),

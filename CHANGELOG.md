@@ -1,153 +1,36 @@
 # Changelog
 
-## [1.16.2] - 2026-06-14
+## [1.0.0] - 2026-06-14
 
-- Fix: l'install d'un KeyMap seul (sans aucun paquet coche) est maintenant possible. Avant, le bilan affichait "Aucun paquet selectionne" et le bouton Install etait desactive meme quand un KeyMap etait choisi dans la dropdown.
-- Le KeyMap apparait maintenant dans le bilan Review meme si aucun paquet n'est coche.
-- Nouvelle cle locale `wizard-review-keymap-only` (FR/EN) pour le cas keymap-only.
-- 3 nouveaux tests pour garantir que le scenario keymap-only fonctionne end-to-end.
+Premiere version officielle de FRABBIT, l'outil d'installation et de mise a jour de REAPER accessible.
 
-## [1.16.1] - 2026-06-14
+### Fonctionnalites
 
-- Fix: la sauvegarde reaper-kb.ini.bak est maintenant creee AVANT que l'installateur OSARA NSIS ne s'execute (avant, l'installateur OSARA ecrasait reaper-kb.ini en premier, et FRABBIT sauvegardait apres - donc le .bak contenait la version OSARA, pas la version originale de l'utilisateur).
-- backup_reaper_kb_ini est maintenant idempotent: si le .bak existe deja, il n'est pas ecrase (preserve l'original utilisateur en cas d'appels multiples dans la meme session).
-- Le KeyMap choisi est maintenant nomme explicitement dans le bilan Review: "Le KeyMap OSARA sera installe" au lieu du texte generique. Variantes: OSARA, ReaperAccessible (USA), ReaperAccessible (Francais France), ReaperAccessible (Francais Canada).
+- Interface graphique en francais et en anglais avec detection automatique de la langue
+- Installation et mise a jour automatique de :
+  - REAPER (l'application elle-meme)
+  - OSARA (extension d'accessibilite pour les lecteurs d'ecran)
+  - SWS Extension (actions et outils supplementaires)
+  - ReaPack (gestionnaire de paquets)
+  - ReaKontrol (integration Native Instruments Komplete Kontrol)
+  - Scripts JAWS de Snowman pour REAPER
+  - FFmpeg (support video ameliore)
+  - Surge XT (synthetiseur hybride)
+- Choix du KeyMap a l'installation : Preserver l'actuel, OSARA, ou ReaperAccessible (USA / Francais France / Francais Canada)
+- Sauvegarde automatique du KeyMap existant dans `KeyMaps/<Variant>ReplacedBackup.ReaperKeyMap` avant remplacement (comportement identique a l'installateur OSARA)
+- Copie de reference du KeyMap installe dans `KeyMaps/<Variant>.ReaperKeyMap`
+- Page Review (bilan) detaillee avant installation, listant les paquets coches ET le KeyMap selectionne
+- Page Done (rapport) avec message adaptatif selon le contexte (paquets seuls, KeyMap seul, ou les deux)
+- Support de l'option "Ajouter le depot ReaPack ReaperAccessible" pour acceder aux scripts et plugins accessibles supplementaires
+- Mise a jour automatique de FRABBIT lui-meme (verification de version au demarrage)
 
-## [1.16.0] - 2026-06-14
+### Plateformes supportees
 
-- Sauvegarde automatique du KeyMap utilisateur avant remplacement: lorsque FRABBIT remplace le keymap (choix OSARA, ReaperAccessible USA/FR-FR/FR-CA), le fichier reaper-kb.ini existant est copie en reaper-kb.ini.bak a la racine du dossier ressources REAPER. Comportement identique a l'installateur OSARA. L'option "Preserver le keymap actuel" ne declenche pas de backup (rien n'est remplace).
-- Nettoyage qualite du code: suppression des warnings cargo check (import inutilise dans self_update.rs, pattern inatteignable dans CLI apres retrait CSI). Application des fixes clippy automatiques (collapsible_if, derivable_impls, etc.).
+- Windows x64 (installation standard, mode portable non supporte)
+- macOS universel (Intel + Apple Silicon)
 
-## [1.15.0] - 2026-06-06
+### Accessibilite
 
-- Suppression complete de CSI (Control Surface Integrator): entree manifeste, detecteur inno_setup_registry, champs manifeste inno_setup_app_id/installer_silent_args/requires_elevation/artifact_kind_override/artifact_file_name/artifact_download_url/github_release_api_url, fonction resolve_generic_artifact, fallback manifest-driven dans latest.rs, code de debug instrumentation v1.14.5
-- Le retrait est total: ne reste aucune mention de CSI dans le code, le manifeste ou les locales
-- Les autres paquets (REAPER, OSARA, SWS, ReaPack, ReaKontrol, JAWS scripts, FFmpeg, Surge XT) ne sont pas affectes
-
-## [1.14.5] - 2026-06-06
-
-- Instrumentation diagnostique: ajout de logs detailles dans %APPDATA%\REAPER\FRABBIT\logs\frabbit-debug.log pour le pipeline de lancement d'installeur (package_requires_elevation, execute_program_plan, execute_program_plan_elevated). Permet de diagnostiquer pourquoi un installeur n'est pas execute sur certaines machines (UAC, MOTW/SmartScreen, etc.). Aucun changement de comportement.
-
-## [1.14.4] - 2026-06-05
-
-- Fix CSI: lancement avec elevation UAC (champ manifeste `requires_elevation: true`). Avant, FRABBIT lancait l'installateur Inno Setup en mode silencieux sans elevation, Windows declenchait son "Installer Detection" sur l'.exe et annulait silencieusement le lancement. Maintenant, le prompt UAC officiel s'affiche et l'utilisateur peut accepter.
-- Nouveau champ manifeste `requires_elevation: bool` (data-driven): n'importe quel paquet futur peut s'opt-in a l'elevation UAC en ajoutant ce champ, sans modification de code Rust.
-
-## [1.14.3] - 2026-06-05
-
-- Fix libelle trompeur "Aucune mise a jour disponible" sur une ligne non cochee d'un paquet non installe: le libelle dit maintenant "Disponible a l'installation" (cle `action-available`), ce qui distingue clairement un paquet absent et opt-in d'un paquet deja a jour
-- Visibilite du re-install KeyMap: la mecanique existante (`apply_checkbox_state_to_package_row` + `force_reinstall_packages`) etait deja correcte, mais le nouveau libelle ci-dessus rend visible que la KeyMap deja installee redevient bien "Disponible" quand on la decoche
-- Fix `PostInstallVerificationFailed` sur les paquets Inno Setup: `receipt_paths_for_artifact` court-circuite maintenant les paquets detectes par `inno_setup_registry` (comme le faisait deja `planned_verification_paths`). La cle de registre Uninstall est la preuve d'install, FRABBIT ne tient plus de recus fichiers pour ces paquets
-
-## [1.14.2] - 2026-06-05
-
-- Fix detection CSI: la cle registre Inno Setup est maintenant autoritaire. Si la cle est absente, CSI est "non installe" peu importe les fichiers presents dans UserPlugins (un vieux DLL CSI 2.0 ne fait plus dire "Version inconnue, aucune mise a jour disponible")
-- Fix verification post-install: les paquets detectes via inno_setup_registry ne passent plus par la verification fichier (qui echouait sur le fallback generique resource_path). La detection registre apres install est la preuve d'install reussie
-
-## [1.14.1] - 2026-06-05
-
-- Fix: les installateurs configures via `installer_silent_args` sont maintenant promus PlannedUnattended -> AvailableUnattended et reellement executes par FRABBIT (CSI etait telecharge mais jamais lance en v1.14.0)
-
-## [1.14.0] - 2026-06-05
-
-- CSI: migration vers le nouvel installeur Inno Setup CSIInstaller.exe (v7.0.1-test)
-- FRABBIT télécharge l'installeur et le lance en mode silencieux (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`); l'installeur gère l'extraction, le dépôt ReaPack et le runtime VC++
-- Nouveau détecteur manifeste `inno_setup_registry`: lit `DisplayVersion` depuis la clé Uninstall `<AppId>_is1`
-- Nouveau champ manifeste `inno_setup_app_id`: GUID AppId Inno Setup (sans suffixe `_is1`)
-- Nouveau champ manifeste `installer_silent_args`: arguments silencieux pour l'installeur vendeur, configurables par paquet
-- Suppression du pipeline post-install générique (zip routes, dépôt ReaPack, fichier de version): rendu obsolète par l'installeur Inno Setup
-- Suppression des champs manifeste morts: `compare_by_file_mtime`, `version_from_github_published_at`, `post_install_zip_routes`, `post_install_reapack_repo`, `post_install_version_file`, `version_file_documents_relative`
-- Suppression des modules morts: `generic_post_install.rs`, `date_version.rs`, `csi.rs`
-- Suppression du dossier `Contents/CSI For Behringer X-Touch Universal/` (1700+ fichiers): plus livré par FRABBIT
-
-## [1.13.0] - 2026-05-31
-
-- CSI: detection par date de modification du DLL
-- Comparaison: mtime du DLL local vs published_at du release GitHub
-- Nouveau champ manifeste: compare_by_file_mtime
-- Nouveau champ manifeste: version_from_github_published_at
-- Nouveau module date_version.rs pour conversion timestamps en YYYY.MM.DD
-
-## [1.12.0] - 2026-05-31
-
-- Simplification majeure: -2479 lignes de code
-- Paquets declaratifs: ajouter un paquet simple = JSON + locales, zero Rust
-- Self-update simplifie: verification de version uniquement, plus de staging/apply
-- Rollback reduit au minimum (backup manifest)
-- Signature.rs supprime
-- Module native_tree_checkboxes extrait de wx_app.rs
-- 16 cles de locale mortes supprimees
-
-## [1.11.0] - 2026-05-31
-
-- CSI integre dans le systeme de paquets complet (comme REAPER, OSARA, SWS)
-- Detection automatique via .frabbit-version (CsiVersionFile)
-- Version disponible via GitHub API (CsiGithubRelease)
-- Resolution d'artefact automatique (CsiGithubReleaseZip)
-- Installation: DLL extraite par le pipeline standard, post-install pour CSI/ et Documents/
-- Suppression de l'ancien install_csi: bool, checkbox separee et progress events CSI
-
-## [1.10.0] - 2026-05-30
-
-- Integration CSI complete: progression en temps reel, resume/review, rapport Done
-- Fichier de version .frabbit-version ecrit apres installation CSI
-- Evenements de progression CsiDownloadStarted/CsiDownloadCompleted/CsiInstallCompleted
-- Page Review affiche la section CSI quand la case est cochee
-- Rapport de fin (Done) inclut le statut CSI dans les details
-- CLI: ajout du flag --install-csi pour la commande Setup
-- Locales FR/EN: ajout des textes review, progression et resume CSI
-
-## [1.9.0] - 2026-05-30
-
-- Ajout case a cocher CSI (Control Surface Integrator) pour X-Touch Universal
-- Installation CSI: DLL + config + dossier Documents
-- Depot ReaPack CSI ajoute automatiquement
-
-## [1.8.0] - 2026-05-30
-
-- Release complete: Windows x64 + macOS universel
-
-## [1.7.0] - 2026-05-30
-
-- Le KeyMap ReaperAccessible est place dans le dossier KeyMaps/ ET applique dans reaper-kb.ini
-
-## [1.6.0] - 2026-05-30
-
-- Fix: le KeyMap est maintenant applique meme si OSARA n est pas coche
-
-## [1.5.0] - 2026-05-30
-
-- Fix: tolere les fichiers reaper-kb.ini non-UTF-8 (Windows-1252)
-
-## [1.4.0] - 2026-05-30
-
-- KeyMap decoupled: installable independently of OSARA update
-- Resume affiche le KeyMap selectionne avec son nom
-
-## [1.3.0] - 2026-05-30
-
-- Textes ameliores: actions claires, review simplifie, dropdown KeyMaps
-- Dropdown keymap nomme 'KeyMaps' avec labels courts
-- Resume affiche clairement le KeyMap selectionne
-
-## [1.2.0] - 2026-05-30
-
-- Interface: dropdown de selection du keymap (Preserver, OSARA, ReaperAccessible x3)
-- Suppression du support Windows ARM64 (instable)
-
-## [1.1.0] - 2026-05-30
-
-- Ajout des keymaps ReaperAccessible (Windows) : USA, Francais France, Francais Canada
-- Choix du keymap a l'installation : Preserver, OSARA (USA), ou ReaperAccessible (3 variantes)
-- Les keymaps sont embarques dans le binaire, pas de telechargement supplementaire
-- Sauvegarde automatique du reaper-kb.ini avant remplacement
-
-## [1.0.0] - 2026-05-30
-
-Premiere version de FRABBIT, basee sur le code source de RABBIT (Timtam/rabbit).
-
-- Interface en francais et en anglais avec detection automatique de la langue
-- Installation et mise a jour de REAPER, OSARA, SWS, ReaPack, ReaKontrol, scripts JAWS, FFmpeg, Surge XT
-- Depots ReaPack ReaperAccessible selon la langue (francais ou anglais)
-- Support Windows x64, Windows ARM64 et macOS (universel)
-- Mise a jour automatique de FRABBIT
+- Compatible avec les lecteurs d'ecran NVDA, JAWS, et Narrator sous Windows
+- Compatible avec VoiceOver sous macOS
+- Navigation complete au clavier
