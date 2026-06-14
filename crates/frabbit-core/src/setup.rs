@@ -493,6 +493,57 @@ mod tests {
         );
     }
 
+    #[test]
+    fn keymap_only_install_creates_backup_and_writes_keymap() {
+        // Regression for v1.16.1: a "keymap-only" run (no packages, no
+        // configuration steps, just a replacement KeymapChoice) must
+        // still back up the user's reaper-kb.ini and write the embedded
+        // keymap bytes on top.
+        let dir = tempdir().unwrap();
+        let cache = tempdir().unwrap();
+        let resource_path = dir.path().join("PortableREAPER");
+        fs::create_dir_all(&resource_path).unwrap();
+        fs::write(resource_path.join("reaper-kb.ini"), b"USER_ORIGINAL").unwrap();
+
+        let report = execute_resolved_setup_operation(
+            &resource_path,
+            Vec::new(), // no packages
+            cache.path(),
+            &SetupOptions {
+                dry_run: false,
+                portable: true,
+                allow_reaper_running: true,
+                stage_unsupported: false,
+                keymap_choice: KeymapChoice::ReaperAccessibleWinUsa,
+                target_app_path: None,
+                lock_path: None,
+                force_reinstall_packages: Vec::new(),
+                configuration_step_ids: Vec::new(),
+                active_locale: "en-US".to_string(),
+            },
+        )
+        .unwrap();
+
+        assert!(!report.dry_run);
+        let backup = resource_path.join("reaper-kb.ini.bak");
+        let kb_ini = resource_path.join("reaper-kb.ini");
+        assert!(backup.exists(), "backup must exist after keymap-only run");
+        assert_eq!(
+            fs::read(&backup).unwrap(),
+            b"USER_ORIGINAL",
+            "backup must preserve user's original reaper-kb.ini"
+        );
+        assert!(
+            kb_ini.exists(),
+            "new keymap must be written to reaper-kb.ini"
+        );
+        assert_ne!(
+            fs::read(&kb_ini).unwrap(),
+            b"USER_ORIGINAL",
+            "reaper-kb.ini must have been overwritten with the embedded keymap"
+        );
+    }
+
     fn artifact(source: &std::path::Path) -> ArtifactDescriptor {
         ArtifactDescriptor {
             package_id: PACKAGE_REAPACK.to_string(),

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.2] - 2026-06-14
+
+- Fix: l'install d'un KeyMap seul (sans aucun paquet coche) est maintenant possible. Avant, le bilan affichait "Aucun paquet selectionne" et le bouton Install etait desactive meme quand un KeyMap etait choisi dans la dropdown.
+- Le KeyMap apparait maintenant dans le bilan Review meme si aucun paquet n'est coche.
+- Nouvelle cle locale `wizard-review-keymap-only` (FR/EN) pour le cas keymap-only.
+- 3 nouveaux tests pour garantir que le scenario keymap-only fonctionne end-to-end.
+
 ## [1.16.1] - 2026-06-14
 
 - Fix: la sauvegarde reaper-kb.ini.bak est maintenant creee AVANT que l'installateur OSARA NSIS ne s'execute (avant, l'installateur OSARA ecrasait reaper-kb.ini en premier, et FRABBIT sauvegardait apres - donc le .bak contenait la version OSARA, pas la version originale de l'utilisateur).

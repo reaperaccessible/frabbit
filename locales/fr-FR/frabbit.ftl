@@ -151,6 +151,7 @@ wizard-review-preflight-prefix = Installation impossible pour le moment
 wizard-review-target = Cible : { $path }
 wizard-review-no-target = Aucune cible sélectionnée.
 wizard-review-no-package = Aucun paquet sélectionné.
+wizard-review-keymap-only = Aucun paquet sélectionné. Seul le KeyMap sera appliqué.
 
 # $package est le nom du paquet et $action est l'action planifiée.
 wizard-review-package = { $package } : { $action }

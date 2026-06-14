@@ -150,6 +150,7 @@ pub struct WizardText {
     pub review_preflight_prefix: String,
     pub review_no_target: String,
     pub review_no_package: String,
+    pub review_keymap_only: String,
     pub progress_heading: String,
     pub progress_status: String,
     pub progress_status_running: String,
@@ -664,6 +665,7 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         review_preflight_prefix: localizer.text("wizard-review-preflight-prefix").value,
         review_no_target: localizer.text("wizard-review-no-target").value,
         review_no_package: localizer.text("wizard-review-no-package").value,
+        review_keymap_only: localizer.text("wizard-review-keymap-only").value,
         progress_heading: localizer.text("wizard-progress-heading").value,
         progress_status: localizer.text("wizard-progress-status-idle").value,
         done_heading: localizer.text("wizard-done-heading").value,
@@ -909,10 +911,19 @@ pub fn install_request_from_target_and_rows(
     }
 
     let package_ids = package_ids_for_rows(package_rows, selected_package_indices);
-    if package_ids.is_empty() && configuration_step_ids.is_empty() {
+    // A keymap-only install (no package, no configuration step, but a
+    // replacement KeymapChoice picked in the dropdown) is a valid run:
+    // `execute_setup_operation_with_progress` will skip the empty package
+    // pipeline and apply the embedded keymap bytes after backing up the
+    // user's reaper-kb.ini. Don't reject it here.
+    if package_ids.is_empty()
+        && configuration_step_ids.is_empty()
+        && matches!(options.keymap_choice, KeymapChoice::PreserveCurrent)
+    {
         return Err(FrabbitError::PreflightFailed {
-            message: "No package or configuration step was selected for installation or update."
-                .to_string(),
+            message:
+                "No package, configuration step or KeyMap was selected for installation or update."
+                    .to_string(),
         });
     }
     let _osara_selected = package_ids.iter().any(|id| id == PACKAGE_OSARA);
@@ -1109,7 +1120,15 @@ pub fn build_review_preview_for_package_rows(
         target.path.display()
     )];
 
-    let mut can_install = !selected_package_indices.is_empty();
+    // A "keymap-only" install means the user unchecked every package but
+    // still picked a replacement KeyMap in the dropdown — that is a valid
+    // operation: the embedded keymap bytes will be applied and the
+    // pre-existing reaper-kb.ini will be backed up. Without this branch
+    // the GUI used to refuse installation with "No package selected".
+    let keymap_only = selected_package_indices.is_empty()
+        && !matches!(keymap_choice, KeymapChoice::PreserveCurrent);
+
+    let mut can_install = !selected_package_indices.is_empty() || keymap_only;
 
     // Run the resource-path preflight to surface fatal blockers (read-only
     // target, REAPER currently running, etc.) — those still need to land in
@@ -1144,7 +1163,11 @@ pub fn build_review_preview_for_package_rows(
     lines.push(String::new());
     lines.push(model.text.review_package_heading.clone());
     if selected_package_indices.is_empty() {
-        lines.push(model.text.review_no_package.clone());
+        if keymap_only {
+            lines.push(model.text.review_keymap_only.clone());
+        } else {
+            lines.push(model.text.review_no_package.clone());
+        }
     } else {
         for index in selected_package_indices {
             if let Some(package) = package_rows.get(*index) {
@@ -1153,7 +1176,7 @@ pub fn build_review_preview_for_package_rows(
         }
     }
 
-    if osara_selected_for_rows(package_rows, selected_package_indices) {
+    if osara_selected_for_rows(package_rows, selected_package_indices) || keymap_only {
         lines.push(String::new());
         lines.push(model.text.review_keymap_heading.clone());
         lines.push(match keymap_choice_display_name(keymap_choice) {
@@ -3690,11 +3713,19 @@ mod tests {
             },
         );
 
+        // With no packages, no configuration steps AND a "preserve current
+        // keymap" choice there is nothing to do — installation must be
+        // rejected. (When the user picks a replacement keymap instead, the
+        // run is valid; that path is covered by
+        // `keymap_only_install_is_valid_with_no_packages`.)
         let error = super::install_request_from_model(
             &model,
             Some(0),
             &[],
-            super::WizardInstallOptions::default(),
+            super::WizardInstallOptions {
+                keymap_choice: KeymapChoice::PreserveCurrent,
+                ..super::WizardInstallOptions::default()
+            },
         )
         .unwrap_err();
 
@@ -4093,6 +4124,92 @@ mod tests {
         assert!(
             joined.contains("OSARA"),
             "expected keymap name 'OSARA' in review preview, got:\n{joined}"
+        );
+    }
+
+    #[test]
+    fn keymap_only_install_is_valid_with_no_packages() {
+        // Regression: v1.16.1 refused to install when the user unchecked
+        // every package but still picked a KeyMap in the dropdown. The
+        // review preview showed "No package selected" and disabled the
+        // Install button. v1.16.2 treats keymap-only as a valid run.
+        let localizer = Localizer::embedded("en-US").unwrap();
+        let installation = fake_installation();
+        let model = model_from_plan(
+            &localizer,
+            Platform::Windows,
+            Architecture::X64,
+            vec![installation.clone()],
+            Some(0),
+            InstallPlan {
+                target: Some(installation),
+                actions: Vec::new(),
+                notes: Vec::new(),
+            },
+        );
+
+        let preview = super::build_review_preview_for_package_rows(
+            &model,
+            model.target_rows.first(),
+            &[],
+            &model.package_rows,
+            &model.notes,
+            KeymapChoice::Osara,
+        );
+
+        assert!(
+            preview.can_install,
+            "keymap-only must be installable, got lines:\n{}",
+            preview.lines.join("\n")
+        );
+        let joined = preview.lines.join("\n");
+        assert!(
+            preview.lines.iter().any(|line| line == "KeyMaps"),
+            "KeyMaps heading must appear in review for keymap-only, got:\n{joined}"
+        );
+        assert!(
+            joined.contains("KeyMap will be installed"),
+            "keymap-replacement line must appear in review for keymap-only, got:\n{joined}"
+        );
+        assert!(
+            joined.contains("Only the KeyMap will be applied"),
+            "keymap-only notice must appear in review, got:\n{joined}"
+        );
+    }
+
+    #[test]
+    fn keymap_preserve_with_no_packages_is_not_installable() {
+        // The complement of the keymap-only case: when the user
+        // unchecks every package AND picks "preserve current keymap",
+        // there is nothing to do and Install must stay disabled.
+        let localizer = Localizer::embedded("en-US").unwrap();
+        let installation = fake_installation();
+        let model = model_from_plan(
+            &localizer,
+            Platform::Windows,
+            Architecture::X64,
+            vec![installation.clone()],
+            Some(0),
+            InstallPlan {
+                target: Some(installation),
+                actions: Vec::new(),
+                notes: Vec::new(),
+            },
+        );
+
+        let preview = super::build_review_preview_for_package_rows(
+            &model,
+            model.target_rows.first(),
+            &[],
+            &model.package_rows,
+            &model.notes,
+            KeymapChoice::PreserveCurrent,
+        );
+
+        assert!(
+            !preview.can_install,
+            "no package + PreserveCurrent must not be installable, got lines:\n{}",
+            preview.lines.join("\n")
         );
     }
 

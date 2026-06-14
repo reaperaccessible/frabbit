@@ -150,6 +150,7 @@ wizard-review-preflight-prefix = Cannot install yet
 wizard-review-target = Target: { $path }
 wizard-review-no-target = No target selected.
 wizard-review-no-package = No package selected.
+wizard-review-keymap-only = No package selected. Only the KeyMap will be applied.
 
 # $package is the localized package display name and $action is the localized planned action.
 wizard-review-package = { $package }: { $action }
