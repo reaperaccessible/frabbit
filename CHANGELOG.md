@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.16.1] - 2026-06-14
+
+- Fix: la sauvegarde reaper-kb.ini.bak est maintenant creee AVANT que l'installateur OSARA NSIS ne s'execute (avant, l'installateur OSARA ecrasait reaper-kb.ini en premier, et FRABBIT sauvegardait apres - donc le .bak contenait la version OSARA, pas la version originale de l'utilisateur).
+- backup_reaper_kb_ini est maintenant idempotent: si le .bak existe deja, il n'est pas ecrase (preserve l'original utilisateur en cas d'appels multiples dans la meme session).
+- Le KeyMap choisi est maintenant nomme explicitement dans le bilan Review: "Le KeyMap OSARA sera installe" au lieu du texte generique. Variantes: OSARA, ReaperAccessible (USA), ReaperAccessible (Francais France), ReaperAccessible (Francais Canada).
+
 ## [1.16.0] - 2026-06-14
 
 - Sauvegarde automatique du KeyMap utilisateur avant remplacement: lorsque FRABBIT remplace le keymap (choix OSARA, ReaperAccessible USA/FR-FR/FR-CA), le fichier reaper-kb.ini existant est copie en reaper-kb.ini.bak a la racine du dossier ressources REAPER. Comportement identique a l'installateur OSARA. L'option "Preserver le keymap actuel" ne declenche pas de backup (rien n'est remplace).

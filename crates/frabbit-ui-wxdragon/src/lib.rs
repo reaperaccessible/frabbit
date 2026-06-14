@@ -143,6 +143,9 @@ pub struct WizardText {
     pub review_keymap_heading: String,
     pub review_keymap_preserve: String,
     pub review_keymap_replace: String,
+    /// Fluent template with `{ $name }` placeholder for the keymap name.
+    /// Substituted via `keymap_replace_message_named` at the call site.
+    pub review_keymap_replace_named: String,
     pub review_notes_heading: String,
     pub review_preflight_prefix: String,
     pub review_no_target: String,
@@ -656,6 +659,7 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         review_keymap_heading: localizer.text("wizard-review-keymap-heading").value,
         review_keymap_preserve: localizer.text("wizard-review-keymap-preserve").value,
         review_keymap_replace: localizer.text("wizard-review-keymap-replace").value,
+        review_keymap_replace_named: localizer.text("wizard-review-keymap-replace-named").value,
         review_notes_heading: localizer.text("wizard-review-notes-heading").value,
         review_preflight_prefix: localizer.text("wizard-review-preflight-prefix").value,
         review_no_target: localizer.text("wizard-review-no-target").value,
@@ -1063,6 +1067,27 @@ pub fn review_lines_for_package_rows(
     lines
 }
 
+/// Localized display name for a [`KeymapChoice`]. `None` means the choice
+/// preserves the user's current keymap (no replacement happens), so there
+/// is no replacement name to show.
+fn keymap_choice_display_name(choice: KeymapChoice) -> Option<&'static str> {
+    match choice {
+        KeymapChoice::PreserveCurrent => None,
+        KeymapChoice::Osara => Some("OSARA"),
+        KeymapChoice::ReaperAccessibleWinUsa => Some("ReaperAccessible (USA)"),
+        KeymapChoice::ReaperAccessibleWinFrf => Some("ReaperAccessible (Français France)"),
+        KeymapChoice::ReaperAccessibleWinFrc => Some("ReaperAccessible (Français Canada)"),
+    }
+}
+
+/// Substitute `{ $name }` in the template loaded from
+/// `wizard-review-keymap-replace-named`. We use a plain string `replace`
+/// rather than re-invoking the Fluent localizer because the template is
+/// pre-resolved into [`WizardText`] at model construction time.
+fn keymap_replace_message_named(template: &str, name: &str) -> String {
+    template.replace("{ $name }", name)
+}
+
 pub fn build_review_preview_for_package_rows(
     model: &WizardModel,
     target: Option<&TargetRow>,
@@ -1131,9 +1156,11 @@ pub fn build_review_preview_for_package_rows(
     if osara_selected_for_rows(package_rows, selected_package_indices) {
         lines.push(String::new());
         lines.push(model.text.review_keymap_heading.clone());
-        lines.push(match keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
-            _ => model.text.review_keymap_replace.clone(),
+        lines.push(match keymap_choice_display_name(keymap_choice) {
+            None => model.text.review_keymap_preserve.clone(),
+            Some(name) => {
+                keymap_replace_message_named(&model.text.review_keymap_replace_named, name)
+            }
         });
     }
 
@@ -1717,9 +1744,11 @@ pub fn summarize_wizard_error(
         .any(|package_id| package_id == PACKAGE_OSARA)
     {
         detail_lines.push(model.text.review_keymap_heading.clone());
-        detail_lines.push(match request.keymap_choice {
-            KeymapChoice::PreserveCurrent => model.text.review_keymap_preserve.clone(),
-            _ => model.text.review_keymap_replace.clone(),
+        detail_lines.push(match keymap_choice_display_name(request.keymap_choice) {
+            None => model.text.review_keymap_preserve.clone(),
+            Some(name) => {
+                keymap_replace_message_named(&model.text.review_keymap_replace_named, name)
+            }
         });
     }
 
@@ -4025,6 +4054,45 @@ mod tests {
                 .lines
                 .iter()
                 .any(|line| line == "Manual attention expected")
+        );
+    }
+
+    #[test]
+    fn review_preview_includes_keymap_name_when_osara_is_selected() {
+        let localizer = Localizer::embedded("en-US").unwrap();
+        let installation = fake_installation();
+        let model = model_from_plan(
+            &localizer,
+            Platform::Windows,
+            Architecture::X64,
+            vec![installation.clone()],
+            Some(0),
+            InstallPlan {
+                target: Some(installation),
+                actions: vec![PlanAction {
+                    package_id: PACKAGE_OSARA.to_string(),
+                    action: PlanActionKind::Install,
+                    installed_version: None,
+                    available_version: Some(Version::parse("2026.1").unwrap()),
+                    reason: "Missing".to_string(),
+                }],
+                notes: Vec::new(),
+            },
+        );
+
+        let preview = super::build_review_preview_for_package_rows(
+            &model,
+            model.target_rows.first(),
+            &[0],
+            &model.package_rows,
+            &model.notes,
+            KeymapChoice::Osara,
+        );
+
+        let joined = preview.lines.join("\n");
+        assert!(
+            joined.contains("OSARA"),
+            "expected keymap name 'OSARA' in review preview, got:\n{joined}"
         );
     }
 

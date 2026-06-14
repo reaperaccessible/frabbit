@@ -142,6 +142,7 @@ wizard-review-package-heading = Selected packages
 wizard-review-keymap-heading = KeyMaps
 wizard-review-keymap-preserve = No KeyMap will be installed. Your current key map will be preserved.
 wizard-review-keymap-replace = The selected KeyMap will be installed. Your current key map will be backed up before replacement.
+wizard-review-keymap-replace-named = The { $name } KeyMap will be installed. Your current keymap will be backed up to reaper-kb.ini.bak.
 wizard-review-notes-heading = Notes
 wizard-review-preflight-prefix = Cannot install yet
 

@@ -143,6 +143,7 @@ wizard-review-package-heading = Paquets sélectionnés
 wizard-review-keymap-heading = KeyMaps
 wizard-review-keymap-preserve = Aucun KeyMap ne sera installé. Vos raccourcis clavier actuels seront préservés.
 wizard-review-keymap-replace = Le KeyMap sélectionné sera installé. Vos raccourcis clavier actuels seront sauvegardés avant remplacement.
+wizard-review-keymap-replace-named = Le KeyMap { $name } sera installé. Votre KeyMap actuel sera sauvegardé dans reaper-kb.ini.bak.
 wizard-review-notes-heading = Notes
 wizard-review-preflight-prefix = Installation impossible pour le moment
 

@@ -229,10 +229,20 @@ pub(super) fn osara_manual_steps(
 /// to back up, and the absence is not an error).
 pub(crate) fn backup_reaper_kb_ini(resource_path: &Path) -> Result<Option<PathBuf>> {
     let source = resource_path.join("reaper-kb.ini");
+    let backup = resource_path.join("reaper-kb.ini.bak");
+    if backup.exists() {
+        // Backup already exists (likely created earlier in the install
+        // pipeline, before any vendor installer touched reaper-kb.ini).
+        // Don't overwrite it — the original user file is what we want
+        // preserved. Subsequent calls (e.g. apply_keymap_step running
+        // after OSARA's NSIS installer has already overwritten the
+        // active reaper-kb.ini) must be no-ops, otherwise we'd save the
+        // OSARA-substituted version instead of the user's original.
+        return Ok(Some(backup));
+    }
     if !source.is_file() {
         return Ok(None);
     }
-    let backup = resource_path.join("reaper-kb.ini.bak");
     std::fs::copy(&source, &backup).with_path(&backup)?;
     Ok(Some(backup))
 }
@@ -494,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    fn sibling_backup_is_overwritten_on_second_run() {
+    fn sibling_backup_is_preserved_on_second_run() {
         let dir = tempdir().unwrap();
         let resource_path = dir.path();
         seed_osara_replacement_source(resource_path, "osara keymap\r\n");
@@ -507,13 +517,34 @@ mod tests {
             "V1\r\n"
         );
 
-        // Second run after the user mutated the active keymap: the sibling
-        // backup must be refreshed with whatever is currently active.
+        // Second run: the sibling backup must NOT be overwritten — the
+        // original user file is what we want preserved, even if the
+        // active reaper-kb.ini has since been mutated (e.g. by a vendor
+        // installer running mid-pipeline).
         fs::write(resource_path.join("reaper-kb.ini"), "V2\r\n").unwrap();
         apply_osara_keymap_replacement(resource_path).unwrap();
         assert_eq!(
             fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
-            "V2\r\n"
+            "V1\r\n"
+        );
+    }
+
+    #[test]
+    fn backup_does_not_overwrite_existing_bak() {
+        use super::backup_reaper_kb_ini;
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        fs::write(resource_path.join("reaper-kb.ini"), "ORIGINAL").unwrap();
+        backup_reaper_kb_ini(resource_path).unwrap();
+        // Simulate a second pass after a vendor installer (e.g. OSARA NSIS)
+        // overwrote reaper-kb.ini: the second backup call must be a no-op
+        // so we keep the user's original, not the installer's substitute.
+        fs::write(resource_path.join("reaper-kb.ini"), "MODIFIED_BY_NSIS").unwrap();
+        backup_reaper_kb_ini(resource_path).unwrap();
+        let backup_content = fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap();
+        assert_eq!(
+            backup_content, "ORIGINAL",
+            "Backup must preserve the original, not the modified version"
         );
     }
 
