@@ -4395,11 +4395,13 @@ fn keymap_choice_label(_model: &WizardModel, choice: KeymapChoice) -> String {
     match choice {
         KeymapChoice::PreserveCurrent => "Aucun / None".to_string(),
         KeymapChoice::Osara => "OSARA (USA)".to_string(),
-        KeymapChoice::ReaperAccessibleWinUsa => "ReaperAccessible (USA)".to_string(),
-        KeymapChoice::ReaperAccessibleWinFrf => {
+        KeymapChoice::ReaperAccessibleWinUsa | KeymapChoice::ReaperAccessibleMacUsa => {
+            "ReaperAccessible (USA)".to_string()
+        }
+        KeymapChoice::ReaperAccessibleWinFrf | KeymapChoice::ReaperAccessibleMacFrf => {
             "ReaperAccessible (Fran\u{e7}ais France)".to_string()
         }
-        KeymapChoice::ReaperAccessibleWinFrc => {
+        KeymapChoice::ReaperAccessibleWinFrc | KeymapChoice::ReaperAccessibleMacFrc => {
             "ReaperAccessible (Fran\u{e7}ais Canada)".to_string()
         }
     }

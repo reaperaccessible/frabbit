@@ -1085,9 +1085,15 @@ fn keymap_choice_display_name(choice: KeymapChoice) -> Option<&'static str> {
     match choice {
         KeymapChoice::PreserveCurrent => None,
         KeymapChoice::Osara => Some("OSARA"),
-        KeymapChoice::ReaperAccessibleWinUsa => Some("ReaperAccessible (USA)"),
-        KeymapChoice::ReaperAccessibleWinFrf => Some("ReaperAccessible (Français France)"),
-        KeymapChoice::ReaperAccessibleWinFrc => Some("ReaperAccessible (Français Canada)"),
+        KeymapChoice::ReaperAccessibleWinUsa | KeymapChoice::ReaperAccessibleMacUsa => {
+            Some("ReaperAccessible (USA)")
+        }
+        KeymapChoice::ReaperAccessibleWinFrf | KeymapChoice::ReaperAccessibleMacFrf => {
+            Some("ReaperAccessible (Français France)")
+        }
+        KeymapChoice::ReaperAccessibleWinFrc | KeymapChoice::ReaperAccessibleMacFrc => {
+            Some("ReaperAccessible (Français Canada)")
+        }
     }
 }
 

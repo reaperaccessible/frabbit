@@ -5,4 +5,6 @@
 *.log
 *.tmp
 *.bak
-Contents/
+Contents/*
+!Contents/KeyMaps_Win/
+!Contents/KeyMaps_Mac/
