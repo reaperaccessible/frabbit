@@ -444,10 +444,9 @@ fn selectable_installations(
     if !installations
         .iter()
         .any(|installation| installation.kind == InstallationKind::Standard)
+        && let Some(standard) = default_standard_installation(platform)
     {
-        if let Some(standard) = default_standard_installation(platform) {
-            installations.push(standard);
-        }
+        installations.push(standard);
     }
     installations
 }
@@ -467,8 +466,10 @@ pub fn model_from_plan(
     selected_target_index: Option<usize>,
     plan: InstallPlan,
 ) -> WizardModel {
-    let mut options = UiBootstrapOptions::default();
-    options.locale = localizer.active_locale().to_string();
+    let options = UiBootstrapOptions {
+        locale: localizer.active_locale().to_string(),
+        ..Default::default()
+    };
     model_from_plan_with_options(
         localizer,
         options,
@@ -2836,13 +2837,12 @@ fn package_handling_summary(
 }
 
 fn package_display_name(model: &WizardModel, package_id: &str) -> String {
-    if let Ok(localizer) = localizer_from_options(&model.bootstrap_options) {
-        if let Some(spec) = builtin_package_specs(model.platform)
+    if let Ok(localizer) = localizer_from_options(&model.bootstrap_options)
+        && let Some(spec) = builtin_package_specs(model.platform)
             .into_iter()
             .find(|spec| spec.id == package_id)
-        {
-            return localizer.text(&spec.display_name_key).value;
-        }
+    {
+        return localizer.text(&spec.display_name_key).value;
     }
 
     builtin_package_specs(model.platform)

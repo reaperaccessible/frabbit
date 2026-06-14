@@ -193,15 +193,14 @@ pub fn install_cached_artifacts_with_progress(
         }
         save_install_state(resource_path, &state)?;
         report.receipt_written = true;
-    } else if options.dry_run {
-        if let Some(backup_set) = &replacement_backup_set {
-            let source_path = receipt_path(resource_path);
-            if source_path.is_file() {
-                report.receipt_backup_path = Some(backup_set.join(RECEIPT_RELATIVE_PATH));
-            }
-            report.backup_manifest_path =
-                Some(backup_set.join(crate::rollback::BACKUP_MANIFEST_FILE));
+    } else if options.dry_run
+        && let Some(backup_set) = &replacement_backup_set
+    {
+        let source_path = receipt_path(resource_path);
+        if source_path.is_file() {
+            report.receipt_backup_path = Some(backup_set.join(RECEIPT_RELATIVE_PATH));
         }
+        report.backup_manifest_path = Some(backup_set.join(crate::rollback::BACKUP_MANIFEST_FILE));
     }
 
     Ok(report)
@@ -380,10 +379,11 @@ fn install_extension_file(
     match fs::rename(&temp_path, target_path) {
         Ok(()) => Ok(()),
         Err(source) => {
-            if let Some(backup_path) = backup_path {
-                if backup_path.is_file() && !target_path.exists() {
-                    let _ = fs::copy(backup_path, target_path);
-                }
+            if let Some(backup_path) = backup_path
+                && backup_path.is_file()
+                && !target_path.exists()
+            {
+                let _ = fs::copy(backup_path, target_path);
             }
             let _ = fs::remove_file(&temp_path);
             Err(FrabbitError::Io {

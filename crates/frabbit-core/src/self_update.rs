@@ -408,7 +408,6 @@ mod tests {
         arch_token_from_asset_url, current_frabbit_version, evaluate_self_update_report,
         parse_self_update_manifest,
     };
-    use crate::FrabbitError;
     use crate::model::{Architecture, Platform};
     use crate::version::Version;
 

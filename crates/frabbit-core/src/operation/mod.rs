@@ -1584,7 +1584,6 @@ fn strip_windows_verbatim_prefix(path: PathBuf) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::path::PathBuf;
 
     use tempfile::tempdir;
 
@@ -2203,13 +2202,13 @@ mod tests {
             receipt
                 .installed_files
                 .iter()
-                .any(|file| file.path == PathBuf::from("reaper.exe"))
+                .any(|file| file.path == *"reaper.exe")
         );
         assert!(
             receipt
                 .installed_files
                 .iter()
-                .any(|file| file.path == PathBuf::from("reaper.ini"))
+                .any(|file| file.path == *"reaper.ini")
         );
 
         let detections = detect_components(&resource_path, Platform::Windows).unwrap();
@@ -2773,6 +2772,11 @@ mod tests {
         );
 
         let mut restored = fs::metadata(dir.path()).unwrap().permissions();
+        // Test cleanup on Windows: clear the FILE_ATTRIBUTE_READONLY bit so
+        // tempdir can be removed. The clippy warning targets Unix semantics
+        // (world-writable), which is irrelevant — FRABBIT is Windows-only and
+        // this is test teardown.
+        #[allow(clippy::permissions_set_readonly_false)]
         restored.set_readonly(false);
         fs::set_permissions(dir.path(), restored).unwrap();
 

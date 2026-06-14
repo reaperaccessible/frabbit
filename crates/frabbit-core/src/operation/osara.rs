@@ -216,6 +216,27 @@ pub(super) fn osara_manual_steps(
     steps
 }
 
+/// Copy the existing `reaper-kb.ini` to `<resource_path>/reaper-kb.ini.bak`
+/// before FRABBIT overwrites it with one of the bundled key maps.
+///
+/// This mirrors what the OSARA NSIS installer does — leaving a simple,
+/// well-known backup at the root of the REAPER resource folder that any
+/// user (or recovery script) can spot. It is in addition to the full
+/// timestamped backup set written under `FRABBIT/backups/...`.
+///
+/// Returns the backup path when a backup was created, or `None` when
+/// there was no existing `reaper-kb.ini` (fresh REAPER install — nothing
+/// to back up, and the absence is not an error).
+pub(crate) fn backup_reaper_kb_ini(resource_path: &Path) -> Result<Option<PathBuf>> {
+    let source = resource_path.join("reaper-kb.ini");
+    if !source.is_file() {
+        return Ok(None);
+    }
+    let backup = resource_path.join("reaper-kb.ini.bak");
+    std::fs::copy(&source, &backup).with_path(&backup)?;
+    Ok(Some(backup))
+}
+
 pub(crate) fn apply_osara_keymap_replacement(
     resource_path: &Path,
 ) -> Result<UnattendedPostInstallReport> {
@@ -229,6 +250,11 @@ pub(crate) fn apply_osara_keymap_replacement(
     let current_keymap = resource_path.join("reaper-kb.ini");
     let mut report = UnattendedPostInstallReport::default();
     let mut preserved_scr_lines: Vec<String> = Vec::new();
+
+    // OSARA-style sibling backup at the resource root (reaper-kb.ini.bak).
+    // Done before the timestamped FRABBIT/backups/... copy so that if the
+    // latter fails the user still has the simple sibling backup.
+    backup_reaper_kb_ini(resource_path)?;
 
     if current_keymap.is_file() {
         // Capture the existing SCR records before overwriting. ReaPack
@@ -284,6 +310,9 @@ pub(crate) fn apply_keymap_from_bytes(
     let current_keymap = resource_path.join("reaper-kb.ini");
     let mut report = UnattendedPostInstallReport::default();
     let mut preserved_scr_lines: Vec<String> = Vec::new();
+
+    // OSARA-style sibling backup at the resource root (reaper-kb.ini.bak).
+    backup_reaper_kb_ini(resource_path)?;
 
     if current_keymap.is_file() {
         let raw = std::fs::read(&current_keymap).with_path(&current_keymap)?;
@@ -418,6 +447,94 @@ mod tests {
         );
         assert!(report.backup_paths.is_empty());
         assert!(report.backup_manifest_path.is_none());
+    }
+
+    #[test]
+    fn osara_sibling_backup_file_is_created_at_resource_root() {
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        seed_osara_replacement_source(resource_path, "osara keymap\r\n");
+        fs::write(resource_path.join("reaper-kb.ini"), "ORIGINAL CONTENT\r\n").unwrap();
+
+        apply_osara_keymap_replacement(resource_path).unwrap();
+
+        // OSARA-style sibling backup at <resource>/reaper-kb.ini.bak
+        let sibling_backup = resource_path.join("reaper-kb.ini.bak");
+        assert!(
+            sibling_backup.is_file(),
+            "expected reaper-kb.ini.bak at resource root"
+        );
+        assert_eq!(
+            fs::read_to_string(&sibling_backup).unwrap(),
+            "ORIGINAL CONTENT\r\n"
+        );
+        // And the active reaper-kb.ini now holds the new keymap.
+        assert!(
+            fs::read_to_string(resource_path.join("reaper-kb.ini"))
+                .unwrap()
+                .starts_with("osara keymap")
+        );
+    }
+
+    #[test]
+    fn no_sibling_backup_when_reaper_kb_ini_is_absent() {
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        seed_osara_replacement_source(resource_path, "osara keymap\r\n");
+
+        apply_osara_keymap_replacement(resource_path).unwrap();
+
+        // Fresh REAPER install: no original keymap, so no sibling backup.
+        assert!(!resource_path.join("reaper-kb.ini.bak").exists());
+        // The new keymap is still written.
+        assert_eq!(
+            fs::read_to_string(resource_path.join("reaper-kb.ini")).unwrap(),
+            "osara keymap\r\n"
+        );
+    }
+
+    #[test]
+    fn sibling_backup_is_overwritten_on_second_run() {
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        seed_osara_replacement_source(resource_path, "osara keymap\r\n");
+
+        // First run: capture v1 as the sibling backup.
+        fs::write(resource_path.join("reaper-kb.ini"), "V1\r\n").unwrap();
+        apply_osara_keymap_replacement(resource_path).unwrap();
+        assert_eq!(
+            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
+            "V1\r\n"
+        );
+
+        // Second run after the user mutated the active keymap: the sibling
+        // backup must be refreshed with whatever is currently active.
+        fs::write(resource_path.join("reaper-kb.ini"), "V2\r\n").unwrap();
+        apply_osara_keymap_replacement(resource_path).unwrap();
+        assert_eq!(
+            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
+            "V2\r\n"
+        );
+    }
+
+    #[test]
+    fn reaper_accessible_keymap_also_creates_sibling_backup() {
+        use super::{KeymapChoice, apply_keymap_from_bytes};
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path();
+        fs::write(resource_path.join("reaper-kb.ini"), "RA ORIGINAL\r\n").unwrap();
+
+        apply_keymap_from_bytes(
+            resource_path,
+            b"new ra keymap\r\n",
+            KeymapChoice::ReaperAccessibleWinUsa,
+        )
+        .unwrap();
+
+        assert_eq!(
+            fs::read_to_string(resource_path.join("reaper-kb.ini.bak")).unwrap(),
+            "RA ORIGINAL\r\n"
+        );
     }
 
     #[test]

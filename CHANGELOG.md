@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.16.0] - 2026-06-14
+
+- Sauvegarde automatique du KeyMap utilisateur avant remplacement: lorsque FRABBIT remplace le keymap (choix OSARA, ReaperAccessible USA/FR-FR/FR-CA), le fichier reaper-kb.ini existant est copie en reaper-kb.ini.bak a la racine du dossier ressources REAPER. Comportement identique a l'installateur OSARA. L'option "Preserver le keymap actuel" ne declenche pas de backup (rien n'est remplace).
+- Nettoyage qualite du code: suppression des warnings cargo check (import inutilise dans self_update.rs, pattern inatteignable dans CLI apres retrait CSI). Application des fixes clippy automatiques (collapsible_if, derivable_impls, etc.).
+
 ## [1.15.0] - 2026-06-06
 
 - Suppression complete de CSI (Control Surface Integrator): entree manifeste, detecteur inno_setup_registry, champs manifeste inno_setup_app_id/installer_silent_args/requires_elevation/artifact_kind_override/artifact_file_name/artifact_download_url/github_release_api_url, fonction resolve_generic_artifact, fallback manifest-driven dans latest.rs, code de debug instrumentation v1.14.5

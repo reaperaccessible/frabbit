@@ -1496,16 +1496,14 @@ mod tests {
         .unwrap();
 
         match cli.command {
-            Command::SelfUpdate { command } => match command {
-                SelfUpdateCommand::Check { manifest_url, json } => {
-                    assert_eq!(
-                        manifest_url,
-                        "https://example.test/frabbit-update-stable.json"
-                    );
-                    assert!(!json);
-                }
-                other => panic!("unexpected self-update command: {other:?}"),
-            },
+            Command::SelfUpdate { command } => {
+                let SelfUpdateCommand::Check { manifest_url, json } = command;
+                assert_eq!(
+                    manifest_url,
+                    "https://example.test/frabbit-update-stable.json"
+                );
+                assert!(!json);
+            }
             other => panic!("unexpected command: {other:?}"),
         }
     }

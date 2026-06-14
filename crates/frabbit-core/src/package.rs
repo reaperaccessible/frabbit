@@ -93,8 +93,10 @@ pub struct EmbeddedPackageSpec {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum PackageKind {
     ReaperApp,
+    #[default]
     UserPluginBinary,
     Keymap,
     ReapackPackage,
@@ -103,12 +105,6 @@ pub enum PackageKind {
     /// kind only appears in the wizard when the relevant screen reader is
     /// detected on the host (e.g. JAWS-for-REAPER scripts on Windows).
     ScreenReaderScripts,
-}
-
-impl Default for PackageKind {
-    fn default() -> Self {
-        Self::UserPluginBinary
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -225,15 +221,11 @@ pub enum UninstallStep {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum BackupPolicy {
+    #[default]
     None,
     BackupOverwrittenFiles,
-}
-
-impl Default for BackupPolicy {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
