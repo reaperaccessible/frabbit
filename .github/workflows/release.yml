@@ -23,13 +23,9 @@ jobs:
           - os: windows-latest
             platform_id: windows
             extension: ".exe"
-          # macOS temporarily excluded for the v1.0.0 Windows-only release.
-          # The macOS keymap variants are still being curated (math65) on the
-          # mac-keymap-support branch. Restore this entry before the next
-          # release that ships macOS:
-          # - os: macos-latest
-          #   platform_id: macos
-          #   extension: ""
+          - os: macos-latest
+            platform_id: macos
+            extension: ""
 
     steps:
       - name: Checkout
