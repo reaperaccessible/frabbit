@@ -4188,7 +4188,12 @@ mod tests {
         // review preview showed "No package selected" and disabled the
         // Install button. v1.16.2 treats keymap-only as a valid run.
         let localizer = Localizer::embedded("en-US").unwrap();
-        let installation = fake_installation();
+        // Use a real tempdir so the preflight resource-path check passes
+        // on macOS too (C:/REAPER has no existing ancestor there).
+        let dir = tempdir().unwrap();
+        let mut installation = fake_installation();
+        installation.resource_path = dir.path().to_path_buf();
+        installation.app_path = dir.path().join("reaper.exe");
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
@@ -4237,7 +4242,13 @@ mod tests {
         // unchecks every package AND picks "preserve current keymap",
         // there is nothing to do and Install must stay disabled.
         let localizer = Localizer::embedded("en-US").unwrap();
-        let installation = fake_installation();
+        // Use a real tempdir so the preflight passes on macOS — that
+        // forces the test to exercise the install-validity logic, not
+        // accidentally pass because the resource path is invalid.
+        let dir = tempdir().unwrap();
+        let mut installation = fake_installation();
+        installation.resource_path = dir.path().to_path_buf();
+        installation.app_path = dir.path().join("reaper.exe");
         let model = model_from_plan(
             &localizer,
             Platform::Windows,
