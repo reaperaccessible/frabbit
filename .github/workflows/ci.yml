@@ -163,6 +163,10 @@ jobs:
             dist/${{ env.FRABBIT_ARTIFACT_NAME }}
             dist/${{ env.FRABBIT_ARTIFACT_NAME }}.sha256
           if-no-files-found: error
+          # These are throwaway debug builds; the real release binaries live
+          # as release assets (separate quota). Short retention keeps the
+          # Actions artifact storage from filling the account's 0.5 GB.
+          retention-days: 3
 
       - name: Upload macOS artifacts (both arches)
         if: matrix.platform_id == 'macos'
@@ -172,3 +176,4 @@ jobs:
           path: |
             dist/frabbit-*-macos-*
           if-no-files-found: error
+          retention-days: 3
