@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.1] - 2026-06-29
+
+Première version macOS de FRABBIT, en plus de Windows.
+
+### Nouveautés
+
+- Prise en charge complète de macOS (universel : Apple Silicon + Intel)
+- Trois KeyMaps ReaperAccessible disponibles sous macOS (USA / Français France / Français Canada). REAPER adapte automatiquement les touches de modification à l'affichage (Ctrl devient Cmd, Alt devient Option), si bien que les raccourcis correspondent aux conventions Mac sans configuration.
+
+### Corrections
+
+- macOS : la liste des paquets était inaccessible sous VoiceOver lorsque le bloc de choix du KeyMap était affiché en dessous (la table était comprimée sous une hauteur exploitable). La hauteur de la fenêtre passe de 600 à 720 pixels, avec une taille minimale de garde, pour que VoiceOver puisse de nouveau parcourir la liste.
+
 ## [1.0.0] - 2026-06-14
 
 Première version officielle de FRABBIT, l'outil d'installation et de mise à jour de REAPER accessible.
