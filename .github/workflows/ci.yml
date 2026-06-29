@@ -3,6 +3,7 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -43,6 +44,12 @@ jobs:
   artifacts:
     name: Artifact (${{ matrix.platform_id }})
     runs-on: ${{ matrix.os }}
+    # Throwaway downloadable test builds. Only on manual dispatch: the
+    # reaperaccessible account has just 0.5 GB of Actions artifact storage,
+    # and uploading a GUI build on every push exhausted it (and spammed
+    # failure emails when the quota was hit). Verify still runs on every
+    # push/PR; real release binaries come from release.yml on tags.
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -163,6 +170,10 @@ jobs:
             dist/${{ env.FRABBIT_ARTIFACT_NAME }}
             dist/${{ env.FRABBIT_ARTIFACT_NAME }}.sha256
           if-no-files-found: error
+          # These are throwaway debug builds; the real release binaries live
+          # as release assets (separate quota). Short retention keeps the
+          # Actions artifact storage from filling the account's 0.5 GB.
+          retention-days: 3
 
       - name: Upload macOS artifacts (both arches)
         if: matrix.platform_id == 'macos'
@@ -172,3 +183,4 @@ jobs:
           path: |
             dist/frabbit-*-macos-*
           if-no-files-found: error
+          retention-days: 3
