@@ -51,6 +51,9 @@ pub enum KeymapChoice {
     ReaperAccessibleWinUsa,
     ReaperAccessibleWinFrf,
     ReaperAccessibleWinFrc,
+    ReaperAccessibleMacUsa,
+    ReaperAccessibleMacFrf,
+    ReaperAccessibleMacFrc,
 }
 
 impl KeymapChoice {
@@ -64,15 +67,25 @@ impl KeymapChoice {
             Self::ReaperAccessibleWinUsa
                 | Self::ReaperAccessibleWinFrf
                 | Self::ReaperAccessibleWinFrc
+                | Self::ReaperAccessibleMacUsa
+                | Self::ReaperAccessibleMacFrf
+                | Self::ReaperAccessibleMacFrc
         )
     }
 
     pub fn available_choices(platform: Platform) -> Vec<Self> {
         let mut choices = vec![Self::PreserveCurrent, Self::Osara];
-        if platform == Platform::Windows {
-            choices.push(Self::ReaperAccessibleWinUsa);
-            choices.push(Self::ReaperAccessibleWinFrf);
-            choices.push(Self::ReaperAccessibleWinFrc);
+        match platform {
+            Platform::Windows => {
+                choices.push(Self::ReaperAccessibleWinUsa);
+                choices.push(Self::ReaperAccessibleWinFrf);
+                choices.push(Self::ReaperAccessibleWinFrc);
+            }
+            Platform::MacOs => {
+                choices.push(Self::ReaperAccessibleMacUsa);
+                choices.push(Self::ReaperAccessibleMacFrf);
+                choices.push(Self::ReaperAccessibleMacFrc);
+            }
         }
         choices
     }

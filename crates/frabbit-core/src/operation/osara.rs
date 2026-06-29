@@ -14,18 +14,33 @@ use super::{
 
 pub(super) const TITLE: &str = "OSARA";
 
-const RA_WIN_USA: &[u8] =
-    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - USA.ReaperKeyMap");
-const RA_WIN_FRF: &[u8] =
-    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap");
-const RA_WIN_FRC: &[u8] =
-    include_bytes!("../../../../Contents/KeyMaps/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap");
+const RA_WIN_USA: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Win/KeyMap ReaperAccessible - Win - USA.ReaperKeyMap"
+);
+const RA_WIN_FRF: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Win/KeyMap ReaperAccessible - Win - FRF.ReaperKeyMap"
+);
+const RA_WIN_FRC: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Win/KeyMap ReaperAccessible - Win - FRC.ReaperKeyMap"
+);
+const RA_MAC_USA: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Mac/KeyMap ReaperAccessible - Mac - USA.ReaperKeyMap"
+);
+const RA_MAC_FRF: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Mac/KeyMap ReaperAccessible - Mac - FRF.ReaperKeyMap"
+);
+const RA_MAC_FRC: &[u8] = include_bytes!(
+    "../../../../Contents/KeyMaps_Mac/KeyMap ReaperAccessible - Mac - FRC.ReaperKeyMap"
+);
 
 pub(crate) fn embedded_keymap_bytes(choice: KeymapChoice) -> Option<&'static [u8]> {
     match choice {
         KeymapChoice::ReaperAccessibleWinUsa => Some(RA_WIN_USA),
         KeymapChoice::ReaperAccessibleWinFrf => Some(RA_WIN_FRF),
         KeymapChoice::ReaperAccessibleWinFrc => Some(RA_WIN_FRC),
+        KeymapChoice::ReaperAccessibleMacUsa => Some(RA_MAC_USA),
+        KeymapChoice::ReaperAccessibleMacFrf => Some(RA_MAC_FRF),
+        KeymapChoice::ReaperAccessibleMacFrc => Some(RA_MAC_FRC),
         _ => None,
     }
 }
@@ -223,13 +238,13 @@ fn replaced_backup_filename(choice: KeymapChoice) -> Option<&'static str> {
     match choice {
         KeymapChoice::PreserveCurrent => None,
         KeymapChoice::Osara => Some("OSARAReplacedBackup.ReaperKeyMap"),
-        KeymapChoice::ReaperAccessibleWinUsa => {
+        KeymapChoice::ReaperAccessibleWinUsa | KeymapChoice::ReaperAccessibleMacUsa => {
             Some("ReaperAccessibleUSAReplacedBackup.ReaperKeyMap")
         }
-        KeymapChoice::ReaperAccessibleWinFrf => {
+        KeymapChoice::ReaperAccessibleWinFrf | KeymapChoice::ReaperAccessibleMacFrf => {
             Some("ReaperAccessibleFRFRReplacedBackup.ReaperKeyMap")
         }
-        KeymapChoice::ReaperAccessibleWinFrc => {
+        KeymapChoice::ReaperAccessibleWinFrc | KeymapChoice::ReaperAccessibleMacFrc => {
             Some("ReaperAccessibleFRCAReplacedBackup.ReaperKeyMap")
         }
     }
@@ -242,9 +257,15 @@ fn keymap_reference_filename(choice: KeymapChoice) -> Option<&'static str> {
     match choice {
         KeymapChoice::PreserveCurrent => None,
         KeymapChoice::Osara => Some("OSARA.ReaperKeyMap"),
-        KeymapChoice::ReaperAccessibleWinUsa => Some("ReaperAccessibleUSA.ReaperKeyMap"),
-        KeymapChoice::ReaperAccessibleWinFrf => Some("ReaperAccessibleFRFR.ReaperKeyMap"),
-        KeymapChoice::ReaperAccessibleWinFrc => Some("ReaperAccessibleFRCA.ReaperKeyMap"),
+        KeymapChoice::ReaperAccessibleWinUsa | KeymapChoice::ReaperAccessibleMacUsa => {
+            Some("ReaperAccessibleUSA.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrf | KeymapChoice::ReaperAccessibleMacFrf => {
+            Some("ReaperAccessibleFRFR.ReaperKeyMap")
+        }
+        KeymapChoice::ReaperAccessibleWinFrc | KeymapChoice::ReaperAccessibleMacFrc => {
+            Some("ReaperAccessibleFRCA.ReaperKeyMap")
+        }
     }
 }
 

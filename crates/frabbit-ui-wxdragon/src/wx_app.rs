@@ -786,10 +786,19 @@ pub fn run() {
             }
         };
 
+        // 720 (not RABBIT's 600) so the package page's DataView keeps its
+        // full height on macOS: FRABBIT adds a keymap heading + dropdown
+        // under the tree that RABBIT doesn't have, and at 600 px the
+        // proportion-1 tree got squeezed below a usable height — leaving
+        // VoiceOver unable to enter the package list.
         let frame = Frame::builder()
             .with_title(&model.window_title)
-            .with_size(Size::new(820, 600))
+            .with_size(Size::new(820, 720))
             .build();
+        // Guard-rail for the same accessibility bug: forbid shrinking the
+        // window below the height where the package DataView gets squeezed
+        // out of VoiceOver's reach. Keeps the fix robust if the user resizes.
+        frame.set_min_size(Size::new(760, 700));
         frame.set_name("frabbit-main-window");
         install_ui_frame(frame);
 
@@ -4395,11 +4404,13 @@ fn keymap_choice_label(_model: &WizardModel, choice: KeymapChoice) -> String {
     match choice {
         KeymapChoice::PreserveCurrent => "Aucun / None".to_string(),
         KeymapChoice::Osara => "OSARA (USA)".to_string(),
-        KeymapChoice::ReaperAccessibleWinUsa => "ReaperAccessible (USA)".to_string(),
-        KeymapChoice::ReaperAccessibleWinFrf => {
+        KeymapChoice::ReaperAccessibleWinUsa | KeymapChoice::ReaperAccessibleMacUsa => {
+            "ReaperAccessible (USA)".to_string()
+        }
+        KeymapChoice::ReaperAccessibleWinFrf | KeymapChoice::ReaperAccessibleMacFrf => {
             "ReaperAccessible (Fran\u{e7}ais France)".to_string()
         }
-        KeymapChoice::ReaperAccessibleWinFrc => {
+        KeymapChoice::ReaperAccessibleWinFrc | KeymapChoice::ReaperAccessibleMacFrc => {
             "ReaperAccessible (Fran\u{e7}ais Canada)".to_string()
         }
     }
