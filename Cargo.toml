@@ -6,12 +6,24 @@ members = [
     "crates/frabbit-platform",
     "crates/frabbit-ui-wxdragon",
 ]
+# Vendored, one-line-patched copy of wxdragon-sys — NOT a workspace member,
+# only pulled in through [patch.crates-io] below.
+exclude = ["third_party/wxdragon-sys"]
 resolver = "3"
+
+# The published wxdragon-sys 0.9.15 builds wxWidgets against the DYNAMIC MSVC
+# runtime, so frabbit.exe imports VCRUNTIME140.dll / MSVCP140.dll /
+# VCRUNTIME140_1.dll and fails to start on a fresh Windows install. Our vendored
+# copy adds one line (`wxBUILD_USE_STATIC_RUNTIME=ON` when crt-static is set) so
+# wxWidgets links the STATIC runtime and the shipped .exe is self-contained.
+# See .cargo/config.toml for the matching Rust-side crt-static flag.
+[patch.crates-io]
+wxdragon-sys = { path = "third_party/wxdragon-sys" }
 
 [workspace.package]
 edition = "2024"
 license = "MIT OR Apache-2.0"
-version = "1.0.1"
+version = "1.0.2"
 
 [profile.release]
 # Optimize the user-facing binary for download size first, runtime second.

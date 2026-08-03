@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-07-06
+
+### Corrections
+
+- Windows : FRABBIT ne démarrait pas sur une installation de Windows fraîchement formatée, avec des erreurs « VCRUNTIME140.dll est introuvable » (ainsi que MSVCP140.dll et VCRUNTIME140_1.dll). L'exécutable dépendait du Redistribuable Visual C++, absent d'un Windows neuf. Le runtime C/C++ est désormais lié statiquement : FRABBIT est un exécutable autonome qui démarre sur un Windows vierge, sans aucune installation préalable.
+
 ## [1.0.1] - 2026-06-29
 
 Première version macOS de FRABBIT, en plus de Windows.

@@ -1,0 +1,11 @@
+# Statically link the MSVC C runtime on Windows so the shipped .exe is
+# self-contained. Without this, frabbit.exe imports VCRUNTIME140.dll,
+# MSVCP140.dll and VCRUNTIME140_1.dll from the Visual C++ Redistributable,
+# which is NOT present on a fresh Windows install — the app then fails to
+# start with "VCRUNTIME140.dll is missing". wxdragon-sys reads this same
+# `crt-static` feature and builds wxWidgets/the C++ wrapper with the matching
+# static runtime (/MT), so Rust and C++ stay consistent.
+#
+# Scoped to the MSVC target only; macOS and other targets are unaffected.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
