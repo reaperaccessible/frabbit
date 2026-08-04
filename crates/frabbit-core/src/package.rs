@@ -33,12 +33,6 @@ pub struct PackageSpec {
     /// [`effective_recommended`] rather than reading this field directly.
     #[serde(default)]
     pub recommended_when: Option<HostCapability>,
-    /// When `true`, the wizard must show a package-specific acknowledgement
-    /// page and the CLI must require an explicit `--accept-<package>-notice`
-    /// flag before FRABBIT stages or launches the install of this package.
-    /// Used today by ReaPack to surface its donation notice; defaults to
-    /// `false` for everything else.
-    pub requires_user_acknowledgement: bool,
     pub supported_platforms: Vec<SupportedPlatform>,
     pub supported_architectures: Vec<Architecture>,
     pub latest_version_provider: Option<LatestVersionProvider>,
@@ -71,8 +65,6 @@ pub struct EmbeddedPackageSpec {
     /// See [`PackageSpec::recommended_when`].
     #[serde(default)]
     pub recommended_when: Option<HostCapability>,
-    #[serde(default)]
-    pub requires_user_acknowledgement: bool,
     #[serde(default = "all_supported_platforms")]
     pub supported_platforms: Vec<SupportedPlatform>,
     #[serde(default = "all_supported_architectures")]
@@ -370,7 +362,6 @@ impl EmbeddedPackageSpec {
             required: self.required,
             recommended: self.recommended,
             recommended_when: self.recommended_when,
-            requires_user_acknowledgement: self.requires_user_acknowledgement,
             supported_platforms: self.supported_platforms.clone(),
             supported_architectures: self.supported_architectures.clone(),
             latest_version_provider: self.latest_version_provider,

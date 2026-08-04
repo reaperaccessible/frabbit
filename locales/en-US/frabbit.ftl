@@ -44,7 +44,6 @@ status-package-installed = { $package } installed
 wizard-step-target = Target
 wizard-step-version-check = Version check
 wizard-step-packages = Packages
-wizard-step-reapack-acknowledgement = ReaPack donation
 wizard-step-review = Review
 wizard-step-progress = Progress
 wizard-step-done = Done
@@ -103,12 +102,6 @@ wizard-configuration-row-status-already-applied = already applied
 config-reapack-reaper-accessibility-name = Add the ReaperAccessible ReaPack repository
 config-reapack-reaper-accessibility-description = Adds the ReaperAccessible ReaPack repository. Once added, go to the Extensions menu, ReaPack, Browse Packages to get extra accessible scripts and plug-ins.
 
-wizard-reapack-ack-heading = ReaPack donation notice
-wizard-reapack-ack-body = ReaPack is free software released under the LGPL. Its author Christian Fillion accepts optional donations to support continued development. Christian also maintains the SWS extensions and has landed code specifically to improve compatibility with OSARA in the past. Any support you can send has been well earned.
-wizard-reapack-ack-link-label = Open the ReaPack donation page
-wizard-reapack-ack-confirm-label = Skip donation this time, just install or update ReaPack
-cli-reapack-ack-prompt-summary = ReaPack is free software (LGPL). Donations to its author Christian Fillion accepts optional donations at https://reapack.com/donate to support ongoing development.
-cli-reapack-ack-flag-required = ReaPack is in this run's plan but the donation acknowledgement is missing. Re-run with --accept-reapack-donation-notice to confirm you have read https://reapack.com/donate and want FRABBIT to install or update ReaPack.
 
 wizard-version-check-heading = Checking latest versions
 wizard-version-check-status-pending = Preparing latest-version check…

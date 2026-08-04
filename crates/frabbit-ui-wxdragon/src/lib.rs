@@ -117,10 +117,6 @@ pub struct WizardText {
     pub packages_list_label: String,
     pub packages_tree_group_label: String,
     pub configuration_tree_group_label: String,
-    pub reapack_ack_heading: String,
-    pub reapack_ack_body: String,
-    pub reapack_ack_link_label: String,
-    pub reapack_ack_confirm_label: String,
     pub version_check_heading: String,
     pub version_check_status_pending: String,
     pub version_check_progress_label: String,
@@ -178,7 +174,6 @@ pub enum WizardStep {
     Target,
     VersionCheck,
     Packages,
-    ReapackAcknowledgement,
     Review,
     Progress,
     Done,
@@ -630,10 +625,6 @@ fn wizard_text(localizer: &Localizer) -> WizardText {
         configuration_tree_group_label: localizer
             .text("wizard-configuration-tree-group-label")
             .value,
-        reapack_ack_heading: localizer.text("wizard-reapack-ack-heading").value,
-        reapack_ack_body: localizer.text("wizard-reapack-ack-body").value,
-        reapack_ack_link_label: localizer.text("wizard-reapack-ack-link-label").value,
-        reapack_ack_confirm_label: localizer.text("wizard-reapack-ack-confirm-label").value,
         version_check_heading: localizer.text("wizard-version-check-heading").value,
         version_check_status_pending: localizer.text("wizard-version-check-status-pending").value,
         version_check_progress_label: localizer.text("wizard-version-check-progress-label").value,
@@ -771,10 +762,6 @@ fn wizard_steps(localizer: &Localizer) -> Vec<WizardStepLabel> {
         (WizardStep::Target, "wizard-step-target"),
         (WizardStep::VersionCheck, "wizard-step-version-check"),
         (WizardStep::Packages, "wizard-step-packages"),
-        (
-            WizardStep::ReapackAcknowledgement,
-            "wizard-step-reapack-acknowledgement",
-        ),
         (WizardStep::Review, "wizard-step-review"),
         (WizardStep::Progress, "wizard-step-progress"),
         (WizardStep::Done, "wizard-step-done"),
@@ -986,22 +973,6 @@ pub fn osara_selected_for_rows(package_rows: &[PackageRow], indices: &[usize]) -
         .iter()
         .filter_map(|index| package_rows.get(*index))
         .any(|row| row.package_id == PACKAGE_OSARA)
-}
-
-/// Returns true when ReaPack is selected and its planned action would
-/// actually stage the package (Install or Update), i.e. the run will need
-/// the donation acknowledgement before it proceeds.
-pub fn reapack_selected_for_install_or_update(
-    package_rows: &[PackageRow],
-    indices: &[usize],
-) -> bool {
-    indices
-        .iter()
-        .filter_map(|index| package_rows.get(*index))
-        .any(|row| {
-            row.package_id == frabbit_core::package::PACKAGE_REAPACK
-                && matches!(row.action, PlanActionKind::Install | PlanActionKind::Update)
-        })
 }
 
 pub fn keymap_note(model: &WizardModel, osara_selected: bool, choice: KeymapChoice) -> String {
@@ -3358,7 +3329,7 @@ mod tests {
                 env!("CARGO_PKG_VERSION")
             )
         );
-        assert_eq!(model.steps.len(), 7);
+        assert_eq!(model.steps.len(), 6);
         assert_eq!(model.target_rows.len(), 1);
         assert!(model.target_rows[0].selected);
         assert!(model.target_rows[0].portable);

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-08-03
+
+### Modifications
+
+- Suppression de l'étape « Don ReaPack » : FRABBIT n'affiche plus d'avis de don ni de lien lors de l'installation de ReaPack. ReaPack s'installe et se met à jour directement, sans étape intermédiaire. L'assistant compte désormais six étapes au lieu de sept.
+
 ## [1.0.2] - 2026-07-06
 
 ### Corrections

@@ -139,8 +139,6 @@ enum Command {
         #[arg(long)]
         allow_reaper_running: bool,
         #[arg(long)]
-        accept_reapack_donation_notice: bool,
-        #[arg(long)]
         report_path: Option<PathBuf>,
         #[arg(long)]
         save_report: bool,
@@ -166,8 +164,6 @@ enum Command {
         stage_unsupported: bool,
         #[arg(long)]
         preserve_osara_keymap: bool,
-        #[arg(long)]
-        accept_reapack_donation_notice: bool,
         #[arg(long)]
         report_path: Option<PathBuf>,
         #[arg(long)]
@@ -196,8 +192,6 @@ enum Command {
         stage_unsupported: bool,
         #[arg(long)]
         preserve_osara_keymap: bool,
-        #[arg(long)]
-        accept_reapack_donation_notice: bool,
         #[arg(long = "config-step")]
         config_step: Vec<String>,
         #[arg(long = "skip-config-step")]
@@ -497,12 +491,10 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             cache_dir,
             apply,
             allow_reaper_running,
-            accept_reapack_donation_notice,
             report_path,
             save_report,
             json,
         } => {
-            ensure_reapack_donation_acknowledged(&package, accept_reapack_donation_notice)?;
             let platform =
                 Platform::current().ok_or(frabbit_core::FrabbitError::UnsupportedPlatform)?;
             let architecture = architecture.map_or_else(Architecture::current, Into::into);
@@ -541,7 +533,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             allow_reaper_running,
             stage_unsupported,
             preserve_osara_keymap,
-            accept_reapack_donation_notice,
             report_path,
             save_report,
             json,
@@ -550,7 +541,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                 Platform::current().ok_or(frabbit_core::FrabbitError::UnsupportedPlatform)?;
             let architecture = architecture.map_or_else(Architecture::current, Into::into);
             let packages = selected_package_ids(package);
-            ensure_reapack_donation_acknowledged(&packages, accept_reapack_donation_notice)?;
             let cache_dir = cache_dir.unwrap_or_else(default_cache_dir);
             let report = execute_package_operation(
                 &resource_path,
@@ -596,7 +586,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             allow_reaper_running,
             stage_unsupported,
             preserve_osara_keymap,
-            accept_reapack_donation_notice,
             config_step,
             skip_config_step,
             report_path,
@@ -607,7 +596,6 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
                 Platform::current().ok_or(frabbit_core::FrabbitError::UnsupportedPlatform)?;
             let architecture = architecture.map_or_else(Architecture::current, Into::into);
             let packages = selected_package_ids(package);
-            ensure_reapack_donation_acknowledged(&packages, accept_reapack_donation_notice)?;
             let cache_dir = cache_dir.unwrap_or_else(default_cache_dir);
             let active_locale = resolve_runtime_locale();
             let configuration_step_ids = resolve_configuration_step_ids(
@@ -848,31 +836,6 @@ fn resolve_configuration_step_ids(
         })
         .map(|step| step.id)
         .collect()
-}
-
-/// Refuse to proceed when ReaPack is in the user's package selection but
-/// the donation acknowledgement flag is missing. Mirrors the GUI's dedicated
-/// ReaPack ack page: the user must explicitly opt in before FRABBIT stages
-/// or launches the ReaPack install/update.
-fn ensure_reapack_donation_acknowledged(
-    package_ids: &[String],
-    accepted: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if accepted {
-        return Ok(());
-    }
-    if !package_ids
-        .iter()
-        .any(|id| id == frabbit_core::package::PACKAGE_REAPACK)
-    {
-        return Ok(());
-    }
-    Err(
-        "ReaPack is in this run's plan but the donation acknowledgement is missing. \
-         Re-run with --accept-reapack-donation-notice to confirm you have read \
-         https://reapack.com/donate and want FRABBIT to install or update ReaPack."
-            .into(),
-    )
 }
 
 fn save_optional_report<T>(
@@ -1384,56 +1347,6 @@ mod tests {
             }
             other => panic!("unexpected command: {other:?}"),
         }
-    }
-
-    #[test]
-    fn setup_command_parses_accept_reapack_donation_notice_flag() {
-        let cli = Cli::try_parse_from([
-            "frabbit",
-            "setup",
-            "--resource-path",
-            "C:\\PortableREAPER",
-            "--portable",
-            "--accept-reapack-donation-notice",
-        ])
-        .unwrap();
-
-        match cli.command {
-            Command::Setup {
-                accept_reapack_donation_notice,
-                ..
-            } => assert!(accept_reapack_donation_notice),
-            other => panic!("unexpected command: {other:?}"),
-        }
-    }
-
-    #[test]
-    fn ensure_reapack_donation_acknowledged_returns_err_when_unaccepted() {
-        let result = super::ensure_reapack_donation_acknowledged(
-            &["reapack".to_string(), "osara".to_string()],
-            false,
-        );
-        assert!(result.is_err(), "expected refusal");
-        let message = result.err().unwrap().to_string();
-        assert!(
-            message.contains("--accept-reapack-donation-notice"),
-            "error should point at the flag, got {message:?}"
-        );
-    }
-
-    #[test]
-    fn ensure_reapack_donation_acknowledged_passes_when_accepted() {
-        let result = super::ensure_reapack_donation_acknowledged(&["reapack".to_string()], true);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn ensure_reapack_donation_acknowledged_passes_when_reapack_not_in_plan() {
-        let result = super::ensure_reapack_donation_acknowledged(
-            &["osara".to_string(), "sws".to_string()],
-            false,
-        );
-        assert!(result.is_ok());
     }
 
     #[test]

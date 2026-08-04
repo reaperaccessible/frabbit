@@ -122,7 +122,7 @@ use crate::{
     build_review_preview_for_package_rows, custom_portable_target_row,
     execute_wizard_install_with_progress, format_self_update_check_summary,
     install_request_from_target_and_rows, keymap_note, load_wizard_model,
-    localized_package_display_name, localizer_from_options, reapack_selected_for_install_or_update,
+    localized_package_display_name, localizer_from_options,
     recompute_configuration_row_availability, refreshed_target_row, run_wizard_self_update_check,
     save_wizard_outcome_report, selected_configuration_step_ids, wizard_desired_package_ids,
     wizard_outcome_report_from_error, wizard_outcome_report_from_success,
@@ -157,10 +157,9 @@ use wxdragon::widgets::dataview::{
 const TARGET_STEP: usize = 0;
 const VERSION_CHECK_STEP: usize = 1;
 const PACKAGES_STEP: usize = 2;
-const REAPACK_ACK_STEP: usize = 3;
-const REVIEW_STEP: usize = 4;
-const PROGRESS_STEP: usize = 5;
-const DONE_STEP: usize = 6;
+const REVIEW_STEP: usize = 3;
+const PROGRESS_STEP: usize = 4;
+const DONE_STEP: usize = 5;
 
 #[derive(Default)]
 struct SelfUpdateUiState {
@@ -739,7 +738,6 @@ struct WizardWidgets {
     package_details: TextCtrl,
     keymap_choice_dropdown: Choice,
     keymap_note: TextCtrl,
-    reapack_ack_confirm: CheckBox,
     review_text: TextCtrl,
     progress_status: StaticText,
     progress_gauge: Gauge,
@@ -917,10 +915,8 @@ pub fn run() {
             &language_footer,
             effective_can_install(&can_install, &review_can_install),
             target_is_valid(&model, &wizard_widgets),
-            reapack_ack_confirmed(&wizard_widgets),
         );
         bind_target_navigation_updates(&model, wizard_widgets, &current_step, &next);
-        bind_reapack_ack_navigation_updates(wizard_widgets, &current_step, &next);
 
         {
             let book = book;
@@ -934,32 +930,15 @@ pub fn run() {
             let widgets = wizard_widgets;
             let can_install = Rc::clone(&can_install);
             let review_can_install = Rc::clone(&review_can_install);
-            let back_package_rows = Rc::clone(&package_rows);
             back.on_click(move |_| {
                 // Custom Back routing:
                 // - PACKAGES_STEP → TARGET_STEP (skip version check; re-running
                 //   the fetch from a Back press isn't what the user asked for).
-                // - REAPACK_ACK_STEP → PACKAGES_STEP and clear the
-                //   acknowledgement (going back resets the explicit consent).
-                // - REVIEW_STEP → REAPACK_ACK_STEP if ReaPack is in the
-                //   currently-selected plan; otherwise PACKAGES_STEP, again to
-                //   skip the now-irrelevant ack page.
+                // - REVIEW_STEP → PACKAGES_STEP.
                 let current = current_step.load(Ordering::SeqCst);
                 let step = match current {
                     PACKAGES_STEP => TARGET_STEP,
-                    REAPACK_ACK_STEP => {
-                        widgets.reapack_ack_confirm.set_value(false);
-                        PACKAGES_STEP
-                    }
-                    REVIEW_STEP => {
-                        let rows = back_package_rows.borrow();
-                        let checked = checked_package_indices(&rows);
-                        if reapack_selected_for_install_or_update(&rows, &checked) {
-                            REAPACK_ACK_STEP
-                        } else {
-                            PACKAGES_STEP
-                        }
-                    }
+                    REVIEW_STEP => PACKAGES_STEP,
                     other => other.saturating_sub(1),
                 };
                 current_step.store(step, Ordering::SeqCst);
@@ -974,7 +953,6 @@ pub fn run() {
                     &widgets.language_footer,
                     effective_can_install(&can_install, &review_can_install),
                     target_is_valid(&model, &widgets),
-                    reapack_ack_confirmed(&widgets),
                 );
             });
         }
@@ -1057,16 +1035,8 @@ pub fn run() {
                         widgets
                             .review_text
                             .set_value(&review_preview.lines.join("\n"));
-                        // Route through the ReaPack donation acknowledgement
-                        // page when the user has ReaPack in the install/update
-                        // plan; everyone else goes straight to Review.
-                        if reapack_selected_for_install_or_update(&rows, &checked) {
-                            REAPACK_ACK_STEP
-                        } else {
-                            REVIEW_STEP
-                        }
+                        REVIEW_STEP
                     }
-                    REAPACK_ACK_STEP => REVIEW_STEP,
                     PROGRESS_STEP => DONE_STEP,
                     other => other,
                 };
@@ -1082,7 +1052,6 @@ pub fn run() {
                     &widgets.language_footer,
                     effective_can_install(&can_install, &review_can_install),
                     target_is_valid(&model, &widgets),
-                    reapack_ack_confirmed(&widgets),
                 );
                 if step == VERSION_CHECK_STEP {
                     // Pull the screen reader onto the progress bar so the
@@ -1127,7 +1096,6 @@ pub fn run() {
                     &widgets.language_footer,
                     effective_can_install(&can_install, &review_can_install),
                     target_is_valid(&model, &widgets),
-                    reapack_ack_confirmed(&widgets),
                 );
                 back.enable(false);
                 next.enable(false);
@@ -1221,7 +1189,6 @@ pub fn run() {
                             &widgets.language_footer,
                             effective_can_install(&can_install, &review_can_install),
                             target_is_valid(&model, &widgets),
-                            reapack_ack_confirmed(&widgets),
                         );
                         // Focus the always-visible status TextCtrl so the
                         // screen reader reads the success/failure summary
@@ -1513,7 +1480,6 @@ pub fn run() {
                             &widgets.language_footer,
                             can_install,
                             target_is_valid(&ui_model, &widgets),
-                            reapack_ack_confirmed(&widgets),
                         );
                         // Focus the always-visible status TextCtrl so the
                         // screen reader announces the install result and
@@ -1679,16 +1645,6 @@ fn add_pages(
         None,
     );
 
-    let reapack_ack_page = Panel::builder(book).build();
-    let (_reapack_donate_link, reapack_ack_confirm) =
-        build_reapack_ack_page(&reapack_ack_page, model);
-    book.add_page(
-        &reapack_ack_page,
-        &model.steps[REAPACK_ACK_STEP].label,
-        false,
-        None,
-    );
-
     let review_page = Panel::builder(book).build();
     let review_text = build_review_page(&review_page, model);
     book.add_page(&review_page, &model.steps[REVIEW_STEP].label, false, None);
@@ -1720,7 +1676,6 @@ fn add_pages(
         package_details,
         keymap_choice_dropdown,
         keymap_note,
-        reapack_ack_confirm,
         review_text,
         progress_status,
         progress_gauge,
@@ -1774,9 +1729,9 @@ fn build_target_page(page: &Panel, model: &WizardModel) -> (Choice, TextCtrl, Te
     // and the user gets a real text input they can paste/type into.
     let portable_row = BoxSizer::builder(Orientation::Horizontal).build();
     let portable_folder = TextCtrl::builder(page).build();
-    // Same wxdragon quirk as the ReaPack-ack checkbox below: the screen
-    // reader reads the wxWindow *name*, not the preceding StaticText, so
-    // set the name to the localized label instead of an internal id.
+    // wxdragon quirk: the screen reader reads the wxWindow *name*, not the
+    // preceding StaticText, so set the name to the localized label instead
+    // of an internal id.
     portable_folder.set_name(&model.text.target_portable_folder_label);
     portable_folder.add_style(WindowStyle::TabStop);
     portable_row.add(&portable_folder, 1, SizerFlag::Expand | SizerFlag::Right, 6);
@@ -2115,7 +2070,6 @@ fn start_version_check(ui: VersionCheckUi) {
                             &ui.widgets.language_footer,
                             effective_can_install(&ui.can_install, &ui.review_can_install),
                             true,
-                            reapack_ack_confirmed(&ui.widgets),
                         );
                     }
                     Err(error) => {
@@ -4025,83 +3979,6 @@ fn build_version_check_page(
     (status, gauge, error_heading, error_log)
 }
 
-/// Build the ReaPack donation-acknowledgement page. The page is only ever
-/// shown when ReaPack is in the install/update plan — the Packages → Review
-/// transition routes through it conditionally. The Continue button stays
-/// disabled until the user checks the acknowledgement; that gating happens
-/// in `update_navigation` based on `reapack_ack_confirm.get_value()`.
-fn build_reapack_ack_page(page: &Panel, model: &WizardModel) -> (Button, CheckBox) {
-    let sizer = BoxSizer::builder(Orientation::Vertical).build();
-    add_heading(
-        page,
-        &sizer,
-        &model.text.reapack_ack_heading,
-        "frabbit-reapack-ack-heading",
-    );
-    let body = TextCtrl::builder(page)
-        .with_value(&model.text.reapack_ack_body)
-        .with_style(TextCtrlStyle::MultiLine | TextCtrlStyle::ReadOnly | TextCtrlStyle::WordWrap)
-        .with_size(Size::new(-1, 120))
-        .build();
-    body.set_name("frabbit-reapack-ack-body");
-    sizer.add(&body, 0, SizerFlag::All | SizerFlag::Expand, 6);
-
-    let donate_link = Button::builder(page)
-        .with_label(&model.text.reapack_ack_link_label)
-        .build();
-    donate_link.set_name("frabbit-reapack-ack-donate-link");
-    donate_link.add_style(WindowStyle::TabStop);
-    donate_link.set_can_focus(true);
-    sizer.add(&donate_link, 0, SizerFlag::All, 6);
-    donate_link.on_click(move |_| {
-        // Best-effort: open the donation page in the user's default browser
-        // so the donation hint surfaces on a real, current upstream page
-        // rather than a stale cached blurb in the wizard.
-        let _ = open_external_url("https://reapack.com/donate");
-    });
-
-    let confirm = CheckBox::builder(page)
-        .with_label(&model.text.reapack_ack_confirm_label)
-        .build();
-    // Mirror the OSARA-keymap / done-page CheckBox pattern: on this
-    // wxdragon version the accessible name is driven by the wxWindow
-    // *name* on Windows, not the visible `with_label` argument, so set
-    // both `name` and `label` to the localized string. Without this the
-    // screen reader announces the literal Fluent key
-    // (`frabbit-reapack-ack-confirm`) instead of the translated label.
-    confirm.set_name(&model.text.reapack_ack_confirm_label);
-    confirm.set_label(&model.text.reapack_ack_confirm_label);
-    confirm.add_style(WindowStyle::TabStop);
-    confirm.set_value(false);
-    sizer.add(&confirm, 0, SizerFlag::All, 6);
-
-    page.set_sizer(sizer, true);
-    (donate_link, confirm)
-}
-
-fn open_external_url(url: &str) -> std::io::Result<()> {
-    #[cfg(target_os = "windows")]
-    {
-        Command::new("cmd").args(["/C", "start", "", url]).spawn()?;
-        Ok(())
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("open").arg(url).spawn()?;
-        Ok(())
-    }
-
-    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    {
-        let _ = url;
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "opening URLs is only implemented on Windows and macOS",
-        ))
-    }
-}
-
 fn build_review_page(page: &Panel, model: &WizardModel) -> TextCtrl {
     let sizer = BoxSizer::builder(Orientation::Vertical).build();
     add_heading(
@@ -4476,29 +4353,6 @@ fn target_is_valid(model: &WizardModel, widgets: &WizardWidgets) -> bool {
         .unwrap_or(false)
 }
 
-/// Whether the user has checked the ReaPack-donation acknowledgement on
-/// the dedicated wizard page. Used by `update_navigation` to gate the
-/// Next button on REAPACK_ACK_STEP — the page never shows up in the run
-/// at all when ReaPack isn't being installed/updated, so on every other
-/// step this value is irrelevant.
-fn reapack_ack_confirmed(widgets: &WizardWidgets) -> bool {
-    widgets.reapack_ack_confirm.get_value()
-}
-
-fn bind_reapack_ack_navigation_updates(
-    widgets: WizardWidgets,
-    current_step: &Arc<AtomicUsize>,
-    next: &Button,
-) {
-    let current_step = Arc::clone(current_step);
-    let next = *next;
-    widgets.reapack_ack_confirm.on_toggled(move |event| {
-        if current_step.load(Ordering::SeqCst) == REAPACK_ACK_STEP {
-            next.enable(event.is_checked());
-        }
-    });
-}
-
 fn bind_target_navigation_updates(
     model: &Arc<WizardModel>,
     widgets: WizardWidgets,
@@ -4696,7 +4550,6 @@ fn update_navigation(
     language_footer: &Panel,
     can_install: bool,
     target_valid: bool,
-    reapack_ack_confirmed: bool,
 ) {
     book.set_selection(step);
     if let Some(label) = labels.get(step) {
@@ -4707,7 +4560,6 @@ fn update_navigation(
         TARGET_STEP => target_valid,
         // VERSION_CHECK_STEP auto-advances on success; never user-driven.
         PACKAGES_STEP | PROGRESS_STEP => true,
-        REAPACK_ACK_STEP => reapack_ack_confirmed,
         _ => false,
     });
     install.enable(step == REVIEW_STEP && can_install);
