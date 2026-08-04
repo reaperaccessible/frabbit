@@ -70,49 +70,119 @@ impl std::fmt::Display for ElevationError {
 
 impl std::error::Error for ElevationError {}
 
-/// `true` if the current process already runs with an elevated
-/// (administrator) token. Two common ways to reach that state on Windows:
-/// the user disabled UAC (so an administrator account's processes always
-/// carry the full token), or FRABBIT was launched with "Run as
-/// administrator". In either case the vendor installers can be run
-/// directly and the `runas` verb must be *skipped* — with UAC fully
-/// disabled there is no elevation service to satisfy a `runas` request, so
-/// it comes back as `ERROR_CANCELLED` (1223) even though nothing was
-/// actually cancelled. Always `false` off Windows (the notion doesn't
-/// apply to the platforms FRABBIT's elevation path targets).
-pub fn is_process_elevated() -> bool {
-    platform_is_process_elevated()
+/// Whether a `requires_elevation` installer must be launched through the
+/// `runas` verb (raising a UAC prompt) rather than a plain, direct
+/// `CreateProcess`.
+///
+/// The decision keys off the process token's **elevation TYPE**, not the
+/// unreliable `TokenIsElevated` flag:
+///
+/// * `Full` — already elevated (Run as administrator, or elevated under
+///   active UAC): launch directly, no prompt.
+/// * `Limited` — a *filtered* admin token under active UAC: `runas` is
+///   needed to obtain the full token via the consent prompt.
+/// * `Default` — no split token exists. This covers BOTH a UAC-disabled
+///   admin (whose default token is already full → launch directly) and an
+///   ordinary standard user (who genuinely needs `runas`). We disambiguate
+///   with an Administrators-group membership check.
+///
+/// This fixes the case that mislabelled a working install as cancelled:
+/// with UAC disabled (`EnableLUA=0`), an administrator's token is `Default`
+/// with `TokenIsElevated == 0`. The old check saw "not elevated" and forced
+/// `runas`, but there is no elevation broker when UAC is off, so
+/// `ShellExecuteEx(runas)` returned `ERROR_CANCELLED` (1223) and the
+/// installer never ran — even though a direct launch would have installed
+/// fine with the already-full admin token. Always `false` off Windows.
+pub fn needs_runas_to_elevate() -> bool {
+    platform_needs_runas_to_elevate()
 }
 
 #[cfg(windows)]
-fn platform_is_process_elevated() -> bool {
+fn platform_needs_runas_to_elevate() -> bool {
     use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
     use windows_sys::Win32::Security::{
-        GetTokenInformation, TOKEN_ELEVATION, TOKEN_QUERY, TokenElevation,
+        GetTokenInformation, TOKEN_QUERY, TokenElevationType, TokenElevationTypeFull,
+        TokenElevationTypeLimited,
     };
     use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
-    unsafe {
+    let elevation_type = unsafe {
         let mut token: HANDLE = std::ptr::null_mut();
         if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
+            // Can't tell — fail toward a direct launch rather than a
+            // possibly-doomed runas.
             return false;
         }
-        let mut elevation = TOKEN_ELEVATION { TokenIsElevated: 0 };
+        let mut ty: i32 = 0;
         let mut return_length = 0u32;
         let ok = GetTokenInformation(
             token,
-            TokenElevation,
-            &mut elevation as *mut TOKEN_ELEVATION as *mut core::ffi::c_void,
-            std::mem::size_of::<TOKEN_ELEVATION>() as u32,
+            TokenElevationType,
+            &mut ty as *mut i32 as *mut core::ffi::c_void,
+            std::mem::size_of::<i32>() as u32,
             &mut return_length,
         );
         CloseHandle(token);
-        ok != 0 && elevation.TokenIsElevated != 0
+        if ok == 0 {
+            return false;
+        }
+        ty
+    };
+
+    if elevation_type == TokenElevationTypeFull as i32 {
+        false
+    } else if elevation_type == TokenElevationTypeLimited as i32 {
+        true
+    } else {
+        // Default: UAC-off admin → already full token → direct;
+        // standard user → needs runas.
+        !current_token_is_admin()
+    }
+}
+
+/// `true` if the current process's effective token has the Administrators
+/// group active (not present-but-deny-only). A UAC-off admin reads as a
+/// member; a filtered admin token reads as a non-member (Administrators is
+/// deny-only in that token); a standard user reads as a non-member.
+#[cfg(windows)]
+fn current_token_is_admin() -> bool {
+    use windows_sys::Win32::Foundation::FALSE;
+    use windows_sys::Win32::Security::{
+        AllocateAndInitializeSid, CheckTokenMembership, FreeSid, PSID, SECURITY_NT_AUTHORITY,
+    };
+    use windows_sys::Win32::System::SystemServices::{
+        DOMAIN_ALIAS_RID_ADMINS, SECURITY_BUILTIN_DOMAIN_RID,
+    };
+
+    unsafe {
+        let mut authority = SECURITY_NT_AUTHORITY;
+        let mut admins: PSID = std::ptr::null_mut();
+        if AllocateAndInitializeSid(
+            &mut authority,
+            2,
+            SECURITY_BUILTIN_DOMAIN_RID as u32,
+            DOMAIN_ALIAS_RID_ADMINS as u32,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            &mut admins,
+        ) == 0
+        {
+            return false;
+        }
+        let mut is_member = FALSE;
+        // NULL token = the process's effective token.
+        let ok = CheckTokenMembership(std::ptr::null_mut(), admins, &mut is_member);
+        FreeSid(admins);
+        ok != 0 && is_member != FALSE
     }
 }
 
 #[cfg(not(windows))]
-fn platform_is_process_elevated() -> bool {
+fn platform_needs_runas_to_elevate() -> bool {
     false
 }
 

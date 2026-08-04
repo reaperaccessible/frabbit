@@ -95,13 +95,10 @@ pub fn verify_planned_execution_paths(plan: &PlannedExecutionPlan) -> Result<()>
 /// few more times before giving up. On success the delay is zero; only a
 /// genuinely failed install pays the full wait.
 pub fn verify_planned_execution_paths_settling(plan: &PlannedExecutionPlan) -> Result<()> {
-    // Up to ~60 s of polling. An elevated installer brokered through the
-    // Windows AppInfo service can run asynchronously: the handle FRABBIT
-    // waited on returns (sometimes signalling "cancelled" / 1223) before the
-    // real elevated install has finished writing its files, so the target
-    // can land many seconds later. Only a genuinely failed install pays the
+    // Up to ~15 s of polling: a silent installer can return before its last
+    // files finish flushing to disk. Only a genuinely failed install pays the
     // full wait; a success that's already on disk returns immediately.
-    verify_planned_execution_paths_with_attempts(plan, 200, std::time::Duration::from_millis(300))
+    verify_planned_execution_paths_with_attempts(plan, 50, std::time::Duration::from_millis(300))
 }
 
 fn verify_planned_execution_paths_with_attempts(
@@ -154,14 +151,14 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
         });
     };
 
-    // Only raise a UAC prompt when we actually need to. If FRABBIT already
-    // runs elevated — the user disabled UAC (an admin's processes then carry
-    // the full token), or launched FRABBIT "as administrator" — the vendor
-    // installer can be run directly. Invoking the `runas` verb in that state
-    // is not just redundant: with UAC fully disabled there is no elevation
-    // service, so `runas` fails with ERROR_CANCELLED (1223) and the install
-    // looks "cancelled" though the user never saw a prompt.
-    if plan.requires_elevation && !frabbit_platform::is_process_elevated() {
+    // Only raise a UAC prompt when we actually need to. `needs_runas_to_elevate`
+    // keys off the token's elevation TYPE (not the unreliable TokenIsElevated
+    // flag): a UAC-disabled administrator already holds a full token and must
+    // launch the installer DIRECTLY — invoking `runas` there is not just
+    // redundant, it fails with ERROR_CANCELLED (1223) because no elevation
+    // service exists, making a working install look "cancelled". Only a
+    // filtered admin token under active UAC (or a standard user) needs runas.
+    if plan.requires_elevation && frabbit_platform::needs_runas_to_elevate() {
         return execute_program_plan_elevated(plan, program);
     }
 
