@@ -80,6 +80,8 @@ wizard-target-custom-portable-note = FRABBIT will create the REAPER resource pat
 
 # $version is the REAPER version or an unknown-version label and $path is the resource path.
 wizard-target-row = REAPER { $version } in { $path }
+wizard-target-row-not-installed = REAPER — not installed (will be installed in { $path })
+wizard-target-row-unknown-version = REAPER (version undetermined) in { $path }
 
 # $app_path is the REAPER application path, $path is the REAPER resource path,
 # $version is the REAPER version or an unknown-version label, and $writable is yes/no.

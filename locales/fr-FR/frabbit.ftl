@@ -81,6 +81,8 @@ wizard-target-custom-portable-note = FRABBIT créera le chemin des ressources RE
 
 # $version est la version de REAPER et $path est le chemin des ressources.
 wizard-target-row = REAPER { $version } dans { $path }
+wizard-target-row-not-installed = REAPER — non installé (sera installé dans { $path })
+wizard-target-row-unknown-version = REAPER (version indéterminée) dans { $path }
 
 # $app_path est le chemin de l'application REAPER, $path est le chemin des ressources,
 # $version est la version de REAPER, et $writable est oui/non.

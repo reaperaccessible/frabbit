@@ -793,11 +793,6 @@ fn target_rows(
 }
 
 fn target_row(localizer: &Localizer, installation: &Installation, selected: bool) -> TargetRow {
-    let version = installation
-        .version
-        .as_ref()
-        .map(ToString::to_string)
-        .unwrap_or_else(|| localizer.text("detect-version-unknown").value);
     // Dropdown label shows the *install directory* (where reaper.exe
     // lives), not the resource folder. For a standard install that's
     // typically `C:\Program Files\REAPER (x64)`; for portable it's the
@@ -808,8 +803,34 @@ fn target_row(localizer: &Localizer, installation: &Installation, selected: bool
         .parent()
         .map(|parent| parent.display().to_string())
         .unwrap_or_else(|| installation.app_path.display().to_string());
-    TargetRow {
-        label: localizer
+    // "Installed" means reaper.exe actually exists at this target. Without
+    // that distinction the row showed "REAPER Version inconnue dans <path>"
+    // for a target where REAPER isn't installed at all — which reads as "we
+    // can't tell what's there" instead of the truthful "nothing is there
+    // yet; this is where it will go".
+    let installed = installation.app_path.is_file();
+    // Version shown in the details pane: say "Not installed" up front rather
+    // than a bare "unknown" when there's nothing on disk; only a present-but-
+    // unreadable binary falls back to the version-unknown wording.
+    let version_display = if !installed {
+        localizer.text("detect-not-installed").value
+    } else {
+        installation
+            .version
+            .as_ref()
+            .map(ToString::to_string)
+            .unwrap_or_else(|| localizer.text("detect-version-unknown").value)
+    };
+    let label = if !installed {
+        localizer
+            .format(
+                "wizard-target-row-not-installed",
+                &[("path", install_dir.as_str())],
+            )
+            .value
+    } else if let Some(version) = installation.version.as_ref() {
+        let version = version.to_string();
+        localizer
             .format(
                 "wizard-target-row",
                 &[
@@ -817,13 +838,23 @@ fn target_row(localizer: &Localizer, installation: &Installation, selected: bool
                     ("path", install_dir.as_str()),
                 ],
             )
-            .value,
+            .value
+    } else {
+        localizer
+            .format(
+                "wizard-target-row-unknown-version",
+                &[("path", install_dir.as_str())],
+            )
+            .value
+    };
+    TargetRow {
+        label,
         details: localizer
             .format(
                 "wizard-target-details",
                 &[
                     ("app_path", &installation.app_path.display().to_string()),
-                    ("version", version.as_str()),
+                    ("version", version_display.as_str()),
                     ("path", &installation.resource_path.display().to_string()),
                     (
                         "writable",
@@ -4051,6 +4082,57 @@ mod tests {
             refreshed
                 .details
                 .contains(&resource_path.display().to_string())
+        );
+    }
+
+    #[test]
+    fn not_installed_target_row_reads_as_not_installed_not_unknown() {
+        let dir = tempdir().unwrap();
+        let resource_path = dir.path().join("REAPER");
+        std::fs::create_dir_all(&resource_path).unwrap();
+        // A fresh-install target: reaper.exe does NOT exist at this path.
+        let app_path = dir
+            .path()
+            .join("Program Files")
+            .join("REAPER (x64)")
+            .join("reaper.exe");
+        let localizer = Localizer::embedded("en-US").unwrap();
+        let installation = Installation {
+            kind: InstallationKind::Standard,
+            platform: Platform::Windows,
+            app_path: app_path.clone(),
+            resource_path: resource_path.clone(),
+            version: None,
+            architecture: Some(Architecture::X64),
+            writable: true,
+            confidence: Confidence::Low,
+            evidence: Vec::new(),
+        };
+
+        let row = super::target_row(&localizer, &installation, true);
+
+        // The label must state "not installed" — never a bare "unknown",
+        // which reads as "we can't tell what's on the machine".
+        assert!(
+            row.label.to_lowercase().contains("not installed"),
+            "label was: {}",
+            row.label
+        );
+        assert!(
+            !row.label.to_lowercase().contains("unknown"),
+            "label must not say 'unknown' when nothing is installed: {}",
+            row.label
+        );
+        // It should still point at where REAPER will be installed.
+        assert!(
+            row.label.contains("REAPER (x64)"),
+            "label should name the install dir: {}",
+            row.label
+        );
+        assert!(
+            row.details.to_lowercase().contains("not installed"),
+            "details should say not installed: {}",
+            row.details
         );
     }
 
