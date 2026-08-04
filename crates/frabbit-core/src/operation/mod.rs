@@ -630,7 +630,19 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                     }
                 }
                 Err(error) => {
-                    items.push(failed_package_item(planned, cached, &error));
+                    let planned_execution = planned_execution_for_artifact(
+                        &planned.artifact,
+                        Some(cached),
+                        resource_path,
+                        options.target_app_path.as_deref(),
+                        options.keymap_choice,
+                    );
+                    items.push(failed_package_item(
+                        planned,
+                        cached,
+                        &error,
+                        Some(planned_execution),
+                    ));
                 }
             }
             progress.report(ProgressEvent::InstallCompleted {
@@ -686,7 +698,7 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
             Ok(report) => Some(report),
             Err(error) => {
                 for (planned, cached) in direct_installable.iter().zip(cached_artifacts.iter()) {
-                    items.push(failed_package_item(planned, cached, &error));
+                    items.push(failed_package_item(planned, cached, &error, None));
                 }
                 None
             }
@@ -924,6 +936,7 @@ fn failed_package_item(
     planned: &PlannedArtifact,
     cached_artifact: &CachedArtifact,
     error: &FrabbitError,
+    planned_execution: Option<PlannedExecutionPlan>,
 ) -> PackageOperationItem {
     let (message, message_code) = failure_message_for_error(error);
     PackageOperationItem {
@@ -937,7 +950,10 @@ fn failed_package_item(
         install_action: None,
         backup_paths: Vec::new(),
         backup_manifest_path: None,
-        planned_execution: None,
+        // Surface what FRABBIT actually tried to run (command, arguments,
+        // whether elevation was requested) so a failure report is
+        // diagnosable instead of just "it failed".
+        planned_execution,
         manual_instruction: None,
     }
 }

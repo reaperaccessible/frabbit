@@ -141,18 +141,13 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
         source,
     })?;
     if !status.success() {
-        // Windows exit code 1223 is `ERROR_CANCELLED`: the user clicked
-        // "No" on the UAC elevation prompt (or it timed out / was
-        // dismissed). The installer never actually ran, so FRABBIT surfaces
-        // it as a distinct, recoverable error instead of the generic
-        // "process failed for X with exit code Some(1223)" — that lets
-        // the wizard tell the user "approve the prompt and try again"
-        // rather than implying the install itself broke.
-        if cfg!(target_os = "windows") && status.code() == Some(1223) {
-            return Err(FrabbitError::UserCancelledElevation {
-                program: program.clone(),
-            });
-        }
+        // We are on the *direct* (non-`runas`) launch path: either the plan
+        // didn't require elevation, or FRABBIT already runs elevated. A
+        // `CreateProcess` launch never raises a UAC prompt (it fails with
+        // ERROR_ELEVATION_REQUIRED, 740, instead), so a 1223 here is the
+        // installer's *own* exit code — NOT a declined UAC prompt. Report
+        // the real exit code honestly rather than mislabelling every 1223 as
+        // "administrator approval cancelled", which hid the true failure.
         return Err(FrabbitError::ProcessFailed {
             program: program.clone(),
             exit_code: status.code(),
