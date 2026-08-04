@@ -1009,12 +1009,20 @@ fn executed_unattended_item(
             post_install_result.unwrap_or_default()
         }
         Err(verify_err) => {
-            // Verification didn't see the expected files: surface the
-            // most informative error available — process first, then
-            // post-install, then verify.
-            process_result?;
-            post_install_result?;
-            return Err(verify_err);
+            // Verification still didn't see the expected files after the
+            // settling wait. Surface BOTH what the installer process
+            // reported AND which files are missing — collapsing to just one
+            // (as before) hid the real picture and mislabelled a mis-report
+            // as "administrator approval cancelled". This combined,
+            // diagnosable message makes the summary tell the whole truth.
+            let process_note = match &process_result {
+                Ok(()) => "the installer process reported success".to_string(),
+                Err(err) => format!("the installer process reported: {err}"),
+            };
+            let _ = post_install_result;
+            return Err(FrabbitError::InvalidPlannedExecution {
+                message: format!("{process_note}; but {verify_err}"),
+            });
         }
     };
     verify_planned_execution_freshness(&planned_execution, install_started_at)?;

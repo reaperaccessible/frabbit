@@ -95,7 +95,13 @@ pub fn verify_planned_execution_paths(plan: &PlannedExecutionPlan) -> Result<()>
 /// few more times before giving up. On success the delay is zero; only a
 /// genuinely failed install pays the full wait.
 pub fn verify_planned_execution_paths_settling(plan: &PlannedExecutionPlan) -> Result<()> {
-    verify_planned_execution_paths_with_attempts(plan, 40, std::time::Duration::from_millis(300))
+    // Up to ~60 s of polling. An elevated installer brokered through the
+    // Windows AppInfo service can run asynchronously: the handle FRABBIT
+    // waited on returns (sometimes signalling "cancelled" / 1223) before the
+    // real elevated install has finished writing its files, so the target
+    // can land many seconds later. Only a genuinely failed install pays the
+    // full wait; a success that's already on disk returns immediately.
+    verify_planned_execution_paths_with_attempts(plan, 200, std::time::Duration::from_millis(300))
 }
 
 fn verify_planned_execution_paths_with_attempts(
