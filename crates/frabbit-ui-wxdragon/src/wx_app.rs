@@ -138,6 +138,7 @@ use std::collections::HashMap;
 #[cfg(target_os = "windows")]
 use wxdragon::event::tree_events::TreeEventData;
 use wxdragon::prelude::*;
+use wxdragon::timer::Timer;
 use wxdragon::widgets::SimpleBook;
 #[cfg(target_os = "windows")]
 use wxdragon::widgets::treectrl::{TreeCtrl, TreeCtrlStyle, TreeItemId};
@@ -1758,10 +1759,22 @@ pub fn run() {
         frame.show(true);
         // After a self-update relaunch, the freshly spawned window doesn't
         // become foreground on its own, so the screen reader stays outside
-        // FRABBIT. Force it to the front — the parent granted the foreground
-        // right before exiting.
+        // FRABBIT. Raising + focusing a control *here* runs before the window
+        // is fully realized and doesn't stick, so defer it with a one-shot
+        // timer (the equivalent of the Manager's `CallAfter`): by the time it
+        // fires the window is live, Raise() takes effect (the parent granted
+        // the foreground right before exiting), and focusing the first control
+        // lands the screen reader inside FRABBIT.
         if std::env::var("FRABBIT_RELAUNCHED").is_ok() {
-            frame.raise();
+            let relaunch_widgets = wizard_widgets;
+            let relaunch_timer = Timer::new(&frame);
+            relaunch_timer.on_tick(move |_| {
+                frame.raise();
+                relaunch_widgets.target_choice.set_focus();
+            });
+            relaunch_timer.start(200, true);
+            // Keep the timer alive until it fires; dropping it would cancel it.
+            std::mem::forget(relaunch_timer);
         }
     });
 }
