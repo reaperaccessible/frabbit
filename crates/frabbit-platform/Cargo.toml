@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+self-replace = { workspace = true }
 serde.workspace = true
 sys-locale = "0.3"
 

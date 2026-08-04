@@ -195,6 +195,13 @@ wizard-self-update-status-checking = Checking for FRABBIT updates…
 self-update-status-update-available = FRABBIT update available: { $current } → { $latest } (channel { $channel }). Relaunch FRABBIT to be re-prompted.
 self-update-status-up-to-date = FRABBIT is up to date (current { $current }, channel { $channel }).
 
+# Startup update dialog. $latest is the new version, $error the failure message.
+self-update-dialog-title = FRABBIT update
+self-update-dialog-body = A new version of FRABBIT ({ $latest }) is available. Do you want to download and install it now? FRABBIT will restart automatically.
+self-update-not-writable-body = Automatic update isn't possible from this location (read-only folder). Do you want to open the download page to install the new version manually?
+self-update-install-failed = The update could not be installed: { $error }. FRABBIT will keep running on the current version.
+self-update-relaunch-failed = The update was installed. Please close and reopen FRABBIT to use the new version.
+
 wizard-summary-target = Target: { $path }
 wizard-summary-portable = Portable target: { $value }
 wizard-summary-dry-run = Dry run: { $value }

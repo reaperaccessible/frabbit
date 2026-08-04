@@ -193,6 +193,92 @@ pub fn check_self_update(platform: Platform, manifest_url: &str) -> Result<SelfU
     )
 }
 
+/// Download the update asset selected by [`check_self_update`] into
+/// `dest_dir`, verify its SHA-256 against the manifest, and return the path to
+/// the verified file. Bytes are streamed to a `.part` sibling and only renamed
+/// into place once the checksum matches, so a corrupt or interrupted download
+/// never leaves a runnable-looking file behind.
+///
+/// This does NOT replace the running executable or relaunch — it only produces
+/// a verified copy of the new version on disk (that is Phase 3+).
+pub fn download_and_verify_update(
+    asset: &SelfUpdateAssetSelection,
+    dest_dir: &std::path::Path,
+) -> Result<std::path::PathBuf> {
+    use std::io::Write;
+
+    if !asset.url.starts_with("https://") {
+        return Err(FrabbitError::RemoteData {
+            url: asset.url.clone(),
+            message: "update asset URL must use https".to_string(),
+        });
+    }
+
+    std::fs::create_dir_all(dest_dir).map_err(|source| FrabbitError::Io {
+        path: dest_dir.to_path_buf(),
+        source,
+    })?;
+
+    let file_name = asset
+        .url
+        .rsplit('/')
+        .next()
+        .filter(|name| !name.is_empty())
+        .unwrap_or("frabbit-update.exe");
+    let final_path = dest_dir.join(file_name);
+    let part_path = dest_dir.join(format!("{file_name}.part"));
+    let _ = std::fs::remove_file(&part_path);
+
+    let client = Client::builder()
+        .user_agent(USER_AGENT)
+        .build()
+        .map_err(|source| FrabbitError::Http {
+            url: asset.url.clone(),
+            source,
+        })?;
+    let mut response = client
+        .get(&asset.url)
+        .send()
+        .and_then(|response| response.error_for_status())
+        .map_err(|source| FrabbitError::Http {
+            url: asset.url.clone(),
+            source,
+        })?;
+
+    let mut file = std::fs::File::create(&part_path).map_err(|source| FrabbitError::Io {
+        path: part_path.clone(),
+        source,
+    })?;
+    std::io::copy(&mut response, &mut file).map_err(|source| FrabbitError::Io {
+        path: part_path.clone(),
+        source,
+    })?;
+    file.flush().map_err(|source| FrabbitError::Io {
+        path: part_path.clone(),
+        source,
+    })?;
+    drop(file);
+
+    let actual = crate::hash::sha256_file(&part_path)?;
+    if !actual.eq_ignore_ascii_case(&asset.sha256) {
+        let _ = std::fs::remove_file(&part_path);
+        return Err(FrabbitError::RemoteData {
+            url: asset.url.clone(),
+            message: format!(
+                "downloaded update failed checksum verification (expected {}, got {actual})",
+                asset.sha256
+            ),
+        });
+    }
+
+    let _ = std::fs::remove_file(&final_path);
+    std::fs::rename(&part_path, &final_path).map_err(|source| FrabbitError::Io {
+        path: final_path.clone(),
+        source,
+    })?;
+    Ok(final_path)
+}
+
 fn evaluate_self_update_report(
     platform: Platform,
     architecture: Architecture,

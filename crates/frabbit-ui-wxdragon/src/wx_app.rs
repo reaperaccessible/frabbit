@@ -9,7 +9,9 @@ use std::sync::{
 };
 
 use frabbit_core::localization::{Localizer, resolve_runtime_locale};
-use frabbit_core::self_update::SelfUpdateCheckReport;
+use frabbit_core::self_update::{
+    SelfUpdateAssetSelection, SelfUpdateCheckReport, download_and_verify_update,
+};
 
 // FluentBundle is !Send, so we keep one Localizer instance per UI thread and
 // have call_after bodies read it from this thread-local rather than capturing
@@ -136,6 +138,7 @@ use std::collections::HashMap;
 #[cfg(target_os = "windows")]
 use wxdragon::event::tree_events::TreeEventData;
 use wxdragon::prelude::*;
+use wxdragon::timer::Timer;
 use wxdragon::widgets::SimpleBook;
 #[cfg(target_os = "windows")]
 use wxdragon::widgets::treectrl::{TreeCtrl, TreeCtrlStyle, TreeItemId};
@@ -202,13 +205,34 @@ fn render_self_update_status(
     // status line is gone. Concurrent self-update + install on the same
     // target still races at the file rename and surfaces a normal IO
     // error.)
+    // Decide whether to raise the once-per-session update prompt BEFORE
+    // touching the status bar, so a later re-render (e.g. a wizard step
+    // change) can't re-open the dialog.
+    let prompt_report = match &check {
+        Ok(report)
+            if report.update_available
+                && !report.requires_manual_transition
+                && !state_guard.prompted =>
+        {
+            state_guard.prompted = true;
+            Some(report.clone())
+        }
+        _ => None,
+    };
+
     let status = match &check {
         Ok(report) => {
             if report.update_available {
-                format!(
-                    "FRABBIT {} is available. Download it from https://github.com/ReaperAccessible/frabbit/releases/latest",
-                    report.latest_version
-                )
+                localizer
+                    .format(
+                        "self-update-status-update-available",
+                        &[
+                            ("current", report.current_version.to_string().as_str()),
+                            ("latest", report.latest_version.to_string().as_str()),
+                            ("channel", report.channel.as_str()),
+                        ],
+                    )
+                    .value
             } else {
                 format_self_update_check_summary(localizer, report)
             }
@@ -216,11 +240,174 @@ fn render_self_update_status(
         Err(error) => format!("{}: {}", model.text.done_self_update_error_prefix, error),
     };
 
-    let status_changed = status != state_guard.last_status;
-    if status_changed {
+    if status != state_guard.last_status {
         widgets.self_update_status.set_status_text(&status, 0);
         state_guard.last_status = status;
     }
+    drop(state_guard);
+
+    // The status bar is easy for a screen-reader user to miss, so raise an
+    // accessible modal prompt when a new version is available. "Yes" downloads
+    // and verifies it; "No" keeps the current version (relaunching re-prompts).
+    if let Some(report) = prompt_report {
+        let latest = report.latest_version.to_string();
+        let title = localizer.text("self-update-dialog-title").value;
+        let body = localizer
+            .format("self-update-dialog-body", &[("latest", latest.as_str())])
+            .value;
+        let dialog = MessageDialog::builder(&widgets.review_text, &body, &title)
+            .with_style(
+                MessageDialogStyle::YesNo
+                    | MessageDialogStyle::IconQuestion
+                    | MessageDialogStyle::Centre,
+            )
+            .build();
+        if dialog.show_modal() != ID_YES {
+            return;
+        }
+        // Pre-flight: an in-place self-replace needs a writable exe directory.
+        // A copy run from a read-only location (e.g. Program Files) can't
+        // auto-update, so offer the download page instead of failing later.
+        if !frabbit_platform::exe_replace::current_exe_dir_is_writable() {
+            let msg = localizer.text("self-update-not-writable-body").value;
+            let fallback = MessageDialog::builder(&widgets.review_text, &msg, &title)
+                .with_style(
+                    MessageDialogStyle::YesNo
+                        | MessageDialogStyle::IconWarning
+                        | MessageDialogStyle::Centre,
+                )
+                .build();
+            if fallback.show_modal() == ID_YES {
+                let url = report
+                    .release_notes_url
+                    .clone()
+                    .unwrap_or_else(|| RELEASES_LATEST_URL.to_string());
+                open_external_url(&url);
+            }
+            return;
+        }
+        start_self_update_install(widgets, report.asset);
+    }
+}
+
+const RELEASES_LATEST_URL: &str = "https://github.com/ReaperAccessible/frabbit/releases/latest";
+
+/// Open a URL in the user's default browser (best-effort). Used for the
+/// "auto-update isn't possible from here" fallback.
+#[cfg(target_os = "windows")]
+fn open_external_url(url: &str) {
+    let _ = Command::new("cmd").args(["/C", "start", "", url]).spawn();
+}
+#[cfg(not(target_os = "windows"))]
+fn open_external_url(url: &str) {
+    let _ = Command::new("open").arg(url).spawn();
+}
+
+/// Relaunch the just-updated executable. On Windows this goes through a
+/// short-lived hidden `cmd` that waits ~1s for this instance to fully exit
+/// (so nothing holds the foreground lock), then `start`s the new exe — Windows
+/// then puts the fresh window in the foreground so the screen reader lands
+/// inside it. Mirrors how the ReaperAccessible Installer Manager relaunches;
+/// a direct spawn keeps the new window in the background instead.
+/// `FRABBIT_RELAUNCHED` / `FRABBIT_LOCALE` are inherited by the started exe.
+#[cfg(target_os = "windows")]
+fn relaunch_updated_exe(exe: &std::path::Path) -> bool {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let mut command = Command::new("cmd");
+    command
+        .raw_arg(format!(
+            "/C ping 127.0.0.1 -n 2 >nul & start \"\" \"{}\"",
+            exe.display()
+        ))
+        .creation_flags(CREATE_NO_WINDOW)
+        .env("FRABBIT_RELAUNCHED", "1");
+    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
+        command.env("FRABBIT_LOCALE", locale);
+    }
+    command.spawn().is_ok()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn relaunch_updated_exe(exe: &std::path::Path) -> bool {
+    let mut command = Command::new(exe);
+    command.env("FRABBIT_RELAUNCHED", "1");
+    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
+        command.env("FRABBIT_LOCALE", locale);
+    }
+    command.spawn().is_ok()
+}
+
+/// Download + verify the new version, replace the running exe in place, then
+/// relaunch. The download/replace run on a worker thread so the UI stays
+/// responsive; the relaunch + exit happen back on the main thread. On any
+/// failure FRABBIT keeps running on the current version (no half-updated
+/// state is reachable: the file is verified before replacement, and
+/// `self-replace` keeps the old exe until the swap succeeds).
+fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelection) {
+    std::thread::spawn(move || {
+        let outcome: std::result::Result<(), String> = (|| {
+            // Download next to the running exe (same volume as the install
+            // target). The directory was checked writable before we got here.
+            let dest = std::env::current_exe()
+                .ok()
+                .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
+                .unwrap_or_else(std::env::temp_dir);
+            let new_exe = download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
+            frabbit_platform::exe_replace::replace_running_exe(&new_exe)
+                .map_err(|e| e.to_string())?;
+            // self-replace COPIES the new file into place, so the downloaded
+            // one lingers — remove it. The old binary (renamed to a
+            // `.__relocated__.exe` sidecar) is cleaned up on the next startup
+            // by cleanup_update_leftovers().
+            let _ = std::fs::remove_file(&new_exe);
+            Ok(())
+        })();
+
+        wxdragon::call_after(Box::new(move || match outcome {
+            Ok(()) => {
+                // The new binary now sits at the current exe path — relaunch it,
+                // preserving the user's chosen language, then exit this instance.
+                let relaunched = std::env::current_exe().is_ok_and(|exe| {
+                    frabbit_platform::exe_replace::allow_foreground_for_relaunch();
+                    relaunch_updated_exe(&exe)
+                });
+                if relaunched {
+                    std::process::exit(0);
+                }
+                // Replace succeeded but the relaunch didn't: the update is
+                // already in place, so ask the user to restart FRABBIT.
+                with_ui_localizer(|localizer| {
+                    let title = localizer.text("self-update-dialog-title").value;
+                    let message = localizer.text("self-update-relaunch-failed").value;
+                    MessageDialog::builder(&widgets.review_text, &message, &title)
+                        .with_style(
+                            MessageDialogStyle::OK
+                                | MessageDialogStyle::IconInformation
+                                | MessageDialogStyle::Centre,
+                        )
+                        .build()
+                        .show_modal();
+                });
+            }
+            Err(error) => {
+                with_ui_localizer(|localizer| {
+                    let title = localizer.text("self-update-dialog-title").value;
+                    let message = localizer
+                        .format("self-update-install-failed", &[("error", error.as_str())])
+                        .value;
+                    MessageDialog::builder(&widgets.review_text, &message, &title)
+                        .with_style(
+                            MessageDialogStyle::OK
+                                | MessageDialogStyle::IconError
+                                | MessageDialogStyle::Centre,
+                        )
+                        .build()
+                        .show_modal();
+                });
+            }
+        }));
+    });
 }
 
 /// `wx/defs.h`: `WXK_SPACE = 32` (just the ASCII value). Kept around as a
@@ -756,6 +943,11 @@ struct WizardWidgets {
 }
 
 pub fn run() {
+    // A self-update leaves the previous binary as a `.__relocated__.exe`
+    // sidecar (Windows would otherwise only delete it on reboot) plus the
+    // downloaded copy; the previous instance has exited by now, so clean them.
+    frabbit_platform::exe_replace::cleanup_update_leftovers();
+
     // Pre-seat Cocoa's per-process language so VoiceOver picks a voice that
     // matches the in-app Fluent locale. Has to happen before `wxdragon::main`
     // because that brings NSApplication / NSBundle up, and `AppleLanguages`
@@ -1593,6 +1785,25 @@ pub fn run() {
 
         frame.centre();
         frame.show(true);
+        // After a self-update relaunch, the freshly spawned window doesn't
+        // become foreground on its own, so the screen reader stays outside
+        // FRABBIT. Raising + focusing a control *here* runs before the window
+        // is fully realized and doesn't stick, so defer it with a one-shot
+        // timer (the equivalent of the Manager's `CallAfter`): by the time it
+        // fires the window is live, Raise() takes effect (the parent granted
+        // the foreground right before exiting), and focusing the first control
+        // lands the screen reader inside FRABBIT.
+        if std::env::var("FRABBIT_RELAUNCHED").is_ok() {
+            let relaunch_widgets = wizard_widgets;
+            let relaunch_timer = Timer::new(&frame);
+            relaunch_timer.on_tick(move |_| {
+                frame.raise();
+                relaunch_widgets.target_choice.set_focus();
+            });
+            relaunch_timer.start(200, true);
+            // Keep the timer alive until it fires; dropping it would cancel it.
+            std::mem::forget(relaunch_timer);
+        }
     });
 }
 
