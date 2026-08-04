@@ -96,10 +96,33 @@ pub enum FrabbitError {
         exit_code: Option<i32>,
     },
 
+    /// Raised on Windows (UAC consent declined) and on macOS (the admin
+    /// authorization dialog dismissed), so the wording stays platform
+    /// neutral. The wizard replaces it with a localized, platform-specific
+    /// sentence; this text is what lands in reports and CLI output.
     #[error(
-        "the Windows administrator approval prompt for {program} was cancelled or declined; re-run and approve the prompt to continue, or pick a portable REAPER target that doesn't need elevation"
+        "the administrator approval prompt for {program} was cancelled or declined; nothing was installed — re-run the installation and approve the prompt to continue"
     )]
     UserCancelledElevation { program: String },
+
+    /// The macOS `installer` command ran but exited non-zero. Distinct from
+    /// [`FrabbitError::ProcessFailed`] so the wizard can name the disk image
+    /// and point at the report instead of surfacing `/usr/sbin/installer`.
+    #[error("the macOS installer for {image} failed with exit code {exit_code:?}")]
+    PkgInstallerFailed {
+        image: PathBuf,
+        exit_code: Option<i32>,
+    },
+
+    /// An app bundle could not be written to its install destination —
+    /// typically `/Applications` not being writable. Distinct from
+    /// [`FrabbitError::Io`] so the wizard can talk about permissions on a
+    /// named folder rather than reporting a raw OS error number.
+    #[error("the app bundle could not be installed into {destination}: {message}")]
+    AppBundleInstallFailed {
+        destination: PathBuf,
+        message: String,
+    },
 
     #[error("post-install verification failed; missing paths: {missing_paths:?}")]
     PostInstallVerificationFailed { missing_paths: Vec<PathBuf> },

@@ -59,6 +59,15 @@ pub enum DiskImageError {
     UserCancelledElevation {
         image: PathBuf,
     },
+    /// The app bundle was found on the mounted volume but could not be
+    /// written to its install destination — most often `/Applications`
+    /// not being writable, or an existing bundle owned by another user.
+    /// Distinct from `Io` so the wizard can name the destination and talk
+    /// about permissions instead of surfacing a raw `os error 13`.
+    AppBundleInstallFailed {
+        destination: PathBuf,
+        message: String,
+    },
     Unsupported {
         image: PathBuf,
         message: String,
@@ -104,6 +113,14 @@ impl std::fmt::Display for DiskImageError {
                 f,
                 "the macOS administrator authorization prompt for installing {} was cancelled or declined",
                 image.display()
+            ),
+            Self::AppBundleInstallFailed {
+                destination,
+                message,
+            } => write!(
+                f,
+                "the app bundle could not be installed into {}: {message}",
+                destination.display()
             ),
             Self::Unsupported { image, message } => {
                 write!(f, "disk image {} unsupported: {message}", image.display())
@@ -181,18 +198,39 @@ pub fn install_app_bundle_from_disk_image(
             }
         })?;
 
+    let target = install_destination_dir.join(bundle_basename);
+    // Every write below lands in the install destination (/Applications for
+    // a standard install), so a failure here is almost always "that folder
+    // isn't writable" or "an existing bundle belongs to another user".
+    // Report it as one destination-scoped error rather than a raw
+    // `I/O error at …: Permission denied (os error 13)`.
+    place_app_bundle(&source, install_destination_dir, &target)
+        .map_err(|error| install_failure(install_destination_dir, error))?;
+
+    mount.detach()?;
+    Ok(target)
+}
+
+fn install_failure(install_destination_dir: &Path, error: DiskImageError) -> DiskImageError {
+    DiskImageError::AppBundleInstallFailed {
+        destination: install_destination_dir.to_path_buf(),
+        message: error.to_string(),
+    }
+}
+
+fn place_app_bundle(
+    bundle_source: &Path,
+    install_destination_dir: &Path,
+    target: &Path,
+) -> Result<(), DiskImageError> {
     fs::create_dir_all(install_destination_dir).map_err(|source| DiskImageError::Io {
         path: install_destination_dir.to_path_buf(),
         source,
     })?;
-    let target = install_destination_dir.join(bundle_basename);
     if target.exists() {
-        remove_path_recursive(&target)?;
+        remove_path_recursive(target)?;
     }
-    copy_directory_recursive(&source, &target)?;
-
-    mount.detach()?;
-    Ok(target)
+    copy_directory_recursive(bundle_source, target)
 }
 
 /// Mount `image_path`, locate the `.pkg` whose filename ends with
@@ -591,7 +629,8 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        copy_directory_recursive, find_app_bundle_in_directory, parse_hdiutil_attach_output,
+        DiskImageError, copy_directory_recursive, find_app_bundle_in_directory,
+        parse_hdiutil_attach_output,
     };
 
     #[test]
@@ -688,6 +727,46 @@ mod tests {
             fs::read(dest.join("Contents").join("Info.plist")).unwrap(),
             b"<plist/>"
         );
+    }
+
+    /// A read-only destination is the realistic macOS failure: /Applications
+    /// not writable, or a REAPER.app left behind by another user. The error
+    /// must name the folder so the wizard can talk about permissions rather
+    /// than echoing a bare `os error 13`. Unix-only: read-only directory
+    /// permissions don't block creation the same way on Windows.
+    #[cfg(unix)]
+    #[test]
+    fn reports_the_destination_when_the_bundle_cannot_be_written() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempdir().unwrap();
+        let bundle = dir.path().join("REAPER.app");
+        fs::create_dir_all(bundle.join("Contents")).unwrap();
+        fs::write(bundle.join("Contents").join("Info.plist"), b"<plist/>").unwrap();
+
+        let destination = dir.path().join("Applications");
+        fs::create_dir_all(&destination).unwrap();
+        fs::set_permissions(&destination, fs::Permissions::from_mode(0o500)).unwrap();
+
+        // Running as root ignores the permission bits entirely, so there is
+        // no failure to observe. Skip rather than fail the suite.
+        if fs::write(destination.join(".probe"), b"probe").is_ok() {
+            fs::set_permissions(&destination, fs::Permissions::from_mode(0o700)).unwrap();
+            return;
+        }
+
+        let error = super::place_app_bundle(&bundle, &destination, &destination.join("REAPER.app"))
+            .unwrap_err();
+
+        // Restore write access so the tempdir can clean itself up.
+        fs::set_permissions(&destination, fs::Permissions::from_mode(0o700)).unwrap();
+
+        let wrapped = super::install_failure(&destination, error);
+        assert!(matches!(
+            wrapped,
+            DiskImageError::AppBundleInstallFailed { .. }
+        ));
+        assert!(wrapped.to_string().contains("Applications"));
     }
 
     #[test]

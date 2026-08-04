@@ -31,11 +31,12 @@ pub enum ElevationError {
     /// `WaitForSingleObject` or `GetExitCodeProcess` failed, or the process
     /// terminated abnormally so we have no exit code to report.
     WaitFailed { program: PathBuf, message: String },
-    /// The user dismissed the UAC consent prompt. Distinct from a generic
-    /// launch failure so the caller can surface a clearer message.
+    /// The user dismissed the elevation prompt — the UAC consent dialog on
+    /// Windows, the admin authorization dialog on macOS. Distinct from a
+    /// generic launch failure so the caller can surface a clearer message.
     UserCancelledElevation { program: PathBuf },
-    /// Compiled on a target that has no elevation primitive (only Windows
-    /// supports this code path today).
+    /// Compiled on a target that has no elevation primitive (Windows and
+    /// macOS are the two that do).
     Unsupported,
 }
 
@@ -52,9 +53,11 @@ impl std::fmt::Display for ElevationError {
                 "could not read exit status for elevated process {}: {message}",
                 program.display()
             ),
+            // Raised on both Windows (UAC declined) and macOS (osascript
+            // reporting "User canceled"), so the wording stays neutral.
             Self::UserCancelledElevation { program } => write!(
                 f,
-                "the Windows administrator approval prompt for {} was cancelled or declined",
+                "the administrator approval prompt for {} was cancelled or declined",
                 program.display()
             ),
             Self::Unsupported => write!(

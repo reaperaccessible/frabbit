@@ -202,6 +202,17 @@ wizard-summary-packages-selected = Packages selected: { $packages }
 wizard-summary-cache = Cache: { $path }
 wizard-summary-planned-app = Planned app path: { $path }
 wizard-summary-error = Error: { $message }
+
+# Install-failure messages. They feed the { $message } of
+# "wizard-summary-error" when FRABBIT knows exactly which failure occurred;
+# otherwise the error's technical text is used as-is.
+error-elevation-cancelled-macos = Administrator authorization was declined or cancelled. Nothing was installed. Re-run the installation and enter your administrator password when macOS asks for it.
+error-elevation-cancelled-windows = The administrator approval prompt was declined or cancelled. Nothing was installed. Re-run the installation and approve the prompt, or pick a portable REAPER target, which needs no elevation.
+# $code is the installer's exit code, or "error-exit-code-unknown".
+error-pkg-installer-failed = The macOS installer stopped on an error (code { $code }). The installation may be incomplete. The report saved under the FRABBIT/logs folder has the details.
+# $destination is the install folder, for example /Applications.
+error-app-bundle-install-failed = The application could not be installed into { $destination }. Check that you can write to that folder and that no existing copy is locked, then re-run the installation.
+error-exit-code-unknown = unknown
 wizard-summary-resource-items-created = Resource items created: { $count }
 wizard-summary-packages-installed-or-checked = Packages installed or checked: { $count }
 wizard-summary-packages-current = Packages already current: { $count }
