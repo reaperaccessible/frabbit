@@ -119,7 +119,14 @@ fn execute_program_plan(plan: &PlannedExecutionPlan) -> Result<()> {
         });
     };
 
-    if plan.requires_elevation {
+    // Only raise a UAC prompt when we actually need to. If FRABBIT already
+    // runs elevated — the user disabled UAC (an admin's processes then carry
+    // the full token), or launched FRABBIT "as administrator" — the vendor
+    // installer can be run directly. Invoking the `runas` verb in that state
+    // is not just redundant: with UAC fully disabled there is no elevation
+    // service, so `runas` fails with ERROR_CANCELLED (1223) and the install
+    // looks "cancelled" though the user never saw a prompt.
+    if plan.requires_elevation && !frabbit_platform::is_process_elevated() {
         return execute_program_plan_elevated(plan, program);
     }
 

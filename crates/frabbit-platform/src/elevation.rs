@@ -70,6 +70,52 @@ impl std::fmt::Display for ElevationError {
 
 impl std::error::Error for ElevationError {}
 
+/// `true` if the current process already runs with an elevated
+/// (administrator) token. Two common ways to reach that state on Windows:
+/// the user disabled UAC (so an administrator account's processes always
+/// carry the full token), or FRABBIT was launched with "Run as
+/// administrator". In either case the vendor installers can be run
+/// directly and the `runas` verb must be *skipped* — with UAC fully
+/// disabled there is no elevation service to satisfy a `runas` request, so
+/// it comes back as `ERROR_CANCELLED` (1223) even though nothing was
+/// actually cancelled. Always `false` off Windows (the notion doesn't
+/// apply to the platforms FRABBIT's elevation path targets).
+pub fn is_process_elevated() -> bool {
+    platform_is_process_elevated()
+}
+
+#[cfg(windows)]
+fn platform_is_process_elevated() -> bool {
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use windows_sys::Win32::Security::{
+        GetTokenInformation, TOKEN_ELEVATION, TOKEN_QUERY, TokenElevation,
+    };
+    use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+
+    unsafe {
+        let mut token: HANDLE = std::ptr::null_mut();
+        if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
+            return false;
+        }
+        let mut elevation = TOKEN_ELEVATION { TokenIsElevated: 0 };
+        let mut return_length = 0u32;
+        let ok = GetTokenInformation(
+            token,
+            TokenElevation,
+            &mut elevation as *mut TOKEN_ELEVATION as *mut core::ffi::c_void,
+            std::mem::size_of::<TOKEN_ELEVATION>() as u32,
+            &mut return_length,
+        );
+        CloseHandle(token);
+        ok != 0 && elevation.TokenIsElevated != 0
+    }
+}
+
+#[cfg(not(windows))]
+fn platform_is_process_elevated() -> bool {
+    false
+}
+
 /// Launch `program` with `arguments` under UAC elevation and block until it
 /// exits. Returns the process exit code (`Some(n)`) on a clean exit, or
 /// `None` if the OS could not return one (rare). Working directory may be
