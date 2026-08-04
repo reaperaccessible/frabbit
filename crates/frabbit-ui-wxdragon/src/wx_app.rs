@@ -303,6 +303,41 @@ fn open_external_url(url: &str) {
     let _ = Command::new("open").arg(url).spawn();
 }
 
+/// Relaunch the just-updated executable. On Windows this goes through a
+/// short-lived hidden `cmd` that waits ~1s for this instance to fully exit
+/// (so nothing holds the foreground lock), then `start`s the new exe — Windows
+/// then puts the fresh window in the foreground so the screen reader lands
+/// inside it. Mirrors how the ReaperAccessible Installer Manager relaunches;
+/// a direct spawn keeps the new window in the background instead.
+/// `FRABBIT_RELAUNCHED` / `FRABBIT_LOCALE` are inherited by the started exe.
+#[cfg(target_os = "windows")]
+fn relaunch_updated_exe(exe: &std::path::Path) -> bool {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let mut command = Command::new("cmd");
+    command
+        .raw_arg(format!(
+            "/C ping 127.0.0.1 -n 2 >nul & start \"\" \"{}\"",
+            exe.display()
+        ))
+        .creation_flags(CREATE_NO_WINDOW)
+        .env("FRABBIT_RELAUNCHED", "1");
+    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
+        command.env("FRABBIT_LOCALE", locale);
+    }
+    command.spawn().is_ok()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn relaunch_updated_exe(exe: &std::path::Path) -> bool {
+    let mut command = Command::new(exe);
+    command.env("FRABBIT_RELAUNCHED", "1");
+    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
+        command.env("FRABBIT_LOCALE", locale);
+    }
+    command.spawn().is_ok()
+}
+
 /// Download + verify the new version, replace the running exe in place, then
 /// relaunch. The download/replace run on a worker thread so the UI stays
 /// responsive; the relaunch + exit happen back on the main thread. On any
@@ -334,15 +369,8 @@ fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelec
                 // The new binary now sits at the current exe path — relaunch it,
                 // preserving the user's chosen language, then exit this instance.
                 let relaunched = std::env::current_exe().is_ok_and(|exe| {
-                    let mut command = Command::new(&exe);
-                    command.env("FRABBIT_RELAUNCHED", "1");
-                    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
-                        command.env("FRABBIT_LOCALE", locale);
-                    }
-                    // Grant the child the foreground right so its window becomes
-                    // active and the screen reader follows it after the swap.
                     frabbit_platform::exe_replace::allow_foreground_for_relaunch();
-                    command.spawn().is_ok()
+                    relaunch_updated_exe(&exe)
                 });
                 if relaunched {
                     std::process::exit(0);
