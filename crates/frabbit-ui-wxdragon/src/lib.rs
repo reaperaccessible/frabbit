@@ -1368,18 +1368,39 @@ pub fn apply_checkbox_state_to_package_row(
     } else {
         PlanActionKind::Keep
     };
-    let action_label = action_label_for_row(&localizer, new_action, row.original_action);
-    let summary = localizer
-        .format(
-            "wizard-package-row",
-            &[
-                ("package", row.display_name.as_str()),
-                ("action", action_label.as_str()),
-                ("installed", row.installed_version.as_str()),
-                ("available", row.available_version.as_str()),
-            ],
-        )
-        .value;
+    let same_version =
+        !row.installed_version.is_empty() && row.installed_version == row.available_version;
+    let (action_label, summary) = if matches!(new_action, PlanActionKind::Update) && same_version {
+        // The user checked a package that is already at the latest version:
+        // that's a reinstall of the same version, not an update. Say
+        // "Reinstall" and drop the redundant "you have X, latest is X".
+        let label = localizer.text("action-reinstall").value;
+        let summary = localizer
+            .format(
+                "wizard-package-row-reinstall",
+                &[
+                    ("package", row.display_name.as_str()),
+                    ("action", label.as_str()),
+                    ("version", row.installed_version.as_str()),
+                ],
+            )
+            .value;
+        (label, summary)
+    } else {
+        let label = action_label_for_row(&localizer, new_action, row.original_action);
+        let summary = localizer
+            .format(
+                "wizard-package-row",
+                &[
+                    ("package", row.display_name.as_str()),
+                    ("action", label.as_str()),
+                    ("installed", row.installed_version.as_str()),
+                    ("available", row.available_version.as_str()),
+                ],
+            )
+            .value;
+        (label, summary)
+    };
     row.action = new_action;
     row.action_label = action_label;
     row.summary = summary.clone();
@@ -3465,10 +3486,15 @@ mod tests {
         assert!(!row.selected);
 
         let _ = super::apply_checkbox_state_to_package_row(&model, &mut row, true).unwrap();
+        // The package is already at the latest version (1.2.6 == 1.2.6), so
+        // checking it is a REINSTALL, not an update: the action is still Update
+        // (the pipeline re-stages it) but the label says "Reinstall" and the
+        // summary drops the nonsensical "you have 1.2.6, latest is 1.2.6".
         assert_eq!(row.action, PlanActionKind::Update);
-        assert_eq!(row.action_label, "Update available");
+        assert_eq!(row.action_label, "Reinstall");
         assert!(row.selected);
-        assert!(row.summary.contains("Update available"));
+        assert!(row.summary.contains("Reinstall"));
+        assert!(!row.summary.contains("Latest is"));
     }
 
     #[test]

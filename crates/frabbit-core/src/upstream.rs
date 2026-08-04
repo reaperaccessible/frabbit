@@ -174,6 +174,14 @@ fn execute_program_plan_elevated(plan: &PlannedExecutionPlan, program: &str) -> 
 
     match exit_code {
         Some(0) => Ok(()),
+        // Exit code 1223 is Windows `ERROR_CANCELLED`. Even after elevation
+        // succeeds, an upstream installer returns it when the user cancels the
+        // install (or dismisses a prompt it raised), so surface the same
+        // recoverable "was cancelled — re-run and approve" message instead of
+        // a raw "process failed with exit code Some(1223)".
+        Some(1223) if cfg!(target_os = "windows") => Err(FrabbitError::UserCancelledElevation {
+            program: program.to_string(),
+        }),
         Some(code) => Err(FrabbitError::ProcessFailed {
             program: program.to_string(),
             exit_code: Some(code),

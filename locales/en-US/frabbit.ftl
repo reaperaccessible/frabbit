@@ -8,6 +8,7 @@ action-install = Will be installed
 action-update = Update available
 action-keep = No update available
 action-available = Available to install
+action-reinstall = Reinstall
 
 package-reaper = REAPER
 package-osara = OSARA
@@ -128,6 +129,9 @@ wizard-package-handling-unavailable = This package is not available for the sele
 
 # $package is the localized package display name, $action is the localized planned action, $installed is the installed version or unknown, and $available is the available version or unknown.
 wizard-package-row = { $package }: { $action }. You have { $installed }. Latest is { $available }
+# Shown when the installed version already matches the latest, so there is no
+# "you have X, latest is Y" to compare — the user is re-staging the same version.
+wizard-package-row-reinstall = { $package }: { $action } (version { $version })
 
 wizard-review-heading = Review your choices before confirmation
 wizard-review-target-prefix = Target

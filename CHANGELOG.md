@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6] - 2026-08-03
+
+### Corrections
+
+- Windows : quand l'installateur de REAPER (ou d'un autre produit) est annulé après l'accord administrateur, FRABBIT affiche désormais un message clair (« l'invite d'approbation administrateur a été annulée ou refusée ; relancez et approuvez, ou choisissez une cible REAPER portable ») au lieu de « process failed … exit code 1223 ».
+- Cocher un produit déjà installé et à jour affichait « Mise à jour disponible. Vous avez X. La dernière version est X » — incohérent. Ce cas indique maintenant « Réinstaller (version X) », sans comparaison de version inutile.
+
 ## [1.0.5] - 2026-08-03
 
 ### Modifications

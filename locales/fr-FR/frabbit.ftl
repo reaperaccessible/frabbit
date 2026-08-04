@@ -8,6 +8,7 @@ action-install = Sera installé
 action-update = Mise à jour disponible
 action-keep = Aucune mise à jour disponible
 action-available = Disponible à l'installation
+action-reinstall = Réinstaller
 
 package-reaper = REAPER
 package-osara = OSARA
@@ -129,6 +130,9 @@ wizard-package-handling-unavailable = Ce paquet n'est pas disponible pour la pla
 
 # $package est le nom du paquet, $action est l'action planifiée, $installed est la version installée, $available est la version disponible.
 wizard-package-row = { $package } : { $action }. Vous avez { $installed }. La dernière version est { $available }
+# Affiché quand la version installée est déjà la dernière : pas de comparaison
+# « vous avez X, la dernière est Y » à faire — l'utilisateur réinstalle la même version.
+wizard-package-row-reinstall = { $package } : { $action } (version { $version })
 
 wizard-review-heading = Vérifiez vos choix avant confirmation
 wizard-review-target-prefix = Cible
