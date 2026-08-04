@@ -92,13 +92,48 @@ fn platform_run_elevated_and_wait(
     use std::os::windows::ffi::OsStrExt;
 
     use windows_sys::Win32::Foundation::{CloseHandle, ERROR_CANCELLED, GetLastError, WAIT_FAILED};
+    use windows_sys::Win32::System::Com::{
+        COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize,
+    };
     use windows_sys::Win32::System::Threading::{
         GetExitCodeProcess, INFINITE, WaitForSingleObject,
     };
     use windows_sys::Win32::UI::Shell::{
-        SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
+        SEE_MASK_NOASYNC, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
     };
-    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        ASFW_ANY, AllowSetForegroundWindow, SW_SHOWNORMAL,
+    };
+
+    // The install pipeline runs off the UI thread. `ShellExecuteEx`'s `runas`
+    // verb can delegate to shell/COM code, and MSDN requires COM to be
+    // initialized on the calling thread; without it the UAC consent UI can
+    // fail to surface and the call comes back as ERROR_CANCELLED even though
+    // the user never saw a prompt. Initialize an apartment for the duration
+    // of this call and balance it with `CoUninitialize` on every exit path.
+    struct ComGuard {
+        should_uninitialize: bool,
+    }
+    impl Drop for ComGuard {
+        fn drop(&mut self) {
+            if self.should_uninitialize {
+                unsafe { CoUninitialize() };
+            }
+        }
+    }
+    let com_hr = unsafe { CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32) };
+    // SUCCEEDED(hr) (S_OK / S_FALSE, both >= 0) means our call added a
+    // reference we own and must release. A negative HRESULT (e.g.
+    // RPC_E_CHANGED_MODE) means another apartment already owns the thread —
+    // don't uninitialize what we didn't initialize.
+    let _com_guard = ComGuard {
+        should_uninitialize: com_hr >= 0,
+    };
+
+    // Let the elevation/consent UI take the foreground so a screen reader
+    // reliably announces and focuses it, instead of it flashing as a taskbar
+    // button the (blind) user can't see or act on.
+    unsafe { AllowSetForegroundWindow(ASFW_ANY) };
 
     let verb_w: Vec<u16> = OsStr::new("runas").encode_wide().chain(Some(0)).collect();
     let program_w: Vec<u16> = program.as_os_str().encode_wide().chain(Some(0)).collect();
@@ -112,7 +147,12 @@ fn platform_run_elevated_and_wait(
 
     let mut info = SHELLEXECUTEINFOW {
         cbSize: std::mem::size_of::<SHELLEXECUTEINFOW>() as u32,
-        fMask: SEE_MASK_NOCLOSEPROCESS,
+        // NOCLOSEPROCESS: keep the process handle so we can wait on it.
+        // NOASYNC: block until the (possibly COM/DDE-backed) operation is
+        // fully done — required when calling from a thread without a message
+        // loop, otherwise ShellExecuteEx can return before the elevated
+        // process is actually launched.
+        fMask: SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC,
         hwnd: std::ptr::null_mut(),
         lpVerb: verb_w.as_ptr(),
         lpFile: program_w.as_ptr(),

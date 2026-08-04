@@ -10,6 +10,7 @@
 ### Corrections
 
 - **Un échec sur un paquet n'interrompt plus toute l'installation, et le bilan dit enfin la vérité.** Avant, si un paquet échouait (typiquement l'invite administrateur de Windows refusée ou manquée), FRABBIT s'arrêtait net : les paquets suivants n'étaient jamais installés et le message affichait « Rien n'a été installé » — trompeur, car certains paquets l'étaient déjà. Désormais, chaque paquet est traité indépendamment : un échec est signalé **sur ce paquet précis, avec sa raison**, et les autres paquets continuent de s'installer. La page de fin liste le résultat réel de chaque paquet (« installé », « échec : approbation administrateur refusée », etc.), affiche en tête « Terminé avec des erreurs : N paquet(s) non installés », et un compteur d'échecs. Fini de croire que tout est installé alors que non.
+- **Fiabilité de l'invite administrateur (UAC) améliorée.** L'invite d'élévation était déclenchée depuis un thread de travail sans initialisation COM ni demande de premier plan, ce qui pouvait empêcher la fenêtre d'approbation de s'afficher ou de recevoir le focus (donc d'être lue par le lecteur d'écran), et se solder par un « annulé » alors que l'utilisateur n'avait rien vu. FRABBIT initialise désormais COM sur le thread, autorise la fenêtre à passer au premier plan, et attend la fin réelle de l'opération (`SEE_MASK_NOASYNC`).
 
 ## [1.0.8] - 2026-08-04
 
