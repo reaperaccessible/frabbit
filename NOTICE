@@ -1,0 +1,14 @@
+FRABBIT
+Copyright 2025 ReaperAccessible
+
+This product is a fork of the RABBIT project by Timtam
+(https://github.com/Timtam/rabbit), used under the terms of the
+MIT OR Apache-2.0 license.
+
+Portions of this software:
+  Copyright 2025 Timtam (original RABBIT project)
+
+FRABBIT modifies RABBIT: it is renamed to FRABBIT/frabbit, adds a French
+(fr-FR) locale, points update/download URLs at ReaperAccessible, and makes
+various behavioural changes. Such modifications are marked in the project's
+git history and CHANGELOG.md.

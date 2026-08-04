@@ -41,9 +41,13 @@ Une fois termine, vous pouvez lancer REAPER directement depuis l'assistant.
 
 https://reaperaccessible.fr
 
+## Credits
+
+FRABBIT est un fork de **[RABBIT](https://github.com/Timtam/rabbit)** de **Timtam**, dont il reprend le code source. Merci a Timtam et aux contributeurs de RABBIT pour ce travail.
+
 ## Licence
 
-FRABBIT est sous double licence **MIT OU Apache-2.0**.
+FRABBIT est sous double licence **MIT OU Apache-2.0**, comme le projet RABBIT dont il derive. Le copyright original de Timtam (RABBIT) est conserve dans `LICENSE-MIT`, `LICENSE-APACHE` et `NOTICE` ; ReaperAccessible detient le copyright des modifications propres a FRABBIT.
 
 ## Compilation depuis les sources
 
