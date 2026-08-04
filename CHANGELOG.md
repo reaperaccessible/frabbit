@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7] - 2026-08-04
+
+### Corrections
+
+- Les messages d'échec d'installation sont désormais **localisés** (français et anglais) au lieu d'afficher du texte technique brut. Notamment, quand l'invite d'approbation administrateur est annulée, le message est clair et traduit (avec, sous Windows, le rappel qu'une cible REAPER portable évite l'élévation).
+- Ajout de messages dédiés et clairs pour les échecs spécifiques à macOS (installateur `.pkg` en erreur, application non copiable). Contribution de math65.
+
 ## [1.0.6] - 2026-08-03
 
 ### Corrections
