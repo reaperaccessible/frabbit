@@ -70,6 +70,122 @@ impl std::fmt::Display for ElevationError {
 
 impl std::error::Error for ElevationError {}
 
+/// Whether a `requires_elevation` installer must be launched through the
+/// `runas` verb (raising a UAC prompt) rather than a plain, direct
+/// `CreateProcess`.
+///
+/// The decision keys off the process token's **elevation TYPE**, not the
+/// unreliable `TokenIsElevated` flag:
+///
+/// * `Full` — already elevated (Run as administrator, or elevated under
+///   active UAC): launch directly, no prompt.
+/// * `Limited` — a *filtered* admin token under active UAC: `runas` is
+///   needed to obtain the full token via the consent prompt.
+/// * `Default` — no split token exists. This covers BOTH a UAC-disabled
+///   admin (whose default token is already full → launch directly) and an
+///   ordinary standard user (who genuinely needs `runas`). We disambiguate
+///   with an Administrators-group membership check.
+///
+/// This fixes the case that mislabelled a working install as cancelled:
+/// with UAC disabled (`EnableLUA=0`), an administrator's token is `Default`
+/// with `TokenIsElevated == 0`. The old check saw "not elevated" and forced
+/// `runas`, but there is no elevation broker when UAC is off, so
+/// `ShellExecuteEx(runas)` returned `ERROR_CANCELLED` (1223) and the
+/// installer never ran — even though a direct launch would have installed
+/// fine with the already-full admin token. Always `false` off Windows.
+pub fn needs_runas_to_elevate() -> bool {
+    platform_needs_runas_to_elevate()
+}
+
+#[cfg(windows)]
+fn platform_needs_runas_to_elevate() -> bool {
+    use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+    use windows_sys::Win32::Security::{
+        GetTokenInformation, TOKEN_QUERY, TokenElevationType, TokenElevationTypeFull,
+        TokenElevationTypeLimited,
+    };
+    use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+
+    let elevation_type = unsafe {
+        let mut token: HANDLE = std::ptr::null_mut();
+        if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
+            // Can't tell — fail toward a direct launch rather than a
+            // possibly-doomed runas.
+            return false;
+        }
+        let mut ty: i32 = 0;
+        let mut return_length = 0u32;
+        let ok = GetTokenInformation(
+            token,
+            TokenElevationType,
+            &mut ty as *mut i32 as *mut core::ffi::c_void,
+            std::mem::size_of::<i32>() as u32,
+            &mut return_length,
+        );
+        CloseHandle(token);
+        if ok == 0 {
+            return false;
+        }
+        ty
+    };
+
+    if elevation_type == TokenElevationTypeFull as i32 {
+        false
+    } else if elevation_type == TokenElevationTypeLimited as i32 {
+        true
+    } else {
+        // Default: UAC-off admin → already full token → direct;
+        // standard user → needs runas.
+        !current_token_is_admin()
+    }
+}
+
+/// `true` if the current process's effective token has the Administrators
+/// group active (not present-but-deny-only). A UAC-off admin reads as a
+/// member; a filtered admin token reads as a non-member (Administrators is
+/// deny-only in that token); a standard user reads as a non-member.
+#[cfg(windows)]
+fn current_token_is_admin() -> bool {
+    use windows_sys::Win32::Foundation::FALSE;
+    use windows_sys::Win32::Security::{
+        AllocateAndInitializeSid, CheckTokenMembership, FreeSid, PSID, SECURITY_NT_AUTHORITY,
+    };
+    use windows_sys::Win32::System::SystemServices::{
+        DOMAIN_ALIAS_RID_ADMINS, SECURITY_BUILTIN_DOMAIN_RID,
+    };
+
+    unsafe {
+        let mut authority = SECURITY_NT_AUTHORITY;
+        let mut admins: PSID = std::ptr::null_mut();
+        if AllocateAndInitializeSid(
+            &mut authority,
+            2,
+            SECURITY_BUILTIN_DOMAIN_RID as u32,
+            DOMAIN_ALIAS_RID_ADMINS as u32,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            &mut admins,
+        ) == 0
+        {
+            return false;
+        }
+        let mut is_member = FALSE;
+        // NULL token = the process's effective token.
+        let ok = CheckTokenMembership(std::ptr::null_mut(), admins, &mut is_member);
+        FreeSid(admins);
+        ok != 0 && is_member != FALSE
+    }
+}
+
+#[cfg(not(windows))]
+fn platform_needs_runas_to_elevate() -> bool {
+    false
+}
+
 /// Launch `program` with `arguments` under UAC elevation and block until it
 /// exits. Returns the process exit code (`Some(n)`) on a clean exit, or
 /// `None` if the OS could not return one (rare). Working directory may be
@@ -92,13 +208,48 @@ fn platform_run_elevated_and_wait(
     use std::os::windows::ffi::OsStrExt;
 
     use windows_sys::Win32::Foundation::{CloseHandle, ERROR_CANCELLED, GetLastError, WAIT_FAILED};
+    use windows_sys::Win32::System::Com::{
+        COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize,
+    };
     use windows_sys::Win32::System::Threading::{
         GetExitCodeProcess, INFINITE, WaitForSingleObject,
     };
     use windows_sys::Win32::UI::Shell::{
-        SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
+        SEE_MASK_NOASYNC, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
     };
-    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        ASFW_ANY, AllowSetForegroundWindow, SW_SHOWNORMAL,
+    };
+
+    // The install pipeline runs off the UI thread. `ShellExecuteEx`'s `runas`
+    // verb can delegate to shell/COM code, and MSDN requires COM to be
+    // initialized on the calling thread; without it the UAC consent UI can
+    // fail to surface and the call comes back as ERROR_CANCELLED even though
+    // the user never saw a prompt. Initialize an apartment for the duration
+    // of this call and balance it with `CoUninitialize` on every exit path.
+    struct ComGuard {
+        should_uninitialize: bool,
+    }
+    impl Drop for ComGuard {
+        fn drop(&mut self) {
+            if self.should_uninitialize {
+                unsafe { CoUninitialize() };
+            }
+        }
+    }
+    let com_hr = unsafe { CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32) };
+    // SUCCEEDED(hr) (S_OK / S_FALSE, both >= 0) means our call added a
+    // reference we own and must release. A negative HRESULT (e.g.
+    // RPC_E_CHANGED_MODE) means another apartment already owns the thread —
+    // don't uninitialize what we didn't initialize.
+    let _com_guard = ComGuard {
+        should_uninitialize: com_hr >= 0,
+    };
+
+    // Let the elevation/consent UI take the foreground so a screen reader
+    // reliably announces and focuses it, instead of it flashing as a taskbar
+    // button the (blind) user can't see or act on.
+    unsafe { AllowSetForegroundWindow(ASFW_ANY) };
 
     let verb_w: Vec<u16> = OsStr::new("runas").encode_wide().chain(Some(0)).collect();
     let program_w: Vec<u16> = program.as_os_str().encode_wide().chain(Some(0)).collect();
@@ -112,7 +263,12 @@ fn platform_run_elevated_and_wait(
 
     let mut info = SHELLEXECUTEINFOW {
         cbSize: std::mem::size_of::<SHELLEXECUTEINFOW>() as u32,
-        fMask: SEE_MASK_NOCLOSEPROCESS,
+        // NOCLOSEPROCESS: keep the process handle so we can wait on it.
+        // NOASYNC: block until the (possibly COM/DDE-backed) operation is
+        // fully done — required when calling from a thread without a message
+        // loop, otherwise ShellExecuteEx can return before the elevated
+        // process is actually launched.
+        fMask: SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC,
         hwnd: std::ptr::null_mut(),
         lpVerb: verb_w.as_ptr(),
         lpFile: program_w.as_ptr(),

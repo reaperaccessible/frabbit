@@ -574,6 +574,23 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 print_package_operation_report(&report);
             }
+            // A per-package failure no longer aborts the batch (the report
+            // lists what did and didn't install), but the process must
+            // still exit non-zero so scripts and CI see the failure.
+            let failed = report
+                .items
+                .iter()
+                .filter(|item| {
+                    matches!(
+                        item.status,
+                        frabbit_core::operation::PackageOperationStatus::Failed
+                    )
+                })
+                .count();
+            if failed > 0 {
+                eprintln!("{failed} package(s) failed to install; see the report above.");
+                std::process::exit(1);
+            }
         }
         Command::Setup {
             resource_path,

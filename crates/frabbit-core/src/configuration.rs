@@ -17,13 +17,25 @@ use serde::{Deserialize, Serialize};
 
 use crate::Result;
 use crate::package::PACKAGE_REAPACK;
-use crate::reapack::{RemoteUpsertOutcome, is_remote_configured, upsert_remote};
+use crate::reapack::{
+    CuratedDefaultsOutcome, RemoteUpsertOutcome, apply_curated_reapack_defaults,
+    is_remote_configured, upsert_remote,
+};
 
 /// Stable id for the "configure REAPER Accessibility ReaPack remote"
 /// step. Used by callers (CLI, wizard) to identify the step across
 /// runs.
 pub const CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE: &str =
     "reapack-add-reaper-accessibility-remote";
+
+/// Stable id for the always-on "curate ReaPack defaults" action FRABBIT
+/// runs whenever ReaPack is installed or already present: it writes
+/// `[general] version` and `[install] autoinstall=0` into `reapack.ini`
+/// so ReaPack never seeds its default repositories nor mass-installs
+/// scripts on the first synchronize. This is *not* a user-selectable
+/// step — FRABBIT must not impose repositories, so the safe defaults are
+/// applied unconditionally rather than offered as an opt-in row.
+pub const CONFIG_REAPACK_CURATED_DEFAULTS: &str = "reapack-curated-defaults";
 
 /// Display name to write into `reapack.ini`'s `remote<N>=<name>|...`
 /// entry. ReaPack shows this in its Manage Repositories UI.
@@ -99,6 +111,14 @@ pub enum ConfigurationMessage {
     ReapackRemoteCreatedFile { name: String, url: String },
     /// Dry-run preview of an `AddReapackRemote` step.
     ReapackRemoteDryRun { name: String, url: String },
+    /// Curated-defaults action wrote (or updated) `reapack.ini` to skip
+    /// ReaPack's default repositories and disable auto-install.
+    ReapackDefaultsCurated,
+    /// Curated-defaults action found an existing ReaPack config and left
+    /// it completely untouched (no repo removed, no setting overridden).
+    ReapackDefaultsLeftExisting,
+    /// Dry-run preview of the curated-defaults action.
+    ReapackDefaultsCuratedDryRun,
     /// User opted out of this configuration step.
     Skipped { step_id: String },
     /// The step's `requires_package_id` dependency wasn't satisfied.
@@ -211,9 +231,7 @@ pub fn apply_configuration_step(
                     },
                 ),
                 RemoteUpsertOutcome::CreatedFile => (
-                    format!(
-                        "Created reapack.ini with ReaPack remote {name:?} ({url}). ReaPack will add its default repositories on the next REAPER launch."
-                    ),
+                    format!("Created reapack.ini with ReaPack remote {name:?} ({url})."),
                     ConfigurationMessage::ReapackRemoteCreatedFile {
                         name: name.clone(),
                         url: url.clone(),
@@ -228,6 +246,44 @@ pub fn apply_configuration_step(
             })
         }
     }
+}
+
+/// Apply FRABBIT's always-on curated ReaPack defaults and return a
+/// report the wizard / CLI can fold in alongside the opt-in steps. Unlike
+/// [`apply_configuration_step`], this isn't tied to a user selection —
+/// callers run it unconditionally whenever ReaPack is installed or part
+/// of the plan, because FRABBIT must not let ReaPack impose default
+/// repositories or auto-install scripts the user never chose.
+pub fn apply_reapack_curated_defaults(
+    resource_path: &Path,
+    dry_run: bool,
+) -> Result<ConfigurationStepReport> {
+    if dry_run {
+        return Ok(ConfigurationStepReport {
+            step_id: CONFIG_REAPACK_CURATED_DEFAULTS.to_string(),
+            status: ConfigurationStatus::DryRun,
+            message: "Would configure ReaPack to skip its default repositories and disable automatic installation of scripts.".to_string(),
+            message_code: ConfigurationMessage::ReapackDefaultsCuratedDryRun,
+        });
+    }
+
+    let outcome = apply_curated_reapack_defaults(resource_path)?;
+    let (message, message_code) = match outcome {
+        CuratedDefaultsOutcome::LeftExisting => (
+            "ReaPack already had its own configuration; left it untouched — no repository removed, no setting changed.".to_string(),
+            ConfigurationMessage::ReapackDefaultsLeftExisting,
+        ),
+        CuratedDefaultsOutcome::Updated | CuratedDefaultsOutcome::CreatedFile => (
+            "Configured ReaPack to skip its default repositories and disable automatic installation, so synchronizing won't pull in unwanted scripts.".to_string(),
+            ConfigurationMessage::ReapackDefaultsCurated,
+        ),
+    };
+    Ok(ConfigurationStepReport {
+        step_id: CONFIG_REAPACK_CURATED_DEFAULTS.to_string(),
+        status: ConfigurationStatus::Applied,
+        message,
+        message_code,
+    })
 }
 
 fn dry_run_message_for(step: &ConfigurationStep) -> (String, ConfigurationMessage) {
@@ -377,6 +433,47 @@ mod tests {
         assert!(!is_configuration_step_applied(dir.path(), step).unwrap());
         apply_configuration_step(dir.path(), step, false).unwrap();
         assert!(is_configuration_step_applied(dir.path(), step).unwrap());
+    }
+
+    #[test]
+    fn curated_defaults_apply_writes_and_reports_applied() {
+        let dir = tempdir().unwrap();
+        let report = apply_reapack_curated_defaults(dir.path(), false).unwrap();
+        assert_eq!(report.step_id, CONFIG_REAPACK_CURATED_DEFAULTS);
+        assert_eq!(report.status, ConfigurationStatus::Applied);
+        assert_eq!(
+            report.message_code,
+            ConfigurationMessage::ReapackDefaultsCurated
+        );
+
+        let ini =
+            std::fs::read_to_string(dir.path().join(crate::reapack::REAPACK_INI_RELATIVE_PATH))
+                .unwrap();
+        assert!(ini.contains("version=4"));
+        assert!(ini.contains("autoinstall=0"));
+
+        // Second run finds the config it wrote and leaves it untouched.
+        let again = apply_reapack_curated_defaults(dir.path(), false).unwrap();
+        assert_eq!(
+            again.message_code,
+            ConfigurationMessage::ReapackDefaultsLeftExisting
+        );
+    }
+
+    #[test]
+    fn curated_defaults_dry_run_does_not_touch_disk() {
+        let dir = tempdir().unwrap();
+        let report = apply_reapack_curated_defaults(dir.path(), true).unwrap();
+        assert_eq!(report.status, ConfigurationStatus::DryRun);
+        assert_eq!(
+            report.message_code,
+            ConfigurationMessage::ReapackDefaultsCuratedDryRun
+        );
+        assert!(
+            !dir.path()
+                .join(crate::reapack::REAPACK_INI_RELATIVE_PATH)
+                .exists()
+        );
     }
 
     #[test]

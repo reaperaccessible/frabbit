@@ -81,6 +81,8 @@ wizard-target-custom-portable-note = FRABBIT créera le chemin des ressources RE
 
 # $version est la version de REAPER et $path est le chemin des ressources.
 wizard-target-row = REAPER { $version } dans { $path }
+wizard-target-row-not-installed = REAPER — non installé (sera installé dans { $path })
+wizard-target-row-unknown-version = REAPER (version indéterminée) dans { $path }
 
 # $app_path est le chemin de l'application REAPER, $path est le chemin des ressources,
 # $version est la version de REAPER, et $writable est oui/non.
@@ -103,6 +105,7 @@ wizard-configuration-row-status-requires = nécessite { $package }
 wizard-configuration-row-status-already-applied = déjà appliqué
 config-reapack-reaper-accessibility-name = Ajouter le dépôt ReaPack ReaperAccessible
 config-reapack-reaper-accessibility-description = Ajoute le dépôt ReaPack ReaperAccessible. Une fois ajouté, allez dans le menu Extensions, ReaPack, Parcourir les paquets pour obtenir des scripts et plugins accessibles supplémentaires.
+config-reapack-curated-defaults-name = Empêcher ReaPack d'installer des dépôts non désirés
 
 
 wizard-version-check-heading = Vérification des dernières versions
@@ -214,8 +217,8 @@ wizard-summary-error = Erreur : { $message }
 # Messages d'échec d'installation. Ils alimentent le { $message } de
 # « wizard-summary-error » quand FRABBIT sait précisément de quel échec il
 # s'agit ; sinon le texte technique de l'erreur est repris tel quel.
-error-elevation-cancelled-macos = L'autorisation administrateur a été refusée ou annulée. Rien n'a été installé. Relancez l'installation et saisissez votre mot de passe administrateur lorsque macOS le demande.
-error-elevation-cancelled-windows = L'invite d'approbation administrateur a été refusée ou annulée. Rien n'a été installé. Relancez l'installation et approuvez l'invite, ou choisissez une cible REAPER portable, qui ne demande pas d'élévation.
+error-elevation-cancelled-macos = L'autorisation administrateur a été refusée ou annulée : les paquets qui nécessitent les droits administrateur n'ont pas été installés. Relancez l'installation et saisissez votre mot de passe administrateur lorsque macOS le demande. Consultez le détail par paquet pour voir exactement ce qui a été installé ou non.
+error-elevation-cancelled-windows = L'invite d'approbation administrateur a été refusée ou annulée : les paquets qui nécessitent les droits administrateur n'ont pas été installés. Relancez et approuvez l'invite, ou choisissez une cible REAPER portable, qui ne demande pas d'élévation. Consultez le détail par paquet pour voir exactement ce qui a été installé ou non.
 # $code est le code de sortie de l'installateur, ou « error-exit-code-unknown ».
 error-pkg-installer-failed = L'installateur macOS s'est arrêté sur une erreur (code { $code }). L'installation est peut-être incomplète. Le rapport enregistré dans le dossier FRABBIT/logs donne le détail.
 # $destination est le dossier d'installation, par exemple /Applications.
@@ -225,6 +228,7 @@ wizard-summary-resource-items-created = Éléments de ressource créés : { $cou
 wizard-summary-packages-installed-or-checked = Paquets installés ou vérifiés : { $count }
 wizard-summary-packages-current = Paquets déjà à jour : { $count }
 wizard-summary-packages-manual = Paquets nécessitant une attention manuelle : { $count }
+wizard-summary-packages-failed = Paquets dont l'installation a échoué : { $count }
 wizard-summary-backup-files-created = Fichiers de sauvegarde créés : { $count }
 wizard-summary-backup-file = Fichier de sauvegarde : { $path }
 wizard-summary-receipt-backup = Sauvegarde du reçu : { $path }
@@ -242,10 +246,14 @@ status-installed-or-checked = Installé ou vérifié
 status-planned-unattended = Planifié sans intervention
 status-deferred-unattended = Reporté sans intervention
 status-skipped-current = Ignoré (déjà à jour)
+status-failed = Échec — non installé
 
 package-status-extension-binary-installed = Binaire d'extension unique géré par l'installateur FRABBIT.
 # $installed est la version sur disque ; $available est la dernière version disponible.
 package-status-skipped-current = La version installée { $installed } est à jour ou plus récente que la version disponible { $available }.
+package-status-elevation-declined = L'approbation administrateur (UAC) a été refusée ou annulée : ce paquet n'a pas été installé. Relancez et approuvez l'invite, ou choisissez une cible REAPER portable, qui ne demande aucune élévation.
+# $detail est la description technique de l'erreur (en anglais).
+package-status-install-failed = L'installation a échoué : { $detail }
 # $automation est l'un des libellés "package-automation-*".
 package-status-dry-run-would-run-unattended = Simulation : FRABBIT téléchargerait et exécuterait ce { $automation } sans intervention.
 package-status-deferred-unattended-staged = Cette version n'a pas encore implémenté le chemin d'exécution sans intervention pour { $automation }. FRABBIT a placé l'artefact dans le cache mais ne l'a pas exécuté.
@@ -262,8 +270,11 @@ package-automation-extension-binary = installation directe de fichier
 # $name est le nom lisible du dépôt distant ; $url est l'URL du fichier XML d'index.
 config-message-reapack-remote-already-present = Le dépôt distant ReaPack { $name } ({ $url }) est déjà configuré dans reapack.ini.
 config-message-reapack-remote-added = Le dépôt distant ReaPack { $name } ({ $url }) a été ajouté à reapack.ini.
-config-message-reapack-remote-created-file = reapack.ini a été créé avec le dépôt distant ReaPack { $name } ({ $url }). ReaPack ajoutera ses dépôts par défaut au prochain lancement de REAPER.
+config-message-reapack-remote-created-file = reapack.ini a été créé avec le dépôt distant ReaPack { $name } ({ $url }).
 config-message-reapack-remote-dry-run = Ajouterait le dépôt distant ReaPack { $name } ({ $url }) à reapack.ini.
+config-message-reapack-defaults-curated = ReaPack a été configuré pour ne pas ajouter ses dépôts par défaut ni rien installer automatiquement : lors de la synchronisation, des milliers de scripts non désirés ne seront pas installés. Vous gardez le contrôle : parcourez ReaPack et installez uniquement ce que vous voulez.
+config-message-reapack-defaults-left-existing = ReaPack avait déjà sa propre configuration : FRABBIT n'y a pas touché du tout. Aucun de vos dépôts n'a été supprimé et aucun réglage n'a été modifié.
+config-message-reapack-defaults-dry-run = Configurerait ReaPack pour ne pas ajouter ses dépôts par défaut ni rien installer automatiquement.
 # $step est l'identifiant de l'étape de configuration.
 config-message-skipped = L'étape de configuration { $step } n'a pas été sélectionnée.
 # $step est l'identifiant de l'étape ; $dependency est l'identifiant du paquet dépendant.
@@ -291,6 +302,7 @@ wizard-summary-keymap-installed = KeyMap installé : { $name }. L'ancien keymap 
 wizard-summary-status-finished-keymap-only = Terminé. KeyMap { $name } appliqué.
 wizard-summary-status-finished-with-keymap = Terminé. { $installed } élément(s) de paquet installé(s) ou vérifié(s) et KeyMap { $name } appliqué ; { $manual } nécessitent une attention manuelle.
 wizard-summary-status-finished = Terminé. { $installed } élément(s) de paquet installé(s) ou vérifié(s) ; { $manual } nécessitent une attention manuelle.
+wizard-summary-status-finished-with-failures = Terminé avec des erreurs : { $failed } paquet(s) N'ONT PAS été installés, { $installed } installé(s) ou vérifié(s). Consultez le détail par paquet ci-dessous.
 
 wizard-planned-runner-launch-installer = Lancer l'installateur
 wizard-planned-runner-extract-archive = Extraire l'archive et exécuter l'installateur contenu

@@ -770,7 +770,7 @@ fn standard_windows_installation(require_existing: bool) -> Option<Installation>
     let app_path = windows_reaper_app_candidates()
         .into_iter()
         .find(|path| path.is_file())
-        .unwrap_or_else(|| PathBuf::from(r"C:\Program Files\REAPER\reaper.exe"));
+        .unwrap_or_else(default_windows_reaper_app_path);
 
     if require_existing && !app_path.exists() && !resource_path.exists() {
         return None;
@@ -819,6 +819,23 @@ fn standard_windows_installation(require_existing: bool) -> Option<Installation>
         },
         evidence,
     })
+}
+
+/// REAPER's own 64-bit installer default, used ONLY when no existing install
+/// is found on disk or in the registry: `%ProgramFiles%\REAPER (x64)\reaper.exe`.
+/// The bundled `reaper*_x64-install.exe` writes here by default, and
+/// [`windows_reaper_app_candidates`] probes this location first — so a fresh
+/// FRABBIT install lands exactly where the user, REAPER's own uninstaller, and
+/// FRABBIT's next detection all expect it. The previous bare
+/// `C:\Program Files\REAPER` fallback produced a duplicate, mislocated install
+/// alongside the user's real `REAPER (x64)`.
+fn default_windows_reaper_app_path() -> PathBuf {
+    frabbit_platform::windows_program_files_dirs()
+        .into_iter()
+        .next() // %ProgramFiles% — the 64-bit dir for a native x64 process
+        .unwrap_or_else(|| PathBuf::from(r"C:\Program Files"))
+        .join("REAPER (x64)")
+        .join("reaper.exe")
 }
 
 fn windows_reaper_app_candidates() -> Vec<PathBuf> {
