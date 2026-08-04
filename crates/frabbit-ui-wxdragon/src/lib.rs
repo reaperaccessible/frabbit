@@ -2526,7 +2526,7 @@ fn package_rows(
     architecture: Architecture,
     package_specs: &[PackageSpec],
     actions: &[PlanAction],
-    host: &HostCapabilities,
+    _host: &HostCapabilities,
 ) -> Vec<PackageRow> {
     let specs_by_id: BTreeMap<_, _> = package_specs
         .iter()
@@ -2546,23 +2546,11 @@ fn package_rows(
                 .unwrap_or_default();
             let installed_version = version_text(localizer, action.installed_version.as_ref());
             let available_version = version_text(localizer, action.available_version.as_ref());
-            // Auto-tick rule:
-            //  - Update → always ticked (the package is already on disk; the
-            //    user opted into having it, so keep it current by default).
-            //  - Install → only ticked when the spec is *effectively*
-            //    recommended. That's the manifest baseline OR a host-conditional
-            //    escalation (e.g. ReaKontrol's `recommended_when:
-            //    komplete_kontrol_installed`), so non-recommended packages
-            //    (FFmpeg, plain ReaKontrol on a non-KK host) stay unchecked.
-            //  - Keep → never ticked (nothing to do).
-            let recommended = spec
-                .map(|spec| frabbit_core::package::effective_recommended(spec, host))
-                .unwrap_or(false);
-            let initially_selected = match action.action {
-                PlanActionKind::Update => true,
-                PlanActionKind::Install => recommended,
-                PlanActionKind::Keep => false,
-            };
+            // No product is ever auto-ticked. Regardless of the plan action
+            // (Install / Update / Keep) or the manifest's recommended flag,
+            // every product row starts UNCHECKED — the user checks exactly
+            // what they want themselves.
+            let initially_selected = false;
             // When the auto-tick rule leaves an Install/Update row unticked,
             // mirror what `apply_checkbox_state_to_package_row(checked=false)`
             // does on a manual untick: flip the *displayed* action to Keep so
@@ -3007,9 +2995,17 @@ fn action_label_for_row(
     action: PlanActionKind,
     original_action: PlanActionKind,
 ) -> String {
-    if matches!(action, PlanActionKind::Keep) && matches!(original_action, PlanActionKind::Install)
-    {
-        return localizer.text("action-available").value;
+    // A row shown as Keep because it starts unchecked should still tell the
+    // user what it *could* do, based on the plan's original decision:
+    //  - Install → "Available to install"
+    //  - Update  → "Update available" (an update exists; the user just hasn't
+    //    ticked it — never claim "No update available" on such a row).
+    if matches!(action, PlanActionKind::Keep) {
+        match original_action {
+            PlanActionKind::Install => return localizer.text("action-available").value,
+            PlanActionKind::Update => return localizer.text("action-update").value,
+            _ => {}
+        }
     }
     action_label(localizer, action)
 }
@@ -3366,18 +3362,21 @@ mod tests {
                 .contains(&model.package_rows[0].description),
             "expected OSARA description embedded in details"
         );
-        assert_eq!(model.package_rows[0].action_label, "Will be installed");
+        // No product auto-ticks now: OSARA (an Install) starts unchecked and
+        // shows "Available to install" until the user ticks it.
+        assert_eq!(model.package_rows[0].action_label, "Available to install");
         assert!(!model.package_rows[0].manual_attention_expected);
         assert_eq!(
             model.package_rows[0].handling_summary,
             model.text.package_handling_unattended
         );
-        assert!(model.package_rows[0].selected);
+        assert!(!model.package_rows[0].selected);
         assert_eq!(model.package_rows[1].action_label, "No update available");
         assert!(!model.package_rows[1].manual_attention_expected);
         assert!(!model.package_rows[1].selected);
-        assert!(model.controls.can_go_next);
-        assert!(model.controls.can_install);
+        // Nothing is ticked by default, so there's nothing to install until the
+        // user makes a selection.
+        assert!(!model.controls.can_install);
         assert!(model.review_lines.iter().any(|line| line.contains("OSARA")));
     }
 
@@ -3407,10 +3406,12 @@ mod tests {
                 notes: Vec::new(),
             },
         );
+        // Starts unchecked (no product auto-ticks): shown as Keep /
+        // "Available to install".
         let mut row = model.package_rows[0].clone();
-        assert_eq!(row.action, PlanActionKind::Install);
-        assert_eq!(row.action_label, "Will be installed");
-        assert!(row.selected);
+        assert_eq!(row.action, PlanActionKind::Keep);
+        assert_eq!(row.action_label, "Available to install");
+        assert!(!row.selected);
 
         let summary = super::apply_checkbox_state_to_package_row(&model, &mut row, false).unwrap();
         assert_eq!(row.action, PlanActionKind::Keep);
@@ -3559,12 +3560,11 @@ mod tests {
     }
 
     #[test]
-    fn reakontrol_install_row_starts_ticked_when_komplete_kontrol_is_detected() {
-        // ReaKontrol's manifest baseline is `recommended: false`, but it
-        // declares `recommended_when: komplete_kontrol_installed` so the
-        // wizard escalates it to recommended-by-default for users who have
-        // Komplete Kontrol on their host. This test pins the host capability
-        // explicitly so the result doesn't depend on whether dev/CI has KK.
+    fn reakontrol_install_row_never_auto_ticks() {
+        // No product auto-ticks anymore, not even a recommended one. Even on a
+        // host with Komplete Kontrol installed (which used to escalate
+        // ReaKontrol to recommended-by-default), the row starts UNCHECKED — the
+        // user ticks what they want.
         let localizer = Localizer::embedded("en-US").unwrap();
         let text = super::wizard_text(&localizer);
         let specs = builtin_package_specs(Platform::Windows);
@@ -3589,13 +3589,12 @@ mod tests {
             &host,
         );
         assert!(
-            rows[0].selected,
-            "ReaKontrol Install row must auto-tick on a host where Komplete \
-             Kontrol is detected"
+            !rows[0].selected,
+            "ReaKontrol Install row must start unticked even when Komplete \
+             Kontrol is detected — no product auto-ticks"
         );
 
-        // Sanity: same plan, KK absent → row stays unticked (the manifest
-        // baseline of recommended:false wins).
+        // Same plan, KK absent → still unticked.
         let rows = super::package_rows(
             &localizer,
             &text,
@@ -3619,10 +3618,11 @@ mod tests {
     }
 
     #[test]
-    fn non_recommended_package_update_row_starts_ticked() {
-        // Update means the package is already on disk — the user opted into
-        // having it. FRABBIT should keep it current by default, so the Update
-        // row stays auto-ticked even for a non-recommended package.
+    fn update_row_starts_unticked_but_advertises_the_update() {
+        // No product auto-ticks — not even an Update for a package already on
+        // disk. The row starts UNCHECKED (shown as Keep), but its label still
+        // advertises that an update is available so the user knows they can
+        // tick it. It must never claim "No update available".
         let localizer = Localizer::embedded("en-US").unwrap();
         let installation = fake_installation();
         let model = model_from_plan(
@@ -3644,8 +3644,9 @@ mod tests {
             },
         );
         let row = &model.package_rows[0];
-        assert_eq!(row.action, PlanActionKind::Update);
-        assert!(row.selected);
+        assert_eq!(row.action, PlanActionKind::Keep);
+        assert!(!row.selected);
+        assert_eq!(row.action_label, "Update available");
     }
 
     #[test]
@@ -3905,7 +3906,8 @@ mod tests {
 
         assert_eq!(reapack.action, PlanActionKind::Keep);
         assert!(!reapack.selected);
-        assert!(plan.package_rows.iter().any(|row| row.selected));
+        // No product auto-ticks: every row in a freshly-built plan is unchecked.
+        assert!(!plan.package_rows.iter().any(|row| row.selected));
     }
 
     #[test]
@@ -3934,7 +3936,10 @@ mod tests {
             .unwrap();
 
         assert_eq!(reaper.display_name, "REAPER");
-        assert_eq!(reaper.action, PlanActionKind::Install);
+        // REAPER is present in the plan but, like every product, starts
+        // unchecked (shown as Keep / "Available to install").
+        assert_eq!(reaper.action, PlanActionKind::Keep);
+        assert_eq!(reaper.action_label, "Available to install");
         assert!(!reaper.manual_attention_expected);
         // Handling-kind no longer surfaces in the wizard details pane; it
         // remains as a structured field on PackageRow for the saved report.
@@ -3942,7 +3947,7 @@ mod tests {
             reaper.handling_summary,
             model.text.package_handling_unattended
         );
-        assert!(reaper.selected);
+        assert!(!reaper.selected);
     }
 
     #[test]

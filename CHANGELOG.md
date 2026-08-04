@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-08-03
+
+### Modifications
+
+- Dans la liste des produits, **aucun produit n'est plus coché automatiquement** : chaque ligne démarre décochée et c'est à l'utilisateur de cocher exactement ce qu'il veut installer ou mettre à jour. Les produits déjà installés pour lesquels une mise à jour existe affichent toujours « Update available » (mise à jour disponible) même décochés, pour que l'information reste visible.
+
 ## [1.0.4] - 2026-08-03
 
 ### Corrections
