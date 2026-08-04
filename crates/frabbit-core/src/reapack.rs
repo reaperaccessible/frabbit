@@ -10,6 +10,17 @@ use crate::version::Version;
 pub const REAPACK_REGISTRY_RELATIVE_PATH: &str = "ReaPack/registry.db";
 pub const REAPACK_INI_RELATIVE_PATH: &str = "reapack.ini";
 
+/// The `[general] version=` marker ReaPack uses to decide whether to run
+/// its first-time migration. ReaPack's `migrate()` only ever *seeds its
+/// default repositories* (ReaTeam Extensions/Scripts, MPL, etc.) at each
+/// version bump; if `reapack.ini` already declares a version equal to (or
+/// greater than) ReaPack's current one, that migration is a no-op and the
+/// default repos are never added. Pre-writing this value before REAPER
+/// first launches is therefore how FRABBIT keeps ReaPack from pulling in
+/// thousands of scripts the user never asked for. 4 matches the version
+/// current ReaPack writes.
+pub const REAPACK_CURATED_VERSION: u32 = 4;
+
 /// Outcome of [`upsert_remote`]: tells callers whether the upsert was a
 /// no-op (the URL was already configured), whether we appended into an
 /// existing config, or whether we created a fresh `reapack.ini` (which
@@ -74,6 +85,162 @@ pub fn upsert_remote(resource_path: &Path, name: &str, url: &str) -> Result<Remo
     } else {
         RemoteUpsertOutcome::Added
     })
+}
+
+/// Outcome of [`apply_curated_reapack_defaults`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CuratedDefaultsOutcome {
+    /// `reapack.ini` already declared a `[general] version`, meaning
+    /// ReaPack has run and the file reflects the user's own choices.
+    /// FRABBIT left it completely untouched — no repository is removed
+    /// and no setting is overridden.
+    LeftExisting,
+    /// A FRABBIT-created `reapack.ini` (e.g. one that only had the
+    /// `[remotes]` section) was updated in place to add the curated
+    /// settings.
+    Updated,
+    /// `reapack.ini` did not exist; created it with the curated settings.
+    CreatedFile,
+}
+
+/// Write FRABBIT's curated ReaPack defaults into a *fresh* `reapack.ini`
+/// so a first-time ReaPack install doesn't force unwanted repositories on
+/// the user:
+///
+/// * `[general] version` is set to [`REAPACK_CURATED_VERSION`], which
+///   stops ReaPack's first-launch migration from seeding its default
+///   ReaTeam / MPL repositories.
+/// * `[install] autoinstall` is set to `0`, so even the one repository
+///   ReaPack always re-adds for its own updates (`reapack.com`, which
+///   cannot be permanently removed) never mass-installs packages when the
+///   user synchronizes.
+///
+/// **Existing configs are never touched.** If `reapack.ini` already
+/// declares a `[general] version`, ReaPack has already run and the file
+/// reflects the user's own decisions — including any default repositories
+/// they deliberately kept. In that case this returns
+/// [`CuratedDefaultsOutcome::LeftExisting`] without changing a single
+/// byte: FRABBIT removes no repository and overrides no setting. We only
+/// ever pre-empt the fresh case, which is the one that seeds thousands of
+/// scripts. A file FRABBIT itself created this run (e.g. one holding only
+/// the `[remotes]` entry written by [`upsert_remote`]) has no version yet,
+/// so it is treated as fresh and the curated settings are added while its
+/// `[remotes]` section is preserved.
+pub fn apply_curated_reapack_defaults(resource_path: &Path) -> Result<CuratedDefaultsOutcome> {
+    let ini_path = resource_path.join(REAPACK_INI_RELATIVE_PATH);
+    let original = if ini_path.is_file() {
+        fs::read_to_string(&ini_path).with_path(&ini_path)?
+    } else {
+        String::new()
+    };
+    let creating_new = original.is_empty();
+    let newline = if original.contains("\r\n") {
+        "\r\n"
+    } else {
+        "\n"
+    };
+
+    let mut lines: Vec<String> = if creating_new {
+        Vec::new()
+    } else {
+        original.lines().map(|s| s.to_string()).collect()
+    };
+
+    // A declared version means ReaPack owns this file already — hands off.
+    if ini_value(&lines, "general", "version").is_some() {
+        return Ok(CuratedDefaultsOutcome::LeftExisting);
+    }
+
+    set_ini_value(
+        &mut lines,
+        "general",
+        "version",
+        &REAPACK_CURATED_VERSION.to_string(),
+    );
+    set_ini_value(&mut lines, "install", "autoinstall", "0");
+
+    let mut joined = lines.join(newline);
+    if !joined.ends_with(newline) {
+        joined.push_str(newline);
+    }
+    fs::create_dir_all(resource_path).with_path(resource_path)?;
+    fs::write(&ini_path, joined).with_path(&ini_path)?;
+
+    Ok(if creating_new {
+        CuratedDefaultsOutcome::CreatedFile
+    } else {
+        CuratedDefaultsOutcome::Updated
+    })
+}
+
+/// Read `key=value` under `[section]` from already-split INI lines.
+/// Returns the first match's raw (un-trimmed) value.
+fn ini_value(lines: &[String], section: &str, key: &str) -> Option<String> {
+    let mut in_target = false;
+    for line in lines {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix('[')
+            && let Some(name) = rest.strip_suffix(']')
+        {
+            in_target = name == section;
+            continue;
+        }
+        if in_target
+            && let Some((k, v)) = trimmed.split_once('=')
+            && k.trim() == key
+        {
+            return Some(v.to_string());
+        }
+    }
+    None
+}
+
+/// Set `key=value` under `[section]`, creating the key at the end of the
+/// section if absent, or appending a fresh `[section]` at end of file if
+/// the section itself is missing. Every other line keeps its position.
+fn set_ini_value(lines: &mut Vec<String>, section: &str, key: &str, value: &str) {
+    let new_line = format!("{key}={value}");
+    let mut in_target = false;
+    let mut section_start: Option<usize> = None;
+    let mut section_end: Option<usize> = None;
+    let mut key_idx: Option<usize> = None;
+    for (i, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix('[')
+            && let Some(name) = rest.strip_suffix(']')
+        {
+            if in_target && section_end.is_none() {
+                section_end = Some(i);
+            }
+            in_target = name == section;
+            if in_target && section_start.is_none() {
+                section_start = Some(i);
+            }
+            continue;
+        }
+        if in_target
+            && key_idx.is_none()
+            && let Some((k, _)) = trimmed.split_once('=')
+            && k.trim() == key
+        {
+            key_idx = Some(i);
+        }
+    }
+    if in_target && section_end.is_none() {
+        section_end = Some(lines.len());
+    }
+
+    match (section_start, key_idx) {
+        (Some(_), Some(idx)) => lines[idx] = new_line,
+        (Some(_), None) => {
+            let end = section_end.unwrap_or(lines.len());
+            lines.insert(end, new_line);
+        }
+        (None, _) => {
+            lines.push(format!("[{section}]"));
+            lines.push(new_line);
+        }
+    }
 }
 
 /// `true` if `<resource_path>/reapack.ini` exists and lists `url` under
@@ -358,8 +525,9 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        REAPACK_INI_RELATIVE_PATH, RemoteUpsertOutcome, extract_scr_lines, is_remote_configured,
-        list_entries, package_owner_for_file, upsert_remote,
+        CuratedDefaultsOutcome, REAPACK_INI_RELATIVE_PATH, RemoteUpsertOutcome,
+        apply_curated_reapack_defaults, extract_scr_lines, is_remote_configured, list_entries,
+        package_owner_for_file, upsert_remote,
     };
 
     const TEST_REPO_NAME: &str = "REAPER Accessibility";
@@ -495,6 +663,86 @@ mod tests {
         )
         .unwrap();
         assert!(!is_remote_configured(dir.path(), TEST_REPO_URL).unwrap());
+    }
+
+    #[test]
+    fn curated_defaults_creates_fresh_file_with_version_and_autoinstall_off() {
+        let dir = tempdir().unwrap();
+        let outcome = apply_curated_reapack_defaults(dir.path()).unwrap();
+        assert_eq!(outcome, CuratedDefaultsOutcome::CreatedFile);
+
+        let ini = fs::read_to_string(dir.path().join(REAPACK_INI_RELATIVE_PATH)).unwrap();
+        assert!(ini.contains("[general]"));
+        assert!(ini.contains("version=4"));
+        assert!(ini.contains("[install]"));
+        assert!(ini.contains("autoinstall=0"));
+    }
+
+    #[test]
+    fn curated_defaults_leaves_a_file_it_already_wrote_untouched() {
+        let dir = tempdir().unwrap();
+        assert_eq!(
+            apply_curated_reapack_defaults(dir.path()).unwrap(),
+            CuratedDefaultsOutcome::CreatedFile
+        );
+        // Second run sees the version marker it wrote and backs off.
+        assert_eq!(
+            apply_curated_reapack_defaults(dir.path()).unwrap(),
+            CuratedDefaultsOutcome::LeftExisting
+        );
+    }
+
+    #[test]
+    fn curated_defaults_never_touches_an_existing_user_config() {
+        // The user reinstalls/updates ReaPack via FRABBIT after having
+        // deliberately kept ReaPack's default repos and turned autoinstall
+        // on. FRABBIT must not remove those repos or flip their settings.
+        let dir = tempdir().unwrap();
+        let ini_path = dir.path().join(REAPACK_INI_RELATIVE_PATH);
+        let original = "[general]\nversion=4\n[install]\nautoinstall=1\n[remotes]\nsize=2\nremote0=ReaPack|https://reapack.com/index.xml|1|1\nremote1=ReaTeam Extensions|https://github.com/ReaTeam/Extensions/raw/master/index.xml|1|1\n";
+        fs::write(&ini_path, original).unwrap();
+
+        let outcome = apply_curated_reapack_defaults(dir.path()).unwrap();
+        assert_eq!(outcome, CuratedDefaultsOutcome::LeftExisting);
+
+        // Byte-for-byte unchanged: nothing removed, nothing overridden.
+        let after = fs::read_to_string(&ini_path).unwrap();
+        assert_eq!(after, original);
+    }
+
+    #[test]
+    fn curated_defaults_leaves_even_a_stale_lower_version_untouched() {
+        // An old ReaPack config (version 2) is still the user's own setup,
+        // so we do not rewrite it.
+        let dir = tempdir().unwrap();
+        let ini_path = dir.path().join(REAPACK_INI_RELATIVE_PATH);
+        let original = "[general]\nversion=2\n";
+        fs::write(&ini_path, original).unwrap();
+
+        assert_eq!(
+            apply_curated_reapack_defaults(dir.path()).unwrap(),
+            CuratedDefaultsOutcome::LeftExisting
+        );
+        assert_eq!(fs::read_to_string(&ini_path).unwrap(), original);
+    }
+
+    #[test]
+    fn curated_defaults_upgrades_a_frabbit_created_remotes_only_file() {
+        // Mirrors the real run order: the ReaperAccessible remote step
+        // creates reapack.ini (only [remotes], no version), then the
+        // curated step runs and adds the safe defaults without disturbing
+        // the remote it finds.
+        let dir = tempdir().unwrap();
+        upsert_remote(dir.path(), TEST_REPO_NAME, TEST_REPO_URL).unwrap();
+
+        let outcome = apply_curated_reapack_defaults(dir.path()).unwrap();
+        assert_eq!(outcome, CuratedDefaultsOutcome::Updated);
+
+        let ini = fs::read_to_string(dir.path().join(REAPACK_INI_RELATIVE_PATH)).unwrap();
+        assert!(ini.contains("version=4"));
+        assert!(ini.contains("autoinstall=0"));
+        assert!(ini.contains(&format!("remote0={}|{}|1|2", TEST_REPO_NAME, TEST_REPO_URL)));
+        assert!(is_remote_configured(dir.path(), TEST_REPO_URL).unwrap());
     }
 
     #[test]

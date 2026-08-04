@@ -2534,6 +2534,13 @@ fn localized_configuration_message(
             "config-message-reapack-remote-dry-run",
             &[("name", name.as_str()), ("url", url.as_str())],
         ),
+        Msg::ReapackDefaultsCurated => localizer.text("config-message-reapack-defaults-curated"),
+        Msg::ReapackDefaultsLeftExisting => {
+            localizer.text("config-message-reapack-defaults-left-existing")
+        }
+        Msg::ReapackDefaultsCuratedDryRun => {
+            localizer.text("config-message-reapack-defaults-dry-run")
+        }
         Msg::Skipped { step_id } => {
             localizer.format("config-message-skipped", &[("step", step_id.as_str())])
         }
@@ -2555,6 +2562,18 @@ fn localized_configuration_message(
 /// isn't in the manifest (forward-compat for unknown ids loaded from
 /// an older receipt).
 fn localized_configuration_step_name(localizer: Option<&Localizer>, step_id: &str) -> String {
+    // The always-on curated-defaults action isn't in the builtin manifest
+    // (it's never a selectable row), so give it a friendly name directly.
+    if step_id == frabbit_core::configuration::CONFIG_REAPACK_CURATED_DEFAULTS {
+        if let Some(localizer) = localizer {
+            let text = localizer.text("config-reapack-curated-defaults-name");
+            if !text.missing {
+                return text.value;
+            }
+        }
+        return step_id.to_string();
+    }
+
     let locale = localizer.map(|l| l.active_locale()).unwrap_or("fr-FR");
     let steps = frabbit_core::configuration::builtin_configuration_steps(locale);
     let display_key = steps

@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 use crate::Result;
 use crate::artifact::ArtifactDescriptor;
 use crate::configuration::{
-    ConfigurationStatus, ConfigurationStepReport, apply_configuration_step,
-    builtin_configuration_steps, skipped_step_report,
+    CONFIG_REAPACK_CURATED_DEFAULTS, ConfigurationStatus, ConfigurationStepReport,
+    apply_configuration_step, apply_reapack_curated_defaults, builtin_configuration_steps,
+    skipped_step_report,
 };
 use crate::detection::detect_components;
 use crate::model::{Architecture, Platform};
@@ -15,7 +16,7 @@ use crate::operation::{
     KeymapChoice, PackageOperationOptions, PackageOperationReport,
     execute_package_operation_with_progress, execute_resolved_package_operation_with_progress,
 };
-use crate::package::PACKAGE_REAPER;
+use crate::package::{PACKAGE_REAPACK, PACKAGE_REAPER};
 use crate::progress::{ProgressEvent, ProgressReporter};
 use crate::resource::{ResourceInitOptions, ResourceInitReport, initialize_resource_path};
 
@@ -314,6 +315,23 @@ fn run_configuration_steps(
             step_id: step.id.clone(),
         });
     }
+
+    // Always-on: whenever ReaPack is installed or part of this run, write
+    // FRABBIT's curated defaults so ReaPack doesn't seed its default
+    // repositories or auto-install thousands of scripts on the first
+    // synchronize. This is deliberately not a user-selectable step —
+    // FRABBIT must not impose repositories, so the safe defaults apply
+    // unconditionally.
+    if installed_or_pending.contains(PACKAGE_REAPACK) {
+        progress.report(ProgressEvent::ConfigurationStarted {
+            step_id: CONFIG_REAPACK_CURATED_DEFAULTS.to_string(),
+        });
+        reports.push(apply_reapack_curated_defaults(resource_path, dry_run)?);
+        progress.report(ProgressEvent::ConfigurationCompleted {
+            step_id: CONFIG_REAPACK_CURATED_DEFAULTS.to_string(),
+        });
+    }
+
     Ok(reports)
 }
 

@@ -103,6 +103,7 @@ wizard-configuration-row-status-requires = nécessite { $package }
 wizard-configuration-row-status-already-applied = déjà appliqué
 config-reapack-reaper-accessibility-name = Ajouter le dépôt ReaPack ReaperAccessible
 config-reapack-reaper-accessibility-description = Ajoute le dépôt ReaPack ReaperAccessible. Une fois ajouté, allez dans le menu Extensions, ReaPack, Parcourir les paquets pour obtenir des scripts et plugins accessibles supplémentaires.
+config-reapack-curated-defaults-name = Empêcher ReaPack d'installer des dépôts non désirés
 
 
 wizard-version-check-heading = Vérification des dernières versions
@@ -262,8 +263,11 @@ package-automation-extension-binary = installation directe de fichier
 # $name est le nom lisible du dépôt distant ; $url est l'URL du fichier XML d'index.
 config-message-reapack-remote-already-present = Le dépôt distant ReaPack { $name } ({ $url }) est déjà configuré dans reapack.ini.
 config-message-reapack-remote-added = Le dépôt distant ReaPack { $name } ({ $url }) a été ajouté à reapack.ini.
-config-message-reapack-remote-created-file = reapack.ini a été créé avec le dépôt distant ReaPack { $name } ({ $url }). ReaPack ajoutera ses dépôts par défaut au prochain lancement de REAPER.
+config-message-reapack-remote-created-file = reapack.ini a été créé avec le dépôt distant ReaPack { $name } ({ $url }).
 config-message-reapack-remote-dry-run = Ajouterait le dépôt distant ReaPack { $name } ({ $url }) à reapack.ini.
+config-message-reapack-defaults-curated = ReaPack a été configuré pour ne pas ajouter ses dépôts par défaut ni rien installer automatiquement : lors de la synchronisation, des milliers de scripts non désirés ne seront pas installés. Vous gardez le contrôle : parcourez ReaPack et installez uniquement ce que vous voulez.
+config-message-reapack-defaults-left-existing = ReaPack avait déjà sa propre configuration : FRABBIT n'y a pas touché du tout. Aucun de vos dépôts n'a été supprimé et aucun réglage n'a été modifié.
+config-message-reapack-defaults-dry-run = Configurerait ReaPack pour ne pas ajouter ses dépôts par défaut ni rien installer automatiquement.
 # $step est l'identifiant de l'étape de configuration.
 config-message-skipped = L'étape de configuration { $step } n'a pas été sélectionnée.
 # $step est l'identifiant de l'étape ; $dependency est l'identifiant du paquet dépendant.

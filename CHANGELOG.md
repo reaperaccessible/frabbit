@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.9] - 2026-08-04
+
+### Modifications
+
+- **ReaPack n'impose plus ses dépôts par défaut.** Lors d'une **première** installation de ReaPack, FRABBIT écrit désormais d'office deux réglages dans un `reapack.ini` neuf : il empêche ReaPack d'ajouter ses dépôts par défaut (ReaTeam Extensions, ReaTeam Scripts, MPL, etc.) au premier lancement de REAPER, et il désactive l'installation automatique. Résultat : synchroniser ReaPack n'installe plus des milliers de scripts que vous n'avez jamais demandés. Vous gardez le contrôle total — il suffit de parcourir ReaPack et d'installer uniquement ce que vous voulez. Ce comportement est appliqué automatiquement, sans option à cocher : FRABBIT n'impose aucun dépôt. (Le dépôt « ReaPack » de reapack.com, que ReaPack réajoute toujours lui-même pour ses propres mises à jour, reste présent mais inoffensif puisque l'installation automatique est coupée.)
+- **Vos réglages ReaPack existants sont respectés.** Si ReaPack a déjà été configuré (vous l'avez déjà lancé, ou vous avez volontairement gardé certains dépôts), une réinstallation ou une mise à jour de ReaPack via FRABBIT **ne touche à rien** : aucun dépôt n'est supprimé et aucun réglage n'est modifié. FRABBIT n'agit que sur une configuration ReaPack neuve.
+
 ## [1.0.8] - 2026-08-04
 
 ### Nouveautés

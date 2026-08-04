@@ -102,6 +102,7 @@ wizard-configuration-row-status-requires = requires { $package }
 wizard-configuration-row-status-already-applied = already applied
 config-reapack-reaper-accessibility-name = Add the ReaperAccessible ReaPack repository
 config-reapack-reaper-accessibility-description = Adds the ReaperAccessible ReaPack repository. Once added, go to the Extensions menu, ReaPack, Browse Packages to get extra accessible scripts and plug-ins.
+config-reapack-curated-defaults-name = Keep ReaPack from installing unwanted repositories
 
 
 wizard-version-check-heading = Checking latest versions
@@ -261,8 +262,11 @@ package-automation-extension-binary = direct file install
 # $name is the human-readable remote name; $url is the index XML URL.
 config-message-reapack-remote-already-present = ReaPack remote { $name } ({ $url }) is already configured in reapack.ini.
 config-message-reapack-remote-added = Added ReaPack remote { $name } ({ $url }) to reapack.ini.
-config-message-reapack-remote-created-file = Created reapack.ini with ReaPack remote { $name } ({ $url }). ReaPack will add its default repositories on the next REAPER launch.
+config-message-reapack-remote-created-file = Created reapack.ini with ReaPack remote { $name } ({ $url }).
 config-message-reapack-remote-dry-run = Would add ReaPack remote { $name } ({ $url }) to reapack.ini.
+config-message-reapack-defaults-curated = Configured ReaPack to skip its default repositories and to not install anything automatically, so synchronizing won't pull in thousands of unwanted scripts. You stay in control: browse ReaPack and install only what you want.
+config-message-reapack-defaults-left-existing = ReaPack already had its own configuration, so FRABBIT left it completely untouched: none of your repositories were removed and no setting was changed.
+config-message-reapack-defaults-dry-run = Would configure ReaPack to skip its default repositories and to not install anything automatically.
 # $step is the configuration step id.
 config-message-skipped = Configuration step { $step } was not selected.
 # $step is the configuration step id; $dependency is the dependency package id.
