@@ -261,53 +261,113 @@ fn render_self_update_status(
                     | MessageDialogStyle::Centre,
             )
             .build();
-        if dialog.show_modal() == ID_YES {
-            start_self_update_download(widgets, report.asset, latest);
+        if dialog.show_modal() != ID_YES {
+            return;
         }
+        // Pre-flight: an in-place self-replace needs a writable exe directory.
+        // A copy run from a read-only location (e.g. Program Files) can't
+        // auto-update, so offer the download page instead of failing later.
+        if !frabbit_platform::exe_replace::current_exe_dir_is_writable() {
+            let msg = localizer.text("self-update-not-writable-body").value;
+            let fallback = MessageDialog::builder(&widgets.review_text, &msg, &title)
+                .with_style(
+                    MessageDialogStyle::YesNo
+                        | MessageDialogStyle::IconWarning
+                        | MessageDialogStyle::Centre,
+                )
+                .build();
+            if fallback.show_modal() == ID_YES {
+                let url = report
+                    .release_notes_url
+                    .clone()
+                    .unwrap_or_else(|| RELEASES_LATEST_URL.to_string());
+                open_external_url(&url);
+            }
+            return;
+        }
+        start_self_update_install(widgets, report.asset);
     }
 }
 
-/// Download + verify the new version on a background thread (so the UI stays
-/// responsive and screen-reader-navigable), then report the outcome in an
-/// accessible dialog. Phases 1-2 only: this does NOT yet replace the running
-/// executable or relaunch — it confirms the new version was fetched and its
-/// checksum verified.
-fn start_self_update_download(
-    widgets: WizardWidgets,
-    asset: SelfUpdateAssetSelection,
-    latest: String,
-) {
+const RELEASES_LATEST_URL: &str = "https://github.com/ReaperAccessible/frabbit/releases/latest";
+
+/// Open a URL in the user's default browser (best-effort). Used for the
+/// "auto-update isn't possible from here" fallback.
+#[cfg(target_os = "windows")]
+fn open_external_url(url: &str) {
+    let _ = Command::new("cmd").args(["/C", "start", "", url]).spawn();
+}
+#[cfg(not(target_os = "windows"))]
+fn open_external_url(url: &str) {
+    let _ = Command::new("open").arg(url).spawn();
+}
+
+/// Download + verify the new version, replace the running exe in place, then
+/// relaunch. The download/replace run on a worker thread so the UI stays
+/// responsive; the relaunch + exit happen back on the main thread. On any
+/// failure FRABBIT keeps running on the current version (no half-updated
+/// state is reachable: the file is verified before replacement, and
+/// `self-replace` keeps the old exe until the swap succeeds).
+fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelection) {
     std::thread::spawn(move || {
-        let dest = std::env::temp_dir().join("frabbit-update");
-        let result = download_and_verify_update(&asset, &dest);
-        wxdragon::call_after(Box::new(move || {
-            with_ui_localizer(|localizer| {
-                let title = localizer.text("self-update-dialog-title").value;
-                let message = match &result {
-                    Ok(_) => {
-                        localizer
-                            .format("self-update-download-ok", &[("latest", latest.as_str())])
-                            .value
+        let outcome: std::result::Result<(), String> = (|| {
+            // Download next to the running exe (same volume as the install
+            // target). The directory was checked writable before we got here.
+            let dest = std::env::current_exe()
+                .ok()
+                .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
+                .unwrap_or_else(std::env::temp_dir);
+            let new_exe = download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
+            frabbit_platform::exe_replace::replace_running_exe(&new_exe)
+                .map_err(|e| e.to_string())?;
+            Ok(())
+        })();
+
+        wxdragon::call_after(Box::new(move || match outcome {
+            Ok(()) => {
+                // The new binary now sits at the current exe path — relaunch it,
+                // preserving the user's chosen language, then exit this instance.
+                let relaunched = std::env::current_exe().is_ok_and(|exe| {
+                    let mut command = Command::new(&exe);
+                    if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
+                        command.env("FRABBIT_LOCALE", locale);
                     }
-                    Err(error) => {
-                        localizer
-                            .format(
-                                "self-update-download-failed",
-                                &[("error", error.to_string().as_str())],
-                            )
-                            .value
-                    }
-                };
-                let icon = if result.is_ok() {
-                    MessageDialogStyle::IconInformation
-                } else {
-                    MessageDialogStyle::IconError
-                };
-                let dialog = MessageDialog::builder(&widgets.review_text, &message, &title)
-                    .with_style(MessageDialogStyle::OK | icon | MessageDialogStyle::Centre)
-                    .build();
-                dialog.show_modal();
-            });
+                    command.spawn().is_ok()
+                });
+                if relaunched {
+                    std::process::exit(0);
+                }
+                // Replace succeeded but the relaunch didn't: the update is
+                // already in place, so ask the user to restart FRABBIT.
+                with_ui_localizer(|localizer| {
+                    let title = localizer.text("self-update-dialog-title").value;
+                    let message = localizer.text("self-update-relaunch-failed").value;
+                    MessageDialog::builder(&widgets.review_text, &message, &title)
+                        .with_style(
+                            MessageDialogStyle::OK
+                                | MessageDialogStyle::IconInformation
+                                | MessageDialogStyle::Centre,
+                        )
+                        .build()
+                        .show_modal();
+                });
+            }
+            Err(error) => {
+                with_ui_localizer(|localizer| {
+                    let title = localizer.text("self-update-dialog-title").value;
+                    let message = localizer
+                        .format("self-update-install-failed", &[("error", error.as_str())])
+                        .value;
+                    MessageDialog::builder(&widgets.review_text, &message, &title)
+                        .with_style(
+                            MessageDialogStyle::OK
+                                | MessageDialogStyle::IconError
+                                | MessageDialogStyle::Centre,
+                        )
+                        .build()
+                        .show_modal();
+                });
+            }
         }));
     });
 }

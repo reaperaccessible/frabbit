@@ -13,6 +13,7 @@
 pub mod arch;
 pub mod disk_image;
 pub mod elevation;
+pub mod exe_replace;
 pub mod file_version;
 pub mod jaws;
 pub mod komplete_kontrol;

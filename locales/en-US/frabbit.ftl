@@ -197,9 +197,10 @@ self-update-status-up-to-date = FRABBIT is up to date (current { $current }, cha
 
 # Startup update dialog. $latest is the new version, $error the failure message.
 self-update-dialog-title = FRABBIT update
-self-update-dialog-body = A new version of FRABBIT ({ $latest }) is available. Do you want to download it now?
-self-update-download-ok = The new version of FRABBIT ({ $latest }) was downloaded and verified successfully.
-self-update-download-failed = The update download failed: { $error }
+self-update-dialog-body = A new version of FRABBIT ({ $latest }) is available. Do you want to download and install it now? FRABBIT will restart automatically.
+self-update-not-writable-body = Automatic update isn't possible from this location (read-only folder). Do you want to open the download page to install the new version manually?
+self-update-install-failed = The update could not be installed: { $error }. FRABBIT will keep running on the current version.
+self-update-relaunch-failed = The update was installed. Please close and reopen FRABBIT to use the new version.
 
 wizard-summary-target = Target: { $path }
 wizard-summary-portable = Portable target: { $value }
