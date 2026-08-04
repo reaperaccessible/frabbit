@@ -320,6 +320,11 @@ fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelec
             let new_exe = download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
             frabbit_platform::exe_replace::replace_running_exe(&new_exe)
                 .map_err(|e| e.to_string())?;
+            // self-replace COPIES the new file into place, so the downloaded
+            // one lingers — remove it. The old binary (renamed to a
+            // `.__relocated__.exe` sidecar) is cleaned up on the next startup
+            // by cleanup_update_leftovers().
+            let _ = std::fs::remove_file(&new_exe);
             Ok(())
         })();
 
@@ -329,9 +334,13 @@ fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelec
                 // preserving the user's chosen language, then exit this instance.
                 let relaunched = std::env::current_exe().is_ok_and(|exe| {
                     let mut command = Command::new(&exe);
+                    command.env("FRABBIT_RELAUNCHED", "1");
                     if let Ok(locale) = std::env::var("FRABBIT_LOCALE") {
                         command.env("FRABBIT_LOCALE", locale);
                     }
+                    // Grant the child the foreground right so its window becomes
+                    // active and the screen reader follows it after the swap.
+                    frabbit_platform::exe_replace::allow_foreground_for_relaunch();
                     command.spawn().is_ok()
                 });
                 if relaunched {
@@ -905,6 +914,11 @@ struct WizardWidgets {
 }
 
 pub fn run() {
+    // A self-update leaves the previous binary as a `.__relocated__.exe`
+    // sidecar (Windows would otherwise only delete it on reboot) plus the
+    // downloaded copy; the previous instance has exited by now, so clean them.
+    frabbit_platform::exe_replace::cleanup_update_leftovers();
+
     // Pre-seat Cocoa's per-process language so VoiceOver picks a voice that
     // matches the in-app Fluent locale. Has to happen before `wxdragon::main`
     // because that brings NSApplication / NSBundle up, and `AppleLanguages`
@@ -1742,6 +1756,13 @@ pub fn run() {
 
         frame.centre();
         frame.show(true);
+        // After a self-update relaunch, the freshly spawned window doesn't
+        // become foreground on its own, so the screen reader stays outside
+        // FRABBIT. Force it to the front — the parent granted the foreground
+        // right before exiting.
+        if std::env::var("FRABBIT_RELAUNCHED").is_ok() {
+            frame.raise();
+        }
     });
 }
 
