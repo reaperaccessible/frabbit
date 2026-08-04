@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] - 2026-08-04
+
+### Nouveautés
+
+- **Mise à jour automatique de FRABBIT.** Au démarrage, FRABBIT vérifie s'il existe une version plus récente et, le cas échéant, propose de l'installer dans une boîte de dialogue accessible. Si vous acceptez, FRABBIT télécharge et vérifie la nouvelle version, se remplace lui-même, supprime l'ancienne version, puis redémarre — le tout sans installateur. Si le dossier est en lecture seule, il propose d'ouvrir la page de téléchargement ; en cas d'échec, il reste sur la version actuelle. (Windows ; la version macOS suivra.)
+
 ## [1.0.7] - 2026-08-04
 
 ### Corrections
