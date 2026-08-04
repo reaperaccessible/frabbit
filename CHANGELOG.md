@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-08-03
+
+### Corrections
+
+- Windows : les produits qui passent par leur propre installateur (OSARA, SWS, scripts JAWS) ou qui déposent des fichiers échouaient lorsque REAPER avait été installé mais jamais ouvert, car les sous-dossiers de son dossier ressources (`Scripts`, `Effects`, etc.) n'existaient pas encore. FRABBIT crée désormais lui-même la structure de dossiers standard de REAPER avant l'installation, il n'est donc plus nécessaire d'ouvrir REAPER au préalable.
+
 ## [1.0.3] - 2026-08-03
 
 ### Modifications

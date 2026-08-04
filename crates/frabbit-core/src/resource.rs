@@ -100,8 +100,23 @@ fn resource_directories(
     ];
 
     if include_extension_support_dirs {
-        directories.push(resource_path.join("UserPlugins"));
-        directories.push(resource_path.join("KeyMaps"));
+        // REAPER creates these resource subfolders on its first run. When
+        // REAPER has been installed but never launched, they don't exist yet,
+        // so upstream installers (OSARA, SWS, the JAWS-for-REAPER scripts) and
+        // file-placement components have nowhere to write and the install
+        // fails. Pre-create the standard layout so setup works without
+        // requiring the user to open REAPER first.
+        for subdir in [
+            "UserPlugins",
+            "KeyMaps",
+            "Scripts",
+            "Effects",
+            "Data",
+            "ColorThemes",
+            "MenuSets",
+        ] {
+            directories.push(resource_path.join(subdir));
+        }
     }
 
     directories
@@ -235,6 +250,7 @@ mod tests {
         assert!(resource_path.join("reaper.ini").is_file());
         assert!(resource_path.join("UserPlugins").is_dir());
         assert!(resource_path.join("KeyMaps").is_dir());
+        assert!(resource_path.join("Scripts").is_dir());
         assert!(resource_path.join("FRABBIT/logs").is_dir());
         assert!(resource_path.join("FRABBIT/backups").is_dir());
     }

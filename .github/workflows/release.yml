@@ -23,9 +23,11 @@ jobs:
           - os: windows-latest
             platform_id: windows
             extension: ".exe"
-          - os: macos-latest
-            platform_id: macos
-            extension: ""
+          # macOS intentionally paused: focus is on getting the Windows build
+          # right first. Restore this entry when macOS ships again.
+          # - os: macos-latest
+          #   platform_id: macos
+          #   extension: ""
 
     steps:
       - name: Checkout
