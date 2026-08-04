@@ -38,6 +38,7 @@ use self::reaper::reaper_manual_steps;
 use self::sws::sws_manual_steps;
 use crate::upstream::{
     execute_planned_execution, verify_planned_execution_freshness, verify_planned_execution_paths,
+    verify_planned_execution_paths_settling,
 };
 
 const DEFAULT_UNATTENDED_INSTALL_MESSAGE: &str = "FRABBIT ran the upstream installer unattended, verified the expected target paths, and updated the FRABBIT receipt.";
@@ -995,14 +996,16 @@ fn executed_unattended_item(
         target_app_path,
         keymap_choice,
     );
-    let post_install = match verify_planned_execution_paths(&planned_execution) {
+    let post_install = match verify_planned_execution_paths_settling(&planned_execution) {
         Ok(()) => {
             // Verify confirms the expected files are on disk — accept the
             // run even if the process or post-install steps reported
-            // errors. Use the post-install report when available; fall
-            // back to a default report (no extra backups recorded) when
-            // post-install itself failed but the files we needed are
-            // already there.
+            // errors (a silent installer returning a benign non-zero code
+            // like REAPER's 1223 must not be mis-reported as a failure once
+            // its files are actually present). Use the post-install report
+            // when available; fall back to a default report (no extra
+            // backups recorded) when post-install itself failed but the
+            // files we needed are already there.
             post_install_result.unwrap_or_default()
         }
         Err(verify_err) => {

@@ -84,6 +84,35 @@ pub fn verify_planned_execution_paths(plan: &PlannedExecutionPlan) -> Result<()>
     verify_paths(&plan.verification_paths)
 }
 
+/// Like [`verify_planned_execution_paths`], but tolerant of a brief settle
+/// delay. An elevated / silent vendor installer can signal completion — its
+/// process exits, sometimes with a benign non-zero code such as 1223 — a
+/// moment before its files are fully flushed to disk (REAPER's silent
+/// installer is the worked example: it installs correctly, drops a desktop
+/// icon, yet returns 1223 while the last writes settle). Checking existence
+/// exactly once, right after the process exits, then mis-reports that
+/// successful install as a failure. So if the first check misses, poll a
+/// few more times before giving up. On success the delay is zero; only a
+/// genuinely failed install pays the full wait.
+pub fn verify_planned_execution_paths_settling(plan: &PlannedExecutionPlan) -> Result<()> {
+    verify_planned_execution_paths_with_attempts(plan, 40, std::time::Duration::from_millis(300))
+}
+
+fn verify_planned_execution_paths_with_attempts(
+    plan: &PlannedExecutionPlan,
+    extra_attempts: u32,
+    delay: std::time::Duration,
+) -> Result<()> {
+    let mut result = verify_planned_execution_paths(plan);
+    let mut remaining = extra_attempts;
+    while result.is_err() && remaining > 0 {
+        std::thread::sleep(delay);
+        result = verify_planned_execution_paths(plan);
+        remaining -= 1;
+    }
+    result
+}
+
 /// Reject the run when any `freshness_paths` entry's mtime is older than
 /// `install_started_at`. Catches "silent install no-op" cases where the
 /// installer returned success but actually didn't write anything — the
@@ -247,6 +276,75 @@ mod tests {
         let error = execute_planned_execution(&plan, false).unwrap_err();
 
         assert!(error.to_string().contains("process failed"));
+    }
+
+    #[test]
+    fn settling_verification_waits_for_a_late_arriving_file() {
+        use super::verify_planned_execution_paths_with_attempts;
+
+        let dir = tempdir().unwrap();
+        let late_path = dir.path().join("reaper.exe");
+        let plan = PlannedExecutionPlan {
+            kind: PlannedExecutionKind::LaunchInstallerExecutable,
+            artifact_location: "noop".to_string(),
+            program: None,
+            arguments: Vec::new(),
+            working_directory: None,
+            verification_paths: vec![late_path.clone()],
+            requires_elevation: false,
+            freshness_paths: Vec::new(),
+        };
+
+        // The file isn't there yet — a single check would fail, mirroring a
+        // silent installer that returns before its files finish flushing.
+        assert!(verify_planned_execution_paths(&plan).is_err());
+
+        // A background writer creates it shortly after, as the real
+        // installer would.
+        let writer_path = late_path.clone();
+        let handle = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            std::fs::write(&writer_path, b"reaper").unwrap();
+        });
+
+        // The settling check polls and succeeds once the file lands.
+        verify_planned_execution_paths_with_attempts(
+            &plan,
+            40,
+            std::time::Duration::from_millis(50),
+        )
+        .unwrap();
+        handle.join().unwrap();
+    }
+
+    #[test]
+    fn settling_verification_still_fails_when_file_never_arrives() {
+        use super::verify_planned_execution_paths_with_attempts;
+
+        let dir = tempdir().unwrap();
+        let plan = PlannedExecutionPlan {
+            kind: PlannedExecutionKind::LaunchInstallerExecutable,
+            artifact_location: "noop".to_string(),
+            program: None,
+            arguments: Vec::new(),
+            working_directory: None,
+            verification_paths: vec![dir.path().join("never.exe")],
+            requires_elevation: false,
+            freshness_paths: Vec::new(),
+        };
+
+        // A couple of quick attempts, no writer — must still report failure.
+        let error = verify_planned_execution_paths_with_attempts(
+            &plan,
+            3,
+            std::time::Duration::from_millis(5),
+        )
+        .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("post-install verification failed")
+        );
     }
 
     #[test]
