@@ -7,6 +7,10 @@
 - **ReaPack n'impose plus ses dépôts par défaut.** Lors d'une **première** installation de ReaPack, FRABBIT écrit désormais d'office deux réglages dans un `reapack.ini` neuf : il empêche ReaPack d'ajouter ses dépôts par défaut (ReaTeam Extensions, ReaTeam Scripts, MPL, etc.) au premier lancement de REAPER, et il désactive l'installation automatique. Résultat : synchroniser ReaPack n'installe plus des milliers de scripts que vous n'avez jamais demandés. Vous gardez le contrôle total — il suffit de parcourir ReaPack et d'installer uniquement ce que vous voulez. Ce comportement est appliqué automatiquement, sans option à cocher : FRABBIT n'impose aucun dépôt. (Le dépôt « ReaPack » de reapack.com, que ReaPack réajoute toujours lui-même pour ses propres mises à jour, reste présent mais inoffensif puisque l'installation automatique est coupée.)
 - **Vos réglages ReaPack existants sont respectés.** Si ReaPack a déjà été configuré (vous l'avez déjà lancé, ou vous avez volontairement gardé certains dépôts), une réinstallation ou une mise à jour de ReaPack via FRABBIT **ne touche à rien** : aucun dépôt n'est supprimé et aucun réglage n'est modifié. FRABBIT n'agit que sur une configuration ReaPack neuve.
 
+### Corrections
+
+- **Un échec sur un paquet n'interrompt plus toute l'installation, et le bilan dit enfin la vérité.** Avant, si un paquet échouait (typiquement l'invite administrateur de Windows refusée ou manquée), FRABBIT s'arrêtait net : les paquets suivants n'étaient jamais installés et le message affichait « Rien n'a été installé » — trompeur, car certains paquets l'étaient déjà. Désormais, chaque paquet est traité indépendamment : un échec est signalé **sur ce paquet précis, avec sa raison**, et les autres paquets continuent de s'installer. La page de fin liste le résultat réel de chaque paquet (« installé », « échec : approbation administrateur refusée », etc.), affiche en tête « Terminé avec des erreurs : N paquet(s) non installés », et un compteur d'échecs. Fini de croire que tout est installé alors que non.
+
 ## [1.0.8] - 2026-08-04
 
 ### Nouveautés

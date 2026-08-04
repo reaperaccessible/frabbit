@@ -1870,6 +1870,12 @@ pub fn summarize_setup_report(
         .iter()
         .filter(|item| matches!(item.status, PackageOperationStatus::DeferredUnattended))
         .count();
+    let failed_items = report
+        .package_operation
+        .items
+        .iter()
+        .filter(|item| matches!(item.status, PackageOperationStatus::Failed))
+        .count();
 
     let architecture_label = architecture_label_for_summary(model.architecture);
     let mut detail_lines = vec![
@@ -1930,6 +1936,17 @@ pub fn summarize_setup_report(
             format!("Packages requiring manual attention: {manual_items}"),
         ),
     ];
+
+    // Only surface the failure count when there is one, so a clean run's
+    // summary isn't cluttered with a "0 failed" line.
+    if failed_items > 0 {
+        detail_lines.push(format_localized_message(
+            localizer.as_ref(),
+            "wizard-summary-packages-failed",
+            &[("count", failed_items.to_string())],
+            format!("Packages that failed to install: {failed_items}"),
+        ));
+    }
 
     if let Some(install_report) = &report.package_operation.install_report {
         let backup_paths = install_report
@@ -2214,9 +2231,28 @@ pub fn summarize_setup_report(
         ));
     }
 
-    // Build the always-visible status line. Adapt the wording to what
-    // actually happened: packages only, packages + keymap, or keymap only.
+    // Build the always-visible status line. When one or more packages
+    // failed, lead with that — it's the critical thing a screen-reader
+    // user needs to hear first, and it must never be masked by a cheery
+    // "Finished" headline.
     let keymap_name = keymap_choice_display_name(keymap_choice);
+    if failed_items > 0 {
+        let status_line = format_localized_message(
+            localizer.as_ref(),
+            "wizard-summary-status-finished-with-failures",
+            &[
+                ("failed", failed_items.to_string()),
+                ("installed", installed_or_checked.to_string()),
+            ],
+            format!(
+                "Finished with errors: {failed_items} package(s) were NOT installed, {installed_or_checked} installed or checked. See the per-package details below."
+            ),
+        );
+        return WizardInstallSummary {
+            status_line,
+            detail_lines,
+        };
+    }
     let status_line = match (installed_or_checked, keymap_name) {
         // Keymap-only install (no packages touched).
         (0, Some(name)) => format_localized_message(
@@ -2290,12 +2326,12 @@ fn localized_install_error_message(
             let (id, fallback) = if cfg!(target_os = "macos") {
                 (
                     "error-elevation-cancelled-macos",
-                    "Administrator authorization was declined or cancelled. Nothing was installed. Re-run the installation and enter your administrator password when macOS asks for it.",
+                    "Administrator authorization was declined or cancelled, so the packages that need administrator rights were not installed. Re-run the installation and enter your administrator password when macOS asks for it. See the per-package details for exactly what was and wasn't installed.",
                 )
             } else {
                 (
                     "error-elevation-cancelled-windows",
-                    "The administrator approval prompt was declined or cancelled. Nothing was installed. Re-run the installation and approve the prompt, or pick a portable REAPER target, which needs no elevation.",
+                    "The administrator approval prompt was declined or cancelled, so the packages that need administrator rights were not installed. Re-run and approve the prompt, or pick a portable REAPER target, which needs no elevation. See the per-package details for exactly what was and wasn't installed.",
                 )
             };
             Some(format_localized_message(
@@ -2408,6 +2444,7 @@ fn status_label_for_summary(
         PackageOperationStatus::SkippedCurrent => {
             ("status-skipped-current", "Skipped (already current)")
         }
+        PackageOperationStatus::Failed => ("status-failed", "Failed — not installed"),
     };
     localizer
         .map(|localizer| localizer.text(id).value)
@@ -2468,6 +2505,11 @@ fn localized_package_operation_message(
         Msg::OsaraUnattendedInstalledKeymapReplaced => {
             localizer.text("package-status-osara-unattended-keymap-replaced")
         }
+        Msg::ElevationDeclined => localizer.text("package-status-elevation-declined"),
+        Msg::InstallFailed { detail } => localizer.format(
+            "package-status-install-failed",
+            &[("detail", detail.as_str())],
+        ),
     };
     if message.missing {
         fallback_english.to_string()
@@ -3249,6 +3291,27 @@ mod tests {
         assert!(
             dry_run.starts_with("Dry run") && dry_run.contains("vendor installer"),
             "expected English dry-run with translated automation kind, got: {dry_run:?}"
+        );
+        let elevation = super::localized_package_operation_message(
+            &en,
+            &Msg::ElevationDeclined,
+            "elevation declined",
+        );
+        assert!(
+            elevation.to_lowercase().contains("this package")
+                && !elevation.to_lowercase().contains("nothing"),
+            "elevation-declined must be per-package, got: {elevation:?}"
+        );
+        let install_failed = super::localized_package_operation_message(
+            &en,
+            &Msg::InstallFailed {
+                detail: "process failed for osara.exe with exit code Some(1)".to_string(),
+            },
+            "Installation failed: ...",
+        );
+        assert!(
+            install_failed.contains("osara.exe") && install_failed.contains("Installation failed"),
+            "install-failed must interpolate the technical detail, got: {install_failed:?}"
         );
     }
 
@@ -4797,9 +4860,13 @@ mod tests {
         });
 
         // The wizard replaces the technical English text with an actionable
-        // sentence — no exit codes, no Windows wording on a Mac.
+        // sentence — no exit codes, no Windows wording on a Mac. It must NOT
+        // claim the whole batch was wiped ("Rien n'a été installé") now that
+        // failures are reported per package; it points at the per-package
+        // details instead.
         assert!(!line.contains("cancelled or declined"));
-        assert!(line.contains("Rien n'a été installé."));
+        assert!(!line.contains("Rien n'a été installé"));
+        assert!(line.contains("détail par paquet"));
         if cfg!(target_os = "macos") {
             assert!(!line.contains("Windows"));
             assert!(line.contains("mot de passe administrateur"));

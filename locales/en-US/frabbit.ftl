@@ -214,8 +214,8 @@ wizard-summary-error = Error: { $message }
 # Install-failure messages. They feed the { $message } of
 # "wizard-summary-error" when FRABBIT knows exactly which failure occurred;
 # otherwise the error's technical text is used as-is.
-error-elevation-cancelled-macos = Administrator authorization was declined or cancelled. Nothing was installed. Re-run the installation and enter your administrator password when macOS asks for it.
-error-elevation-cancelled-windows = The administrator approval prompt was declined or cancelled. Nothing was installed. Re-run the installation and approve the prompt, or pick a portable REAPER target, which needs no elevation.
+error-elevation-cancelled-macos = Administrator authorization was declined or cancelled, so the packages that need administrator rights were not installed. Re-run the installation and enter your administrator password when macOS asks for it. See the per-package details for exactly what was and wasn't installed.
+error-elevation-cancelled-windows = The administrator approval prompt was declined or cancelled, so the packages that need administrator rights were not installed. Re-run and approve the prompt, or pick a portable REAPER target, which needs no elevation. See the per-package details for exactly what was and wasn't installed.
 # $code is the installer's exit code, or "error-exit-code-unknown".
 error-pkg-installer-failed = The macOS installer stopped on an error (code { $code }). The installation may be incomplete. The report saved under the FRABBIT/logs folder has the details.
 # $destination is the install folder, for example /Applications.
@@ -225,6 +225,7 @@ wizard-summary-resource-items-created = Resource items created: { $count }
 wizard-summary-packages-installed-or-checked = Packages installed or checked: { $count }
 wizard-summary-packages-current = Packages already current: { $count }
 wizard-summary-packages-manual = Packages requiring manual attention: { $count }
+wizard-summary-packages-failed = Packages that failed to install: { $count }
 wizard-summary-backup-files-created = Backup files created: { $count }
 wizard-summary-backup-file = Backup file: { $path }
 wizard-summary-receipt-backup = Receipt backup: { $path }
@@ -242,10 +243,14 @@ status-installed-or-checked = Installed or checked
 status-planned-unattended = Planned unattended
 status-deferred-unattended = Deferred unattended
 status-skipped-current = Skipped (already current)
+status-failed = Failed — not installed
 
 package-status-extension-binary-installed = Single extension binary handled by FRABBIT installer.
 # $installed is the on-disk version; $available is the latest upstream version.
 package-status-skipped-current = Installed version { $installed } is current or newer than available version { $available }.
+package-status-elevation-declined = The administrator approval prompt (UAC) was cancelled or declined, so this package was not installed. Re-run and approve the prompt, or pick a portable REAPER target, which needs no elevation.
+# $detail is the technical error description.
+package-status-install-failed = Installation failed: { $detail }
 # $automation is one of the "package-automation-*" labels.
 package-status-dry-run-would-run-unattended = Dry run: FRABBIT would download and run this { $automation } unattended.
 package-status-deferred-unattended-staged = This build has not implemented the planned unattended { $automation } execution path yet. FRABBIT staged the artifact in the cache but did not run it.
@@ -294,6 +299,7 @@ wizard-summary-keymap-installed = KeyMap installed: { $name }. The previous keym
 wizard-summary-status-finished-keymap-only = Finished. KeyMap { $name } applied.
 wizard-summary-status-finished-with-keymap = Finished. { $installed } package item(s) installed or checked and KeyMap { $name } applied; { $manual } require manual attention.
 wizard-summary-status-finished = Finished. { $installed } package item(s) installed or checked; { $manual } require manual attention.
+wizard-summary-status-finished-with-failures = Finished with errors: { $failed } package(s) were NOT installed, { $installed } installed or checked. See the per-package details below.
 
 wizard-planned-runner-launch-installer = Launch installer executable
 wizard-planned-runner-extract-archive = Extract archive and run contained installer

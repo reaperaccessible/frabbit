@@ -187,6 +187,13 @@ pub enum PackageOperationMessage {
     /// `reaper-kb.ini` with the OSARA key map; no backup was needed
     /// because the previous file was missing or already matched.
     OsaraUnattendedInstalledKeymapReplaced,
+    /// This package's administrator approval prompt (Windows UAC / macOS
+    /// authorization) was cancelled or declined, so it was not installed.
+    /// Other packages in the batch are unaffected.
+    ElevationDeclined,
+    /// This package's install failed for another reason. `detail` is the
+    /// English technical description (mirrored in the item's `message`).
+    InstallFailed { detail: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -274,6 +281,12 @@ pub enum PackageOperationStatus {
     PlannedUnattended,
     DeferredUnattended,
     SkippedCurrent,
+    /// This package's install was attempted and failed (e.g. the admin
+    /// approval prompt was declined, or the vendor installer errored).
+    /// The rest of the batch is unaffected — a failure here no longer
+    /// aborts the whole operation. The reason is carried in the item's
+    /// `message` / `message_code`.
+    Failed,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -591,23 +604,34 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
             progress.report(ProgressEvent::InstallStarted {
                 package_id: planned.artifact.package_id.clone(),
             });
-            items.push(executed_unattended_item(
+            // A failure on one package (admin prompt declined, vendor
+            // installer error) must NOT abort the batch — record it as a
+            // Failed item and carry on so the remaining packages still
+            // install and the report tells the user exactly what happened.
+            match executed_unattended_item(
                 planned,
                 cached,
                 resource_path,
                 options.target_app_path.as_deref(),
                 options.keymap_choice,
-            )?);
-            if let Some(state) = &mut unattended_state {
-                upsert_unattended_package_receipt(
-                    state,
-                    resource_path,
-                    &planned.artifact,
-                    cached,
-                    options.target_app_path.as_deref(),
-                    options.keymap_choice,
-                )?;
-                unattended_receipts_updated = true;
+            ) {
+                Ok(item) => {
+                    items.push(item);
+                    if let Some(state) = &mut unattended_state {
+                        upsert_unattended_package_receipt(
+                            state,
+                            resource_path,
+                            &planned.artifact,
+                            cached,
+                            options.target_app_path.as_deref(),
+                            options.keymap_choice,
+                        )?;
+                        unattended_receipts_updated = true;
+                    }
+                }
+                Err(error) => {
+                    items.push(failed_package_item(planned, cached, &error));
+                }
             }
             progress.report(ProgressEvent::InstallCompleted {
                 package_id: planned.artifact.package_id.clone(),
@@ -646,7 +670,10 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
     let install_report = if cached_artifacts.is_empty() {
         None
     } else {
-        Some(install_cached_artifacts_with_progress(
+        // Same resilience as the unattended loop: if the direct-install
+        // pass (e.g. copying ReaPack's DLL) errors, mark those packages
+        // Failed and keep the report instead of aborting everything.
+        match install_cached_artifacts_with_progress(
             resource_path,
             &cached_artifacts,
             &InstallOptions {
@@ -655,7 +682,15 @@ pub fn execute_resolved_package_operation_with_detections_and_progress(
                 target_app_path: options.target_app_path.clone(),
             },
             progress,
-        )?)
+        ) {
+            Ok(report) => Some(report),
+            Err(error) => {
+                for (planned, cached) in direct_installable.iter().zip(cached_artifacts.iter()) {
+                    items.push(failed_package_item(planned, cached, &error));
+                }
+                None
+            }
+        }
     };
 
     if let Some(install_report) = &install_report {
@@ -857,6 +892,52 @@ fn planned_unattended_item(
         backup_paths: Vec::new(),
         backup_manifest_path: None,
         planned_execution,
+        manual_instruction: None,
+    }
+}
+
+/// Classify an install error into a user-facing (message, message_code)
+/// pair for a [`PackageOperationStatus::Failed`] item. The admin-approval
+/// cancellation gets its own actionable variant; everything else carries
+/// the technical detail so the saved report and CLI stay informative.
+fn failure_message_for_error(error: &FrabbitError) -> (String, PackageOperationMessage) {
+    match error {
+        FrabbitError::UserCancelledElevation { .. } => (
+            "The administrator approval prompt was cancelled or declined, so this package was not installed. Re-run and approve the prompt, or choose a portable REAPER target that needs no elevation.".to_string(),
+            PackageOperationMessage::ElevationDeclined,
+        ),
+        other => {
+            let detail = other.to_string();
+            (
+                format!("Installation failed: {detail}"),
+                PackageOperationMessage::InstallFailed { detail },
+            )
+        }
+    }
+}
+
+/// Build a [`PackageOperationStatus::Failed`] item for a package whose
+/// install attempt errored. Records no receipt and no backups — nothing
+/// landed — but keeps the package in the report so the user sees exactly
+/// what did (and did not) install instead of a blanket "nothing" message.
+fn failed_package_item(
+    planned: &PlannedArtifact,
+    cached_artifact: &CachedArtifact,
+    error: &FrabbitError,
+) -> PackageOperationItem {
+    let (message, message_code) = failure_message_for_error(error);
+    PackageOperationItem {
+        package_id: planned.artifact.package_id.clone(),
+        plan_action: planned.plan_action,
+        status: PackageOperationStatus::Failed,
+        message,
+        message_code,
+        artifact: planned.artifact.clone(),
+        cached_artifact: Some(cached_artifact.clone()),
+        install_action: None,
+        backup_paths: Vec::new(),
+        backup_manifest_path: None,
+        planned_execution: None,
         manual_instruction: None,
     }
 }
@@ -1593,6 +1674,49 @@ fn strip_windows_verbatim_prefix(path: PathBuf) -> PathBuf {
         PathBuf::from(stripped)
     } else {
         path
+    }
+}
+
+#[cfg(test)]
+mod failure_classification_tests {
+    use super::failure_message_for_error;
+    use super::{PackageOperationMessage, PackageOperationStatus};
+    use crate::error::FrabbitError;
+
+    #[test]
+    fn cancelled_admin_prompt_maps_to_elevation_declined() {
+        let error = FrabbitError::UserCancelledElevation {
+            program: "reaper_installer.exe".to_string(),
+        };
+        let (message, code) = failure_message_for_error(&error);
+        assert_eq!(code, PackageOperationMessage::ElevationDeclined);
+        // The per-package message must NOT claim the whole batch failed.
+        assert!(!message.to_lowercase().contains("nothing"));
+        assert!(message.to_lowercase().contains("this package"));
+    }
+
+    #[test]
+    fn other_errors_map_to_install_failed_carrying_detail() {
+        let error = FrabbitError::ProcessFailed {
+            program: "osara_installer.exe".to_string(),
+            exit_code: Some(1),
+        };
+        let (message, code) = failure_message_for_error(&error);
+        match code {
+            PackageOperationMessage::InstallFailed { detail } => {
+                assert!(detail.contains("osara_installer.exe"));
+                assert!(message.contains(&detail));
+            }
+            other => panic!("expected InstallFailed, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn failed_status_variant_is_distinct() {
+        assert_ne!(
+            PackageOperationStatus::Failed,
+            PackageOperationStatus::InstalledOrChecked
+        );
     }
 }
 
