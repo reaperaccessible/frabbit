@@ -195,6 +195,12 @@ wizard-self-update-status-checking = Checking for FRABBIT updates…
 self-update-status-update-available = FRABBIT update available: { $current } → { $latest } (channel { $channel }). Relaunch FRABBIT to be re-prompted.
 self-update-status-up-to-date = FRABBIT is up to date (current { $current }, channel { $channel }).
 
+# Startup update dialog. $latest is the new version, $error the failure message.
+self-update-dialog-title = FRABBIT update
+self-update-dialog-body = A new version of FRABBIT ({ $latest }) is available. Do you want to download it now?
+self-update-download-ok = The new version of FRABBIT ({ $latest }) was downloaded and verified successfully.
+self-update-download-failed = The update download failed: { $error }
+
 wizard-summary-target = Target: { $path }
 wizard-summary-portable = Portable target: { $value }
 wizard-summary-dry-run = Dry run: { $value }

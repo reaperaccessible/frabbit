@@ -9,7 +9,9 @@ use std::sync::{
 };
 
 use frabbit_core::localization::{Localizer, resolve_runtime_locale};
-use frabbit_core::self_update::SelfUpdateCheckReport;
+use frabbit_core::self_update::{
+    SelfUpdateAssetSelection, SelfUpdateCheckReport, download_and_verify_update,
+};
 
 // FluentBundle is !Send, so we keep one Localizer instance per UI thread and
 // have call_after bodies read it from this thread-local rather than capturing
@@ -202,13 +204,34 @@ fn render_self_update_status(
     // status line is gone. Concurrent self-update + install on the same
     // target still races at the file rename and surfaces a normal IO
     // error.)
+    // Decide whether to raise the once-per-session update prompt BEFORE
+    // touching the status bar, so a later re-render (e.g. a wizard step
+    // change) can't re-open the dialog.
+    let prompt_report = match &check {
+        Ok(report)
+            if report.update_available
+                && !report.requires_manual_transition
+                && !state_guard.prompted =>
+        {
+            state_guard.prompted = true;
+            Some(report.clone())
+        }
+        _ => None,
+    };
+
     let status = match &check {
         Ok(report) => {
             if report.update_available {
-                format!(
-                    "FRABBIT {} is available. Download it from https://github.com/ReaperAccessible/frabbit/releases/latest",
-                    report.latest_version
-                )
+                localizer
+                    .format(
+                        "self-update-status-update-available",
+                        &[
+                            ("current", report.current_version.to_string().as_str()),
+                            ("latest", report.latest_version.to_string().as_str()),
+                            ("channel", report.channel.as_str()),
+                        ],
+                    )
+                    .value
             } else {
                 format_self_update_check_summary(localizer, report)
             }
@@ -216,11 +239,77 @@ fn render_self_update_status(
         Err(error) => format!("{}: {}", model.text.done_self_update_error_prefix, error),
     };
 
-    let status_changed = status != state_guard.last_status;
-    if status_changed {
+    if status != state_guard.last_status {
         widgets.self_update_status.set_status_text(&status, 0);
         state_guard.last_status = status;
     }
+    drop(state_guard);
+
+    // The status bar is easy for a screen-reader user to miss, so raise an
+    // accessible modal prompt when a new version is available. "Yes" downloads
+    // and verifies it; "No" keeps the current version (relaunching re-prompts).
+    if let Some(report) = prompt_report {
+        let latest = report.latest_version.to_string();
+        let title = localizer.text("self-update-dialog-title").value;
+        let body = localizer
+            .format("self-update-dialog-body", &[("latest", latest.as_str())])
+            .value;
+        let dialog = MessageDialog::builder(&widgets.review_text, &body, &title)
+            .with_style(
+                MessageDialogStyle::YesNo
+                    | MessageDialogStyle::IconQuestion
+                    | MessageDialogStyle::Centre,
+            )
+            .build();
+        if dialog.show_modal() == ID_YES {
+            start_self_update_download(widgets, report.asset, latest);
+        }
+    }
+}
+
+/// Download + verify the new version on a background thread (so the UI stays
+/// responsive and screen-reader-navigable), then report the outcome in an
+/// accessible dialog. Phases 1-2 only: this does NOT yet replace the running
+/// executable or relaunch — it confirms the new version was fetched and its
+/// checksum verified.
+fn start_self_update_download(
+    widgets: WizardWidgets,
+    asset: SelfUpdateAssetSelection,
+    latest: String,
+) {
+    std::thread::spawn(move || {
+        let dest = std::env::temp_dir().join("frabbit-update");
+        let result = download_and_verify_update(&asset, &dest);
+        wxdragon::call_after(Box::new(move || {
+            with_ui_localizer(|localizer| {
+                let title = localizer.text("self-update-dialog-title").value;
+                let message = match &result {
+                    Ok(_) => {
+                        localizer
+                            .format("self-update-download-ok", &[("latest", latest.as_str())])
+                            .value
+                    }
+                    Err(error) => {
+                        localizer
+                            .format(
+                                "self-update-download-failed",
+                                &[("error", error.to_string().as_str())],
+                            )
+                            .value
+                    }
+                };
+                let icon = if result.is_ok() {
+                    MessageDialogStyle::IconInformation
+                } else {
+                    MessageDialogStyle::IconError
+                };
+                let dialog = MessageDialog::builder(&widgets.review_text, &message, &title)
+                    .with_style(MessageDialogStyle::OK | icon | MessageDialogStyle::Centre)
+                    .build();
+                dialog.show_modal();
+            });
+        }));
+    });
 }
 
 /// `wx/defs.h`: `WXK_SPACE = 32` (just the ASCII value). Kept around as a
