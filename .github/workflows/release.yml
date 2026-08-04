@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "v*"
+      # Skip pre-release / test tags like `v1.0.9-test9`: they aren't real
+      # releases, have no matching CHANGELOG section (the "extract release
+      # notes" step would fail), and must not spam a failed-run email.
+      - "!v*-*"
   workflow_dispatch:
 
 permissions:
