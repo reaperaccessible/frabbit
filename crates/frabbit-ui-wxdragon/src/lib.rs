@@ -1784,11 +1784,16 @@ pub fn summarize_wizard_error(
         });
     }
 
+    // Failures FRABBIT can name get a localized, actionable sentence;
+    // everything else keeps falling back to the error's technical text,
+    // exactly as before.
+    let error_text = localized_install_error_message(localizer.as_ref(), error)
+        .unwrap_or_else(|| error.to_string());
     detail_lines.push(format_localized_message(
         localizer.as_ref(),
         "wizard-summary-error",
-        &[("message", error.to_string())],
-        format!("Error: {error}"),
+        &[("message", error_text.clone())],
+        format!("Error: {error_text}"),
     ));
 
     WizardInstallSummary {
@@ -2267,6 +2272,71 @@ fn format_localized_message(
         .map(|(name, value)| (*name, value.as_str()))
         .collect::<Vec<_>>();
     localizer.format(id, &borrowed_args).value
+}
+
+/// Map the install failures FRABBIT can name onto a localized, actionable
+/// sentence for the wizard's error summary. Returns `None` for every other
+/// error, which then keeps surfacing its technical text unchanged.
+///
+/// The cancelled-elevation wording differs per platform: macOS asks for an
+/// administrator password, while Windows raises a consent prompt and can
+/// avoid elevation altogether with a portable REAPER target.
+fn localized_install_error_message(
+    localizer: Option<&Localizer>,
+    error: &FrabbitError,
+) -> Option<String> {
+    match error {
+        FrabbitError::UserCancelledElevation { .. } => {
+            let (id, fallback) = if cfg!(target_os = "macos") {
+                (
+                    "error-elevation-cancelled-macos",
+                    "Administrator authorization was declined or cancelled. Nothing was installed. Re-run the installation and enter your administrator password when macOS asks for it.",
+                )
+            } else {
+                (
+                    "error-elevation-cancelled-windows",
+                    "The administrator approval prompt was declined or cancelled. Nothing was installed. Re-run the installation and approve the prompt, or pick a portable REAPER target, which needs no elevation.",
+                )
+            };
+            Some(format_localized_message(
+                localizer,
+                id,
+                &[],
+                fallback.to_string(),
+            ))
+        }
+        FrabbitError::PkgInstallerFailed { exit_code, .. } => {
+            let code = match exit_code {
+                Some(exit_code) => exit_code.to_string(),
+                None => format_localized_message(
+                    localizer,
+                    "error-exit-code-unknown",
+                    &[],
+                    "unknown".to_string(),
+                ),
+            };
+            Some(format_localized_message(
+                localizer,
+                "error-pkg-installer-failed",
+                &[("code", code.clone())],
+                format!(
+                    "The macOS installer stopped on an error (code {code}). The installation may be incomplete. The report saved under the FRABBIT/logs folder has the details."
+                ),
+            ))
+        }
+        FrabbitError::AppBundleInstallFailed { destination, .. } => {
+            let destination = destination.display().to_string();
+            Some(format_localized_message(
+                localizer,
+                "error-app-bundle-install-failed",
+                &[("destination", destination.clone())],
+                format!(
+                    "The application could not be installed into {destination}. Check that you can write to that folder and that no existing copy is locked, then re-run the installation."
+                ),
+            ))
+        }
+        _ => None,
+    }
 }
 
 fn planned_execution_runner_label(
@@ -3075,7 +3145,7 @@ mod tests {
     use tempfile::tempdir;
 
     use super::{
-        HostCapabilities, KeymapChoice, UiBootstrapOptions, WizardInstallRequest,
+        HostCapabilities, KeymapChoice, UiBootstrapOptions, WizardInstallRequest, WizardModel,
         custom_portable_target_row, localizer_from_options, model_from_plan, refreshed_target_row,
         wizard_desired_package_ids_for_host,
     };
@@ -4671,6 +4741,113 @@ mod tests {
                 .iter()
                 .any(|line| line.contains("Error: preflight failed: REAPER is running."))
         );
+    }
+
+    fn french_model() -> WizardModel {
+        let localizer = Localizer::embedded("fr-FR").unwrap();
+        model_from_plan(
+            &localizer,
+            Platform::MacOs,
+            Architecture::Arm64,
+            vec![fake_installation()],
+            Some(0),
+            InstallPlan {
+                target: None,
+                actions: Vec::new(),
+                notes: Vec::new(),
+            },
+        )
+    }
+
+    fn french_error_line(error: &frabbit_core::FrabbitError) -> String {
+        let model = french_model();
+        let request = sample_install_request(PathBuf::from("/Users/test/PortableREAPER"));
+        let summary = super::summarize_wizard_error(&model, &request, error);
+        summary
+            .detail_lines
+            .iter()
+            .find(|line| line.starts_with("Erreur :"))
+            .expect("the summary should carry an error line")
+            .clone()
+    }
+
+    #[test]
+    fn cancelled_authorization_is_explained_in_french_without_naming_windows() {
+        let line = french_error_line(&frabbit_core::FrabbitError::UserCancelledElevation {
+            program: "/tmp/surge.dmg".to_string(),
+        });
+
+        // The wizard replaces the technical English text with an actionable
+        // sentence — no exit codes, no Windows wording on a Mac.
+        assert!(!line.contains("cancelled or declined"));
+        assert!(line.contains("Rien n'a été installé."));
+        if cfg!(target_os = "macos") {
+            assert!(!line.contains("Windows"));
+            assert!(line.contains("mot de passe administrateur"));
+        } else {
+            assert!(line.contains("REAPER portable"));
+        }
+    }
+
+    #[test]
+    fn failed_pkg_installer_is_explained_in_french_with_its_exit_code() {
+        let line = french_error_line(&frabbit_core::FrabbitError::PkgInstallerFailed {
+            image: PathBuf::from("/tmp/surge.dmg"),
+            exit_code: Some(1),
+        });
+
+        assert!(line.contains("L'installateur macOS"));
+        assert!(line.contains("code 1"));
+        assert!(line.contains("FRABBIT/logs"));
+    }
+
+    #[test]
+    fn failed_pkg_installer_without_exit_code_still_reads_as_a_sentence() {
+        let line = french_error_line(&frabbit_core::FrabbitError::PkgInstallerFailed {
+            image: PathBuf::from("/tmp/surge.dmg"),
+            exit_code: None,
+        });
+
+        assert!(line.contains("code inconnu"));
+    }
+
+    #[test]
+    fn failed_app_bundle_install_points_at_the_destination_folder_in_french() {
+        let line = french_error_line(&frabbit_core::FrabbitError::AppBundleInstallFailed {
+            destination: PathBuf::from("/Applications"),
+            message: "Permission denied (os error 13)".to_string(),
+        });
+
+        assert!(line.contains("/Applications"));
+        assert!(line.contains("droit d'écrire"));
+        assert!(!line.contains("os error 13"));
+    }
+
+    #[test]
+    fn unmapped_errors_keep_their_technical_text() {
+        let line = french_error_line(&frabbit_core::FrabbitError::PreflightFailed {
+            message: "REAPER is running.".to_string(),
+        });
+
+        assert!(line.contains("preflight failed: REAPER is running."));
+    }
+
+    #[test]
+    fn saved_report_keeps_the_technical_error_text_for_diagnosis() {
+        let dir = tempdir().unwrap();
+        let model = french_model();
+        let request = sample_install_request(dir.path().join("PortableREAPER"));
+        let error = frabbit_core::FrabbitError::UserCancelledElevation {
+            program: "/tmp/surge.dmg".to_string(),
+        };
+
+        let report = super::wizard_outcome_report_from_error(&model, &request, &error);
+
+        // The wizard shows the friendly sentence; the report keeps the raw
+        // text so a failure can still be diagnosed from the log file.
+        let technical = error.to_string();
+        assert_eq!(report.error_message.as_deref(), Some(technical.as_str()));
+        assert!(technical.contains("/tmp/surge.dmg"));
     }
 
     #[test]

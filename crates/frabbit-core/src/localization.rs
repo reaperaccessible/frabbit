@@ -346,6 +346,41 @@ mod tests {
         );
     }
 
+    /// A message id present in one catalogue but not the other is invisible
+    /// until a user hits it: the formatter returns the raw id, so the window
+    /// would read out "error-pkg-installer-failed" instead of a sentence.
+    #[test]
+    fn embedded_catalogues_define_the_same_message_ids() {
+        fn message_ids(source: &str) -> std::collections::BTreeSet<&str> {
+            source
+                .lines()
+                // Continuation lines of a multiline value are indented, and
+                // comments start with '#'; neither declares an id.
+                .filter(|line| !line.starts_with([' ', '\t', '#']))
+                .filter_map(|line| line.split_once('=').map(|(id, _)| id.trim()))
+                .filter(|id| !id.is_empty())
+                .collect()
+        }
+
+        let french = message_ids(embedded_locale_source(DEFAULT_LOCALE).unwrap());
+        let english = message_ids(embedded_locale_source("en-US").unwrap());
+
+        assert!(
+            french.contains("app-title"),
+            "the id scan found nothing recognizable; check the .ftl syntax"
+        );
+        assert_eq!(
+            french.difference(&english).collect::<Vec<_>>(),
+            Vec::<&&str>::new(),
+            "these ids are missing from the en-US catalogue"
+        );
+        assert_eq!(
+            english.difference(&french).collect::<Vec<_>>(),
+            Vec::<&&str>::new(),
+            "these ids are missing from the fr-FR catalogue"
+        );
+    }
+
     #[test]
     fn loads_embedded_english_messages() {
         let localizer = Localizer::embedded("en-US").unwrap();

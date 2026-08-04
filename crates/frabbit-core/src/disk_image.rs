@@ -179,12 +179,19 @@ fn frabbit_error_from_disk_image_error(error: DiskImageError) -> FrabbitError {
             image,
             message: format!("no installer pkg matching *{suffix} found on mounted volume"),
         },
-        DiskImageError::InstallerFailed { image, code } => FrabbitError::ProcessFailed {
-            program: format!("/usr/sbin/installer (from {})", image.display()),
+        DiskImageError::InstallerFailed { image, code } => FrabbitError::PkgInstallerFailed {
+            image,
             exit_code: code,
         },
         DiskImageError::UserCancelledElevation { image } => FrabbitError::UserCancelledElevation {
-            program: format!("/usr/sbin/installer (from {})", image.display()),
+            program: image.display().to_string(),
+        },
+        DiskImageError::AppBundleInstallFailed {
+            destination,
+            message,
+        } => FrabbitError::AppBundleInstallFailed {
+            destination,
+            message,
         },
         DiskImageError::Unsupported { image, message } => {
             FrabbitError::DiskImageMount { image, message }
@@ -195,12 +202,59 @@ fn frabbit_error_from_disk_image_error(error: DiskImageError) -> FrabbitError {
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::path::PathBuf;
 
+    use frabbit_platform::DiskImageError;
     use tempfile::tempdir;
 
-    use super::find_user_plugin_in_directory;
+    use super::{find_user_plugin_in_directory, frabbit_error_from_disk_image_error};
+    use crate::error::FrabbitError;
     use crate::model::Platform;
     use crate::package::{PACKAGE_SWS, package_specs_by_id};
+
+    #[test]
+    fn cancelled_authorization_maps_to_its_own_error_without_naming_windows() {
+        let error = frabbit_error_from_disk_image_error(DiskImageError::UserCancelledElevation {
+            image: PathBuf::from("/tmp/surge.dmg"),
+        });
+
+        assert!(matches!(error, FrabbitError::UserCancelledElevation { .. }));
+        let message = error.to_string();
+        assert!(!message.contains("Windows"));
+        // The user is told nothing was installed and what to do next.
+        assert!(message.contains("nothing was installed"));
+        assert!(message.contains("re-run the installation"));
+    }
+
+    #[test]
+    fn failed_pkg_installer_reports_the_image_instead_of_usr_sbin_installer() {
+        let error = frabbit_error_from_disk_image_error(DiskImageError::InstallerFailed {
+            image: PathBuf::from("/tmp/surge.dmg"),
+            code: Some(1),
+        });
+
+        assert!(matches!(
+            error,
+            FrabbitError::PkgInstallerFailed {
+                exit_code: Some(1),
+                ..
+            }
+        ));
+        let message = error.to_string();
+        assert!(message.contains("/tmp/surge.dmg"));
+        assert!(!message.contains("/usr/sbin/installer"));
+    }
+
+    #[test]
+    fn failed_app_bundle_install_names_the_destination_folder() {
+        let error = frabbit_error_from_disk_image_error(DiskImageError::AppBundleInstallFailed {
+            destination: PathBuf::from("/Applications"),
+            message: "Permission denied (os error 13)".to_string(),
+        });
+
+        assert!(matches!(error, FrabbitError::AppBundleInstallFailed { .. }));
+        assert!(error.to_string().contains("/Applications"));
+    }
 
     #[test]
     fn finds_user_plugin_at_root_of_directory_tree() {
