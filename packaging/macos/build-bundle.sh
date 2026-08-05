@@ -67,7 +67,21 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 # both so VoiceOver picks the right voice for the in-app language. FRABBIT's
 # strings live in Fluent files outside the bundle, so the directories are
 # deliberately empty — they exist only as a localization signal.
-for lproj in en de; do
+#
+# These MUST stay in sync with CFBundleLocalizations in Info.plist and with
+# EMBEDDED_LOCALES in crates/frabbit-core/src/localization.rs — FRABBIT ships
+# fr-FR (default) and en-US. They said `en`/`de` until 2026-08: leftovers from
+# upstream RABBIT that survived the French fork. French and English Macs
+# resolved correctly anyway (the plist key carried `fr`), but a German Mac
+# resolved the bundle to `de` — a language FRABBIT does not speak, since an
+# unsupported OS language falls back to fr-FR. macOS therefore announced
+# German for an interface displaying French.
+#
+# Declaring the languages twice (here and in CFBundleLocalizations) makes
+# `Bundle.localizations` report each one twice. Measured as harmless — the
+# resolved language is identical either way — and kept because the plist key
+# and the .lproj layout are read by different parts of the system.
+for lproj in fr en; do
 	mkdir -p "$APP_DIR/Contents/Resources/$lproj.lproj"
 done
 
