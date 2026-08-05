@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.14] - 2026-08-05
+
+### Corrections
+
+- **La panne d'un seul serveur ne bloque plus tout FRABBIT au démarrage.** Au lancement, FRABBIT vérifie la dernière version de chaque produit en ligne. Si l'un de ces serveurs était momentanément indisponible — par exemple gyan.dev, qui héberge FFmpeg, renvoyant une erreur 503 — **tout le démarrage échouait** et rien ne pouvait être installé. Désormais, un produit dont le serveur ne répond pas s'affiche simplement sans numéro de version disponible, et tous les autres restent utilisables. FRABBIT s'ouvre normalement même si un fournisseur externe est en panne.
+
 ## [1.0.13] - 2026-08-05
 
 ### Corrections

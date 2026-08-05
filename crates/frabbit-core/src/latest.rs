@@ -83,16 +83,22 @@ pub fn fetch_latest_versions() -> Result<Vec<AvailablePackage>> {
     let client = build_http_client()?;
     let mut packages = Vec::new();
     for (package_id, url, parser) in providers() {
-        let body = http_get_text(&client, url)?;
-        let version = parser(&body, url)?;
+        // One upstream being unreachable (e.g. gyan.dev returning 503 for the
+        // FFmpeg version stamp) must NOT blank the whole wizard. Record that
+        // package with an unknown version (`None`) and keep going, so every
+        // other package still resolves and FRABBIT stays usable — the failing
+        // one just shows no "available version" until its server recovers.
+        let version = http_get_text(&client, url)
+            .and_then(|body| parser(&body, url))
+            .ok();
         packages.push(AvailablePackage {
             package_id: package_id.to_string(),
-            version: Some(version),
+            version,
         });
     }
     packages.push(AvailablePackage {
         package_id: PACKAGE_JAWS_SCRIPTS.to_string(),
-        version: Some(fetch_jaws_for_reaper_latest(&client)?),
+        version: fetch_jaws_for_reaper_latest(&client).ok(),
     });
 
     Ok(packages)
