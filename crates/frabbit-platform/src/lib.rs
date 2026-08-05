@@ -10,6 +10,7 @@
 //! VersionInfo APIs. On macOS and other targets it is a no-op that returns
 //! `None` so callers don't have to spread `cfg(windows)` everywhere.
 
+pub mod app_bundle;
 pub mod arch;
 pub mod disk_image;
 pub mod elevation;
@@ -22,6 +23,10 @@ pub mod paths;
 pub mod registry;
 pub mod signature;
 
+pub use app_bundle::{
+    AppBundleError, app_bundle_is_replaceable, current_app_bundle, relaunch_app_bundle,
+    replace_app_bundle,
+};
 pub use arch::is_running_under_rosetta;
 pub use disk_image::{
     DiskImageError, MountedDiskImage, copy_directory_recursive, find_app_bundle_in_directory,

@@ -32,6 +32,19 @@ pub struct SelfUpdateAssets {
     pub macos: Option<SelfUpdateAsset>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub platforms: Option<BTreeMap<String, SelfUpdateAsset>>,
+    /// Zipped `.app` bundles, keyed like `platforms` (`macos-aarch64`). A
+    /// macOS FRABBIT running from `Frabbit.app` updates from these rather than
+    /// from the bare binary in `platforms`: the bundle also carries the version
+    /// in `Info.plist`, the `.lproj` layout VoiceOver reads, and the code
+    /// signature that seals them, none of which a binary swap would refresh.
+    ///
+    /// Deliberately a sibling field rather than extra `platforms` keys:
+    /// [`validate_platform_key`] rejects any key that isn't `<os>-<arch>`, so
+    /// a `macos-aarch64-bundle` entry would make every already-released client
+    /// fail to parse the manifest at all — Windows ones included. Clients that
+    /// predate this field ignore it and keep updating from `platforms`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bundles: Option<BTreeMap<String, SelfUpdateAsset>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,11 +53,25 @@ pub struct SelfUpdateAsset {
     pub sha256: String,
 }
 
+/// What the selected asset *is*, which decides how it gets installed: an
+/// executable is copied over the running binary, an app bundle replaces the
+/// whole `.app` directory it was launched from.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SelfUpdateAssetKind {
+    #[default]
+    Executable,
+    AppBundle,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SelfUpdateAssetSelection {
     pub platform: Platform,
     pub url: String,
     pub sha256: String,
+    /// Defaulted so reports serialized by older FRABBIT versions still load.
+    #[serde(default)]
+    pub kind: SelfUpdateAssetKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -77,6 +104,8 @@ struct RawSelfUpdateAssets {
     macos: Option<RawSelfUpdateAsset>,
     #[serde(default)]
     platforms: Option<BTreeMap<String, RawSelfUpdateAsset>>,
+    #[serde(default)]
+    bundles: Option<BTreeMap<String, RawSelfUpdateAsset>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -141,21 +170,8 @@ pub fn parse_self_update_manifest(body: &str, manifest_url: &str) -> Result<Self
             parse_semantic_version(value, manifest_url, "minimum_supported_previous_version")
         })
         .transpose()?;
-    let platforms = raw
-        .assets
-        .platforms
-        .as_ref()
-        .map(|raw_platforms| {
-            raw_platforms
-                .iter()
-                .map(|(key, asset)| {
-                    validate_platform_key(key, manifest_url)?;
-                    let parsed = parse_asset(asset, manifest_url, key)?;
-                    Ok::<_, FrabbitError>((key.clone(), parsed))
-                })
-                .collect::<Result<BTreeMap<_, _>>>()
-        })
-        .transpose()?;
+    let platforms = parse_keyed_assets(raw.assets.platforms.as_ref(), manifest_url)?;
+    let bundles = parse_keyed_assets(raw.assets.bundles.as_ref(), manifest_url)?;
     let assets = SelfUpdateAssets {
         windows: raw
             .assets
@@ -170,6 +186,7 @@ pub fn parse_self_update_manifest(body: &str, manifest_url: &str) -> Result<Self
             .map(|asset| parse_asset(asset, manifest_url, "macos"))
             .transpose()?,
         platforms,
+        bundles,
     };
 
     Ok(SelfUpdateManifest {
@@ -183,6 +200,18 @@ pub fn parse_self_update_manifest(body: &str, manifest_url: &str) -> Result<Self
 }
 
 pub fn check_self_update(platform: Platform, manifest_url: &str) -> Result<SelfUpdateCheckReport> {
+    check_self_update_for(platform, manifest_url, SelfUpdateAssetKind::Executable)
+}
+
+/// [`check_self_update`], but choosing which flavour of asset the report should
+/// point at. macOS FRABBIT passes [`SelfUpdateAssetKind::AppBundle`] when it is
+/// running from `Frabbit.app`; everything else (the CLI, a bare binary) keeps
+/// the executable asset.
+pub fn check_self_update_for(
+    platform: Platform,
+    manifest_url: &str,
+    preferred_kind: SelfUpdateAssetKind,
+) -> Result<SelfUpdateCheckReport> {
     let manifest = fetch_self_update_manifest(manifest_url)?;
     evaluate_self_update_report(
         platform,
@@ -190,6 +219,7 @@ pub fn check_self_update(platform: Platform, manifest_url: &str) -> Result<SelfU
         manifest_url,
         current_frabbit_version()?,
         &manifest,
+        preferred_kind,
     )
 }
 
@@ -285,6 +315,7 @@ fn evaluate_self_update_report(
     manifest_url: &str,
     current_version: Version,
     manifest: &SelfUpdateManifest,
+    preferred_kind: SelfUpdateAssetKind,
 ) -> Result<SelfUpdateCheckReport> {
     let current_semver =
         semantic_version_from_version(&current_version, manifest_url, "current_version")?;
@@ -313,7 +344,13 @@ fn evaluate_self_update_report(
         minimum_supported_previous_version,
         update_available: latest_semver > current_semver,
         requires_manual_transition,
-        asset: select_asset_for_platform(platform, architecture, manifest, manifest_url)?,
+        asset: select_asset_for_platform(
+            platform,
+            architecture,
+            manifest,
+            manifest_url,
+            preferred_kind,
+        )?,
     })
 }
 
@@ -322,19 +359,54 @@ fn select_asset_for_platform(
     architecture: Architecture,
     manifest: &SelfUpdateManifest,
     manifest_url: &str,
+    preferred_kind: SelfUpdateAssetKind,
 ) -> Result<SelfUpdateAssetSelection> {
+    let arch_key = architecture
+        .release_artifact_token()
+        .map(|arch_token| format!("{}-{}", platform_token(platform), arch_token));
+
+    // A FRABBIT running from a `.app` must update from a bundle: dropping a
+    // bare binary inside the running bundle would leave Info.plist, the
+    // localization layout and the code signature describing the old version.
+    // No silent fallback to the executable asset for that reason — a manifest
+    // without a bundle entry means "not updatable from here", and the caller
+    // points the user at the releases page instead.
+    if preferred_kind == SelfUpdateAssetKind::AppBundle {
+        let key = arch_key.clone().ok_or_else(|| FrabbitError::RemoteData {
+            url: manifest_url.to_string(),
+            message: format!(
+                "no manifest asset for {platform:?} on architecture {architecture:?}: \
+                 architecture is not produced by the FRABBIT release pipeline."
+            ),
+        })?;
+        let asset = manifest
+            .assets
+            .bundles
+            .as_ref()
+            .and_then(|bundles| bundles.get(&key))
+            .ok_or_else(|| FrabbitError::RemoteData {
+                url: manifest_url.to_string(),
+                message: format!(
+                    "manifest does not list a {key} application bundle; \
+                     download the matching build from the GitHub releases page manually."
+                ),
+            })?;
+        return Ok(SelfUpdateAssetSelection {
+            platform,
+            url: asset.url.clone(),
+            sha256: asset.sha256.clone(),
+            kind: SelfUpdateAssetKind::AppBundle,
+        });
+    }
+
     if let Some(platforms) = &manifest.assets.platforms {
-        let arch_token =
-            architecture
-                .release_artifact_token()
-                .ok_or_else(|| FrabbitError::RemoteData {
-                    url: manifest_url.to_string(),
-                    message: format!(
-                        "no manifest asset for {platform:?} on architecture {architecture:?}: \
-                     architecture is not produced by the FRABBIT release pipeline."
-                    ),
-                })?;
-        let key = format!("{}-{}", platform_token(platform), arch_token);
+        let key = arch_key.ok_or_else(|| FrabbitError::RemoteData {
+            url: manifest_url.to_string(),
+            message: format!(
+                "no manifest asset for {platform:?} on architecture {architecture:?}: \
+                 architecture is not produced by the FRABBIT release pipeline."
+            ),
+        })?;
         let asset = platforms
             .get(&key)
             .ok_or_else(|| FrabbitError::RemoteData {
@@ -348,6 +420,7 @@ fn select_asset_for_platform(
             platform,
             url: asset.url.clone(),
             sha256: asset.sha256.clone(),
+            kind: SelfUpdateAssetKind::Executable,
         });
     }
 
@@ -379,6 +452,7 @@ fn select_asset_for_platform(
         platform,
         url: asset.url.clone(),
         sha256: asset.sha256.clone(),
+        kind: SelfUpdateAssetKind::Executable,
     })
 }
 
@@ -418,6 +492,25 @@ fn arch_token_from_asset_url(url: &str) -> Option<&str> {
         "x86_64" | "aarch64" | "i686" | "armv7" => Some(arch),
         _ => None,
     }
+}
+
+/// Validate and convert one of the `<os>-<arch>`-keyed asset maps (`platforms`,
+/// `bundles`). Both use the same key grammar, so both reject the same typos.
+fn parse_keyed_assets(
+    raw: Option<&BTreeMap<String, RawSelfUpdateAsset>>,
+    manifest_url: &str,
+) -> Result<Option<BTreeMap<String, SelfUpdateAsset>>> {
+    raw.map(|entries| {
+        entries
+            .iter()
+            .map(|(key, asset)| {
+                validate_platform_key(key, manifest_url)?;
+                let parsed = parse_asset(asset, manifest_url, key)?;
+                Ok::<_, FrabbitError>((key.clone(), parsed))
+            })
+            .collect::<Result<BTreeMap<_, _>>>()
+    })
+    .transpose()
 }
 
 fn parse_asset(
@@ -491,8 +584,8 @@ fn is_valid_sha256(value: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        arch_token_from_asset_url, current_frabbit_version, evaluate_self_update_report,
-        parse_self_update_manifest,
+        SelfUpdateAssetKind, arch_token_from_asset_url, current_frabbit_version,
+        evaluate_self_update_report, parse_self_update_manifest,
     };
     use crate::model::{Architecture, Platform};
     use crate::version::Version;
@@ -587,6 +680,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap();
 
@@ -606,6 +700,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.0.9").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap();
 
@@ -657,6 +752,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap_err();
 
@@ -689,6 +785,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap();
 
@@ -742,6 +839,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap();
         assert!(windows_arm.asset.url.ends_with("windows-aarch64.exe"));
@@ -752,6 +850,7 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap();
         assert!(macos_intel.asset.url.ends_with("macos-x86_64"));
@@ -787,9 +886,138 @@ mod tests {
             MANIFEST_URL,
             Version::parse("0.1.0").unwrap(),
             &manifest,
+            SelfUpdateAssetKind::Executable,
         )
         .unwrap_err();
         assert!(error.to_string().contains("windows-aarch64"));
+    }
+
+    /// A manifest carrying both flavours, as the release pipeline publishes.
+    const MANIFEST_WITH_BUNDLES: &str = r#"{
+      "version": "0.2.0",
+      "channel": "stable",
+      "published_at": "2026-04-25T00:00:00Z",
+      "assets": {
+        "windows": null,
+        "macos": {
+          "url": "https://example.test/frabbit-0.2.0-macos-universal",
+          "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        },
+        "platforms": {
+          "macos-aarch64": {
+            "url": "https://example.test/frabbit-0.2.0-macos-universal",
+            "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+          }
+        },
+        "bundles": {
+          "macos-aarch64": {
+            "url": "https://example.test/frabbit-0.2.0-macos-universal.app.zip",
+            "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+          }
+        }
+      }
+    }"#;
+
+    #[test]
+    fn selects_the_app_bundle_when_running_from_one() {
+        let manifest = parse_self_update_manifest(MANIFEST_WITH_BUNDLES, MANIFEST_URL).unwrap();
+
+        let report = evaluate_self_update_report(
+            Platform::MacOs,
+            Architecture::Arm64,
+            MANIFEST_URL,
+            Version::parse("0.1.0").unwrap(),
+            &manifest,
+            SelfUpdateAssetKind::AppBundle,
+        )
+        .unwrap();
+
+        assert_eq!(report.asset.kind, SelfUpdateAssetKind::AppBundle);
+        assert!(report.asset.url.ends_with(".app.zip"));
+    }
+
+    #[test]
+    fn a_bare_binary_still_gets_the_executable_asset_from_the_same_manifest() {
+        let manifest = parse_self_update_manifest(MANIFEST_WITH_BUNDLES, MANIFEST_URL).unwrap();
+
+        let report = evaluate_self_update_report(
+            Platform::MacOs,
+            Architecture::Arm64,
+            MANIFEST_URL,
+            Version::parse("0.1.0").unwrap(),
+            &manifest,
+            SelfUpdateAssetKind::Executable,
+        )
+        .unwrap();
+
+        assert_eq!(report.asset.kind, SelfUpdateAssetKind::Executable);
+        assert!(report.asset.url.ends_with("macos-universal"));
+    }
+
+    /// Never silently hand a bare binary to a FRABBIT running from a bundle:
+    /// dropping it inside the `.app` would leave Info.plist and the code
+    /// signature describing the previous version.
+    #[test]
+    fn refuses_to_fall_back_to_the_executable_when_a_bundle_is_required() {
+        let manifest = parse_self_update_manifest(
+            r#"{
+              "version": "0.2.0",
+              "channel": "stable",
+              "published_at": "2026-04-25T00:00:00Z",
+              "assets": {
+                "windows": null,
+                "macos": null,
+                "platforms": {
+                  "macos-aarch64": {
+                    "url": "https://example.test/frabbit-0.2.0-macos-universal",
+                    "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+                  }
+                }
+              }
+            }"#,
+            MANIFEST_URL,
+        )
+        .unwrap();
+
+        let error = evaluate_self_update_report(
+            Platform::MacOs,
+            Architecture::Arm64,
+            MANIFEST_URL,
+            Version::parse("0.1.0").unwrap(),
+            &manifest,
+            SelfUpdateAssetKind::AppBundle,
+        )
+        .unwrap_err();
+        let message = error.to_string();
+        assert!(message.contains("macos-aarch64"), "message was: {message}");
+        assert!(
+            message.contains("application bundle"),
+            "message was: {message}"
+        );
+    }
+
+    #[test]
+    fn rejects_manifest_with_unknown_bundles_key() {
+        let error = parse_self_update_manifest(
+            r#"{
+              "version": "0.2.0",
+              "channel": "stable",
+              "published_at": "2026-04-25T00:00:00Z",
+              "assets": {
+                "windows": null,
+                "macos": null,
+                "bundles": {
+                  "macos-aarch64-bundle": {
+                    "url": "https://example.test/frabbit-0.2.0-macos.app.zip",
+                    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                  }
+                }
+              }
+            }"#,
+            MANIFEST_URL,
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("macos-aarch64-bundle"));
     }
 
     #[test]

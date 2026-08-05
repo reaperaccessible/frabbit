@@ -10,7 +10,8 @@ use std::sync::{
 
 use frabbit_core::localization::{Localizer, resolve_runtime_locale};
 use frabbit_core::self_update::{
-    SelfUpdateAssetSelection, SelfUpdateCheckReport, download_and_verify_update,
+    SelfUpdateAssetKind, SelfUpdateAssetSelection, SelfUpdateCheckReport,
+    download_and_verify_update,
 };
 
 // FluentBundle is !Send, so we keep one Localizer instance per UI thread and
@@ -265,10 +266,11 @@ fn render_self_update_status(
         if dialog.show_modal() != ID_YES {
             return;
         }
-        // Pre-flight: an in-place self-replace needs a writable exe directory.
-        // A copy run from a read-only location (e.g. Program Files) can't
-        // auto-update, so offer the download page instead of failing later.
-        if !frabbit_platform::exe_replace::current_exe_dir_is_writable() {
+        // Pre-flight: an in-place self-replace needs a writable install
+        // directory. A copy run from a read-only location (e.g. Program Files)
+        // can't auto-update, so offer the download page instead of failing
+        // later.
+        if !self_update_target_is_writable() {
             let msg = localizer.text("self-update-not-writable-body").value;
             let fallback = MessageDialog::builder(&widgets.review_text, &msg, &title)
                 .with_style(
@@ -291,6 +293,17 @@ fn render_self_update_status(
 }
 
 const RELEASES_LATEST_URL: &str = "https://github.com/ReaperAccessible/frabbit/releases/latest";
+
+/// Whether this install can be updated in place. Both flavours of update swap
+/// something inside the install's *parent* directory — a file for the bare
+/// executable, the whole `.app` directory on macOS — so that parent is what has
+/// to be writable.
+fn self_update_target_is_writable() -> bool {
+    match frabbit_platform::current_app_bundle() {
+        Some(bundle) => frabbit_platform::app_bundle_is_replaceable(&bundle),
+        None => frabbit_platform::exe_replace::current_exe_dir_is_writable(),
+    }
+}
 
 /// Open a URL in the user's default browser (best-effort). Used for the
 /// "auto-update isn't possible from here" fallback.
@@ -338,40 +351,76 @@ fn relaunch_updated_exe(exe: &std::path::Path) -> bool {
     command.spawn().is_ok()
 }
 
-/// Download + verify the new version, replace the running exe in place, then
-/// relaunch. The download/replace run on a worker thread so the UI stays
-/// responsive; the relaunch + exit happen back on the main thread. On any
-/// failure FRABBIT keeps running on the current version (no half-updated
-/// state is reachable: the file is verified before replacement, and
-/// `self-replace` keeps the old exe until the swap succeeds).
+/// What the main thread has to start once the swap succeeded.
+enum RelaunchTarget {
+    /// The running executable's own path, now holding the new binary.
+    Executable,
+    /// The `.app` bundle that was replaced, relaunched through Launch Services.
+    AppBundle(std::path::PathBuf),
+}
+
+/// Download + verify the new version, put it in place, then relaunch. The
+/// download/replace run on a worker thread so the UI stays responsive; the
+/// relaunch + exit happen back on the main thread. On any failure FRABBIT keeps
+/// running on the current version — no half-updated state is reachable: the
+/// download is checksum-verified before anything is touched, `self-replace`
+/// keeps the old exe until the swap succeeds, and a bundle swap that fails
+/// halfway puts the previous `.app` back.
 fn start_self_update_install(widgets: WizardWidgets, asset: SelfUpdateAssetSelection) {
     std::thread::spawn(move || {
-        let outcome: std::result::Result<(), String> = (|| {
-            // Download next to the running exe (same volume as the install
-            // target). The directory was checked writable before we got here.
-            let dest = std::env::current_exe()
-                .ok()
-                .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
-                .unwrap_or_else(std::env::temp_dir);
-            let new_exe = download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
-            frabbit_platform::exe_replace::replace_running_exe(&new_exe)
-                .map_err(|e| e.to_string())?;
-            // self-replace COPIES the new file into place, so the downloaded
-            // one lingers — remove it. The old binary (renamed to a
-            // `.__relocated__.exe` sidecar) is cleaned up on the next startup
-            // by cleanup_update_leftovers().
-            let _ = std::fs::remove_file(&new_exe);
-            Ok(())
+        let outcome: std::result::Result<RelaunchTarget, String> = (|| match asset.kind {
+            SelfUpdateAssetKind::Executable => {
+                // Download next to the running exe (same volume as the install
+                // target). The directory was checked writable before we got here.
+                let dest = std::env::current_exe()
+                    .ok()
+                    .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
+                    .unwrap_or_else(std::env::temp_dir);
+                let new_exe =
+                    download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
+                frabbit_platform::exe_replace::replace_running_exe(&new_exe)
+                    .map_err(|e| e.to_string())?;
+                // self-replace COPIES the new file into place, so the downloaded
+                // one lingers — remove it. The old binary (renamed to a
+                // `.__relocated__.exe` sidecar) is cleaned up on the next startup
+                // by cleanup_update_leftovers().
+                let _ = std::fs::remove_file(&new_exe);
+                Ok(RelaunchTarget::Executable)
+            }
+            SelfUpdateAssetKind::AppBundle => {
+                let bundle = frabbit_platform::current_app_bundle().ok_or_else(|| {
+                    "this FRABBIT is not running from an application bundle".to_string()
+                })?;
+                let parent = bundle
+                    .parent()
+                    .ok_or_else(|| format!("{} has no parent directory", bundle.display()))?;
+                // Stage the download in a hidden sibling of the bundle: same
+                // volume, so the swap stays a rename, and nothing visible is
+                // left sitting in /Applications if this fails.
+                let dest = parent.join(format!(".frabbit-download-{}", std::process::id()));
+                let archive =
+                    download_and_verify_update(&asset, &dest).map_err(|e| e.to_string())?;
+                let replaced = frabbit_platform::replace_app_bundle(&archive, &bundle)
+                    .map_err(|e| e.to_string());
+                let _ = std::fs::remove_dir_all(&dest);
+                replaced?;
+                Ok(RelaunchTarget::AppBundle(bundle))
+            }
         })();
 
         wxdragon::call_after(Box::new(move || match outcome {
-            Ok(()) => {
-                // The new binary now sits at the current exe path — relaunch it,
-                // preserving the user's chosen language, then exit this instance.
-                let relaunched = std::env::current_exe().is_ok_and(|exe| {
-                    frabbit_platform::exe_replace::allow_foreground_for_relaunch();
-                    relaunch_updated_exe(&exe)
-                });
+            Ok(target) => {
+                // The new version is in place — relaunch it, preserving the
+                // user's chosen language, then exit this instance.
+                let relaunched = match target {
+                    RelaunchTarget::Executable => std::env::current_exe().is_ok_and(|exe| {
+                        frabbit_platform::exe_replace::allow_foreground_for_relaunch();
+                        relaunch_updated_exe(&exe)
+                    }),
+                    RelaunchTarget::AppBundle(bundle) => {
+                        frabbit_platform::relaunch_app_bundle(&bundle)
+                    }
+                };
                 if relaunched {
                     std::process::exit(0);
                 }
