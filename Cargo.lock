@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "frabbit-cli",
  "frabbit-ui-wxdragon",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-cli"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "clap",
  "frabbit-core",
@@ -515,7 +515,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-core"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "fluent-bundle",
  "frabbit-platform",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-platform"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "plist",
  "self-replace",
@@ -547,7 +547,7 @@ dependencies = [
 
 [[package]]
 name = "frabbit-ui-wxdragon"
-version = "1.0.10"
+version = "1.0.11"
 dependencies = [
  "frabbit-core",
  "frabbit-platform",

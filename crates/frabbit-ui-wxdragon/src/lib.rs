@@ -3362,13 +3362,13 @@ mod tests {
         let added = super::localized_configuration_message(
             &en,
             &Msg::ReapackRemoteAdded {
-                name: "ReaperAccessible EN".to_string(),
+                name: "ReaperAccessible scripts US".to_string(),
                 url: "https://example.test/index.xml".to_string(),
             },
             "Added ReaPack remote ...",
         );
         assert!(
-            added.contains("ReaperAccessible EN")
+            added.contains("ReaperAccessible scripts US")
                 && added.contains("Added")
                 && added.contains("https://example.test/index.xml"),
             "expected English added-remote message with name + URL interpolation, got: {added:?}"

@@ -39,8 +39,14 @@ pub const CONFIG_REAPACK_CURATED_DEFAULTS: &str = "reapack-curated-defaults";
 
 /// Display name to write into `reapack.ini`'s `remote<N>=<name>|...`
 /// entry. ReaPack shows this in its Manage Repositories UI.
-const REAPER_ACCESSIBLE_REPACK_NAME_FR: &str = "ReaperAccessible FR";
-const REAPER_ACCESSIBLE_REPACK_NAME_EN: &str = "ReaperAccessible EN";
+// These MUST match the `name` attribute declared in each repository's
+// `index.xml` (`ReaperAccessible scripts` / `ReaperAccessible scripts US`).
+// ReaPack derives the on-disk scripts folder from this name, and REAPER
+// derives each script's action-command id from its path — so a mismatched
+// name lands the scripts in the wrong folder and breaks the key map bindings
+// that reference them.
+const REAPER_ACCESSIBLE_REPACK_NAME_FR: &str = "ReaperAccessible scripts";
+const REAPER_ACCESSIBLE_REPACK_NAME_EN: &str = "ReaperAccessible scripts US";
 /// Repository index URLs per language.
 const REAPER_ACCESSIBLE_REPACK_URL_FR: &str =
     "https://github.com/reaperaccessible/rap_fr/raw/main/index.xml";
@@ -358,7 +364,8 @@ mod tests {
         assert_eq!(step.requires_package_id.as_deref(), Some(PACKAGE_REAPACK));
         match &step.kind {
             ConfigurationStepKind::AddReapackRemote { name, url } => {
-                assert_eq!(name, "ReaperAccessible FR");
+                // Must match the rap_fr index.xml `name` attribute exactly.
+                assert_eq!(name, "ReaperAccessible scripts");
                 assert_eq!(
                     url,
                     "https://github.com/reaperaccessible/rap_fr/raw/main/index.xml"
@@ -376,7 +383,8 @@ mod tests {
             .unwrap();
         match &step.kind {
             ConfigurationStepKind::AddReapackRemote { name, url } => {
-                assert_eq!(name, "ReaperAccessible EN");
+                // Must match the rap_en index.xml `name` attribute exactly.
+                assert_eq!(name, "ReaperAccessible scripts US");
                 assert_eq!(
                     url,
                     "https://github.com/reaperaccessible/rap_en/raw/main/index.xml"
