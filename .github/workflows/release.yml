@@ -20,6 +20,12 @@ jobs:
   build:
     name: Build release bundle (${{ matrix.platform_id }})
     runs-on: ${{ matrix.os }}
+    # A macOS build failure must never hold back a Windows release: the
+    # publish job runs on `needs: build`, so a hard failure here would skip
+    # publishing entirely. Marked non-blocking instead — the manifest steps
+    # below already treat missing macOS artifacts as "no macOS assets this
+    # release", and a skipped Mac build stays visible in the Actions tab.
+    continue-on-error: ${{ matrix.platform_id == 'macos' }}
     strategy:
       fail-fast: false
       matrix:
@@ -27,11 +33,9 @@ jobs:
           - os: windows-latest
             platform_id: windows
             extension: ".exe"
-          # macOS intentionally paused: focus is on getting the Windows build
-          # right first. Restore this entry when macOS ships again.
-          # - os: macos-latest
-          #   platform_id: macos
-          #   extension: ""
+          - os: macos-latest
+            platform_id: macos
+            extension: ""
 
     steps:
       - name: Checkout
@@ -193,6 +197,12 @@ jobs:
             --out "dist" \
             --zip-name "${ARTIFACT}.app.zip" \
             --adhoc-sign
+          # The zipped bundle is a self-update asset now, not just a download
+          # for the Finder, so it needs a checksum the updater can verify
+          # against the manifest.
+          shasum -a 256 "dist/${ARTIFACT}.app.zip" \
+            | awk -v name="${ARTIFACT}.app.zip" '{print tolower($1) "  " name}' \
+            > "dist/${ARTIFACT}.app.zip.sha256"
 
       - name: Upload Windows release artifact
         if: matrix.platform_id == 'windows'
@@ -263,9 +273,19 @@ jobs:
 
           # Build the per-arch `platforms` map by scanning every bare-binary
           # asset in release/. The bare binary is what the self-updater
-          # downloads (it copies bytes straight over the install target —
-          # no zip extraction). Frabbit.app.zip bundles ship alongside for
-          # Finder launches but are not self-update assets.
+          # downloads when FRABBIT runs as a plain executable — Windows, and
+          # a macOS binary started outside an app bundle.
+          #
+          # A macOS FRABBIT launched from Frabbit.app updates from the zipped
+          # bundle instead, listed separately under `bundles`: the bundle also
+          # carries the version in Info.plist, the .lproj layout VoiceOver
+          # reads and the ad-hoc signature sealing them, so swapping only the
+          # inner binary would leave all three describing the old version.
+          # `bundles` is a sibling of `platforms` rather than extra keys inside
+          # it because released clients reject any `platforms` key that isn't
+          # `<os>-<arch>` — an unknown key there would break their parsing of
+          # the whole manifest. Unknown *fields* are ignored, so they simply
+          # don't see this one.
           #
           # The legacy top-level `windows` / `macos` fields are populated
           # from the primary-arch entries (x86_64 on Windows, aarch64 on
@@ -273,7 +293,10 @@ jobs:
           # auto-updating. New clients prefer `platforms` and ignore the
           # legacy fields.
           PLATFORMS_JSON='{}'
-          add_platform() {
+          BUNDLES_JSON='{}'
+          asset_entry() {
+            # Echo `{"<key>": {url, sha256}}` for the artifact at $2, or
+            # nothing when the artifact wasn't produced this run.
             local key="$1" path="$2"
             if [ -z "$path" ]; then
               return 0
@@ -282,9 +305,22 @@ jobs:
             name="$(basename "$path")"
             sha="$(awk '{print $1}' "${path}.sha256")"
             url="${DOWNLOAD_PREFIX}/${name}"
-            PLATFORMS_JSON="$(printf '%s' "$PLATFORMS_JSON" | jq \
-              --arg key "$key" --arg url "$url" --arg sha "$sha" \
-              '. + {($key): {url: $url, sha256: $sha}}')"
+            jq -n --arg key "$key" --arg url "$url" --arg sha "$sha" \
+              '{($key): {url: $url, sha256: $sha}}'
+          }
+          add_platform() {
+            local entry
+            entry="$(asset_entry "$1" "$2")" || return 1
+            if [ -n "$entry" ]; then
+              PLATFORMS_JSON="$(printf '%s' "$PLATFORMS_JSON" | jq --argjson entry "$entry" '. + $entry')"
+            fi
+          }
+          add_bundle() {
+            local entry
+            entry="$(asset_entry "$1" "$2")" || return 1
+            if [ -n "$entry" ]; then
+              BUNDLES_JSON="$(printf '%s' "$BUNDLES_JSON" | jq --argjson entry "$entry" '. + $entry')"
+            fi
           }
           add_platform "windows-x86_64"  "$(find release -maxdepth 1 -type f -name 'frabbit-*-windows-x86_64.exe'  ! -name '*.sha256' | head -1)"
           # macOS now ships as a single universal Mach-O, but the platforms
@@ -299,6 +335,18 @@ jobs:
           if [ -n "$MACOS_UNIVERSAL_PATH" ]; then
             add_platform "macos-aarch64" "$MACOS_UNIVERSAL_PATH"
             add_platform "macos-x86_64"  "$MACOS_UNIVERSAL_PATH"
+          fi
+
+          # Same universal bundle for both arches, same reasoning as above.
+          MACOS_BUNDLE_PATH="$(find release -maxdepth 1 -type f -name 'frabbit-*-macos-universal.app.zip' ! -name '*.sha256' | head -1)"
+          if [ -n "$MACOS_BUNDLE_PATH" ]; then
+            add_bundle "macos-aarch64" "$MACOS_BUNDLE_PATH"
+            add_bundle "macos-x86_64"  "$MACOS_BUNDLE_PATH"
+          fi
+          # An empty map would advertise "no bundle for your architecture";
+          # omit the field entirely instead, exactly as before this existed.
+          if [ "$(printf '%s' "$BUNDLES_JSON" | jq 'length')" = "0" ]; then
+            BUNDLES_JSON="null"
           fi
 
           WINDOWS_LEGACY="$(printf '%s' "$PLATFORMS_JSON" | jq '."windows-x86_64" // empty')"
@@ -321,6 +369,7 @@ jobs:
             --argjson windows "$WINDOWS_LEGACY" \
             --argjson macos "$MACOS_LEGACY" \
             --argjson platforms "$PLATFORMS_JSON" \
+            --argjson bundles "$BUNDLES_JSON" \
             '{
               version: $version,
               channel: $channel,
@@ -330,7 +379,8 @@ jobs:
               assets: {
                 windows: $windows,
                 macos: $macos,
-                platforms: $platforms
+                platforms: $platforms,
+                bundles: $bundles
               }
             }' > release/frabbit-update-stable.json
 

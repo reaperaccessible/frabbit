@@ -39,7 +39,8 @@ use frabbit_core::resource::{
     ResourceInitActionKind, ResourceInitOptions, initialize_resource_path,
 };
 use frabbit_core::self_update::{
-    DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateCheckReport, check_self_update,
+    DEFAULT_SELF_UPDATE_MANIFEST_URL, SelfUpdateAssetKind, SelfUpdateCheckReport,
+    check_self_update_for,
 };
 use frabbit_core::setup::{SetupOptions, SetupReport, setup_requires_extension_support};
 use frabbit_core::version::Version;
@@ -1656,7 +1657,15 @@ pub fn execute_wizard_install_with_progress(
 
 pub fn run_wizard_self_update_check() -> Result<SelfUpdateCheckReport> {
     let platform = Platform::current().ok_or(FrabbitError::UnsupportedPlatform)?;
-    check_self_update(platform, DEFAULT_SELF_UPDATE_MANIFEST_URL)
+    // Ask for whichever asset this install can actually apply: the zipped
+    // `.app` when macOS launched us from `Frabbit.app`, the bare executable
+    // otherwise (Windows, and a macOS binary run outside a bundle).
+    let preferred_kind = if frabbit_platform::current_app_bundle().is_some() {
+        SelfUpdateAssetKind::AppBundle
+    } else {
+        SelfUpdateAssetKind::Executable
+    };
+    check_self_update_for(platform, DEFAULT_SELF_UPDATE_MANIFEST_URL, preferred_kind)
 }
 
 pub fn format_self_update_check_summary(
