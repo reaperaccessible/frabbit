@@ -2289,56 +2289,76 @@ fn start_version_check(ui: VersionCheckUi) {
             }
         }
         VersionCheckEvent::Finished => {
-            if errors.is_empty() {
-                match wizard_package_plan_for_target_with_available(
-                    &ui.model,
-                    Some(&ui.target),
-                    &accumulated,
-                ) {
-                    Ok(plan) => {
-                        *ui.package_rows.borrow_mut() = plan.package_rows;
-                        *ui.package_notes.borrow_mut() = plan.notes;
-                        // The deferred fetch may have promoted ReaPack to
-                        // Update (or vice versa); refresh configuration
-                        // row availability against the fresh plan.
-                        if let Ok(localizer) = localizer_from_options(&ui.model.bootstrap_options) {
-                            recompute_configuration_row_availability(
-                                &localizer,
-                                &ui.package_rows.borrow(),
-                                Some(&ui.target.path),
-                                &mut ui.configuration_rows.borrow_mut(),
-                            );
-                        }
-                        ui.can_install.set(plan.can_install);
-                        ui.review_can_install.set(false);
-                        rebuild_package_list_widgets(
-                            &ui.widgets,
-                            &ui.package_items,
-                            &ui.model,
+            // A version-check failure for one product — almost always its
+            // download server being temporarily down (e.g. gyan.dev returning
+            // 503 for FFmpeg) — must NEVER block installing everything else.
+            // Always build the plan from the versions we DID get and move on
+            // to the package list; each failure becomes a non-blocking note so
+            // the user knows that product just couldn't be checked right now.
+            match wizard_package_plan_for_target_with_available(
+                &ui.model,
+                Some(&ui.target),
+                &accumulated,
+            ) {
+                Ok(plan) => {
+                    *ui.package_rows.borrow_mut() = plan.package_rows;
+                    let mut notes = plan.notes;
+                    if !errors.is_empty() {
+                        with_ui_localizer(|localizer| {
+                            for (package_id, _message) in &errors {
+                                let display = localized_package_display_name(localizer, package_id);
+                                notes.push(
+                                    localizer
+                                        .format(
+                                            "wizard-version-check-note-unavailable",
+                                            &[("package", display.as_str())],
+                                        )
+                                        .value,
+                                );
+                            }
+                        });
+                    }
+                    *ui.package_notes.borrow_mut() = notes;
+                    // The deferred fetch may have promoted ReaPack to Update
+                    // (or vice versa); refresh configuration row availability
+                    // against the fresh plan.
+                    if let Ok(localizer) = localizer_from_options(&ui.model.bootstrap_options) {
+                        recompute_configuration_row_availability(
+                            &localizer,
                             &ui.package_rows.borrow(),
-                            &ui.configuration_rows.borrow(),
-                        );
-                        ui.current_step.store(PACKAGES_STEP, Ordering::SeqCst);
-                        update_navigation(
-                            PACKAGES_STEP,
-                            &ui.book,
-                            &ui.step_label,
-                            ui.labels.as_slice(),
-                            &ui.back,
-                            &ui.next,
-                            &ui.install,
-                            &ui.widgets.language_footer,
-                            effective_can_install(&ui.can_install, &ui.review_can_install),
-                            true,
+                            Some(&ui.target.path),
+                            &mut ui.configuration_rows.borrow_mut(),
                         );
                     }
-                    Err(error) => {
-                        errors.push((String::new(), error.to_string()));
-                        render_version_check_errors(&ui, &errors);
-                    }
+                    ui.can_install.set(plan.can_install);
+                    ui.review_can_install.set(false);
+                    rebuild_package_list_widgets(
+                        &ui.widgets,
+                        &ui.package_items,
+                        &ui.model,
+                        &ui.package_rows.borrow(),
+                        &ui.configuration_rows.borrow(),
+                    );
+                    ui.current_step.store(PACKAGES_STEP, Ordering::SeqCst);
+                    update_navigation(
+                        PACKAGES_STEP,
+                        &ui.book,
+                        &ui.step_label,
+                        ui.labels.as_slice(),
+                        &ui.back,
+                        &ui.next,
+                        &ui.install,
+                        &ui.widgets.language_footer,
+                        effective_can_install(&ui.can_install, &ui.review_can_install),
+                        true,
+                    );
                 }
-            } else {
-                render_version_check_errors(&ui, &errors);
+                Err(error) => {
+                    // A genuine failure to BUILD the plan (not a per-package
+                    // network hiccup) is worth stopping on.
+                    errors.push((String::new(), error.to_string()));
+                    render_version_check_errors(&ui, &errors);
+                }
             }
         }
     };

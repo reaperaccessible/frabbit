@@ -112,6 +112,7 @@ wizard-version-check-heading = Vérification des dernières versions
 wizard-version-check-status-pending = Préparation de la vérification des versions…
 # $package est le nom localisé du paquet.
 wizard-version-check-status-checking = Vérification de { $package }…
+wizard-version-check-note-unavailable = { $package } : la dernière version n'a pas pu être vérifiée (son serveur est momentanément injoignable). Les autres produits restent installables.
 # $error_count est le nombre de vérifications échouées.
 wizard-version-check-status-error = { $error_count } vérification(s) de version échouée(s). Utilisez Précédent pour essayer une autre cible, ou fermez FRABBIT.
 wizard-version-check-progress-label = Progression

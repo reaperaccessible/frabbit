@@ -111,6 +111,7 @@ wizard-version-check-heading = Checking latest versions
 wizard-version-check-status-pending = Preparing latest-version check…
 # $package is the localized package display name.
 wizard-version-check-status-checking = Checking { $package }…
+wizard-version-check-note-unavailable = { $package }: its latest version couldn't be checked (its server is temporarily unreachable). Every other product can still be installed.
 # $error_count is the number of failed checks.
 wizard-version-check-status-error = { $error_count } version check(s) failed. Use Back to try a different target, or close FRABBIT.
 wizard-version-check-progress-label = Progress

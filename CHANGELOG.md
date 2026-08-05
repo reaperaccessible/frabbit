@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.15] - 2026-08-05
+
+### Corrections
+
+- **Vraie correction du blocage quand le serveur d'un produit est en panne.** La 1.0.14 avait rendu résiliente une première voie de vérification des versions, mais l'interface graphique en utilise une autre (une vérification produit par produit) — et là, **une seule vérification en échec (par exemple FFmpeg quand gyan.dev renvoie 503) affichait une page d'erreur bloquante** : impossible d'atteindre la liste des produits ni d'installer quoi que ce soit. Désormais, l'interface **continue toujours** jusqu'à la liste des produits : un produit dont le serveur ne répond pas apparaît simplement avec une **note d'information non bloquante** (« sa dernière version n'a pas pu être vérifiée »), et tout le reste s'installe normalement. On peut aller au bout même si le site web d'un produit est en erreur.
+
 ## [1.0.14] - 2026-08-05
 
 ### Corrections
