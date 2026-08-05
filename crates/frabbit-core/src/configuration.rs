@@ -115,6 +115,10 @@ pub enum ConfigurationMessage {
     ReapackRemoteAdded { name: String, url: String },
     /// `AddReapackRemote` step created `reapack.ini` from scratch.
     ReapackRemoteCreatedFile { name: String, url: String },
+    /// `AddReapackRemote` step found the URL under a stale name and
+    /// corrected it to the canonical name (which ReaPack uses as the
+    /// scripts folder).
+    ReapackRemoteRenamed { name: String, url: String },
     /// Dry-run preview of an `AddReapackRemote` step.
     ReapackRemoteDryRun { name: String, url: String },
     /// Curated-defaults action wrote (or updated) `reapack.ini` to skip
@@ -239,6 +243,15 @@ pub fn apply_configuration_step(
                 RemoteUpsertOutcome::CreatedFile => (
                     format!("Created reapack.ini with ReaPack remote {name:?} ({url})."),
                     ConfigurationMessage::ReapackRemoteCreatedFile {
+                        name: name.clone(),
+                        url: url.clone(),
+                    },
+                ),
+                RemoteUpsertOutcome::Renamed => (
+                    format!(
+                        "Corrected the ReaPack remote name to {name:?} for ({url}) in reapack.ini."
+                    ),
+                    ConfigurationMessage::ReapackRemoteRenamed {
                         name: name.clone(),
                         url: url.clone(),
                     },

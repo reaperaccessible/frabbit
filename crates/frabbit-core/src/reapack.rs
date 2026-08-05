@@ -29,13 +29,19 @@ pub const REAPACK_CURATED_VERSION: u32 = 4;
 /// repos alongside the remote we just wrote).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RemoteUpsertOutcome {
-    /// A remote with this URL was already configured; nothing changed.
+    /// A remote with this URL was already configured under the same name;
+    /// nothing changed.
     AlreadyPresent,
     /// Appended a new remote into the existing `reapack.ini`.
     Added,
     /// `reapack.ini` did not exist; created it with our remote as the
     /// only entry.
     CreatedFile,
+    /// The URL was already configured but under a *different* name (an
+    /// older FRABBIT wrote e.g. "ReaperAccessible FR"). ReaPack uses the
+    /// remote name as the on-disk scripts folder, so the name was
+    /// corrected in place to match the repository's canonical name.
+    Renamed,
 }
 
 /// Add a remote repository to ReaPack's `reapack.ini` config file.
@@ -62,8 +68,22 @@ pub fn upsert_remote(resource_path: &Path, name: &str, url: &str) -> Result<Remo
         "\n"
     };
 
-    if !creating_new && url_is_already_present(&original, url) {
-        return Ok(RemoteUpsertOutcome::AlreadyPresent);
+    // If the URL is already configured, it's either under the correct name
+    // (nothing to do) or under a stale one. ReaPack derives the on-disk
+    // scripts folder from the remote name, so a stale name (an older FRABBIT
+    // wrote "ReaperAccessible FR" before the name was corrected) must be
+    // fixed in place — otherwise re-running FRABBIT with the right name is a
+    // silent no-op and the folder stays wrong.
+    if !creating_new {
+        if let Some(existing_name) = remote_name_for_url(&original, url) {
+            if existing_name == name {
+                return Ok(RemoteUpsertOutcome::AlreadyPresent);
+            }
+            let renamed = rewrite_remote_name(&original, url, name, newline);
+            fs::create_dir_all(resource_path).with_path(resource_path)?;
+            fs::write(&ini_path, renamed).with_path(&ini_path)?;
+            return Ok(RemoteUpsertOutcome::Renamed);
+        }
     }
 
     let new_text = if creating_new {
@@ -289,6 +309,73 @@ fn url_is_already_present(text: &str, url: &str) -> bool {
         }
     }
     false
+}
+
+/// The name field of the `[remotes]` entry whose URL field matches `url`,
+/// or `None` when no entry has that URL. Used to detect a stale name that
+/// needs correcting.
+fn remote_name_for_url(text: &str, url: &str) -> Option<String> {
+    let mut current_section: Option<String> = None;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix('[')
+            && let Some(name) = rest.strip_suffix(']')
+        {
+            current_section = Some(name.to_string());
+            continue;
+        }
+        if current_section.as_deref() != Some("remotes") {
+            continue;
+        }
+        let Some((key, value)) = trimmed.split_once('=') else {
+            continue;
+        };
+        if !key.trim().starts_with("remote") {
+            continue;
+        }
+        let mut parts = value.trim().splitn(4, '|');
+        let name = parts.next();
+        if parts.next() == Some(url) {
+            return name.map(|n| n.to_string());
+        }
+    }
+    None
+}
+
+/// Rewrite the `[remotes]` entry whose URL matches `url` so its name field
+/// becomes `new_name`, leaving every other field (URL, enabled, autoinstall)
+/// and every other line untouched.
+fn rewrite_remote_name(original: &str, url: &str, new_name: &str, newline: &str) -> String {
+    let mut out: Vec<String> = Vec::with_capacity(original.lines().count() + 1);
+    let mut in_remotes = false;
+    for line in original.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix('[')
+            && let Some(section) = rest.strip_suffix(']')
+        {
+            in_remotes = section == "remotes";
+            out.push(line.to_string());
+            continue;
+        }
+        if in_remotes
+            && let Some((key, value)) = trimmed.split_once('=')
+            && key.trim().starts_with("remote")
+        {
+            let fields: Vec<&str> = value.trim().splitn(4, '|').collect();
+            // fields = [name, url, enabled, autoinstall]
+            if fields.len() >= 2 && fields[1] == url {
+                let tail = fields[1..].join("|");
+                out.push(format!("{}={}|{}", key.trim(), new_name, tail));
+                continue;
+            }
+        }
+        out.push(line.to_string());
+    }
+    let mut joined = out.join(newline);
+    if !joined.ends_with(newline) {
+        joined.push_str(newline);
+    }
+    joined
 }
 
 /// Append a `remote<size>=...` entry into the existing `[remotes]`
@@ -557,6 +644,55 @@ mod tests {
         let ini = fs::read_to_string(dir.path().join(REAPACK_INI_RELATIVE_PATH)).unwrap();
         assert_eq!(ini.matches(TEST_REPO_URL).count(), 1);
         assert!(ini.contains("size=1"));
+    }
+
+    #[test]
+    fn upsert_corrects_a_stale_remote_name_for_the_same_url() {
+        // Older FRABBIT wrote the ReaperAccessible remote under the wrong
+        // name; ReaPack made a `Scripts/ReaperAccessible FR/` folder from it.
+        // Re-running with the canonical name must FIX the name in place, not
+        // no-op on "URL already present".
+        let dir = tempdir().unwrap();
+        let ini_path = dir.path().join(REAPACK_INI_RELATIVE_PATH);
+        fs::write(
+            &ini_path,
+            "[remotes]\nsize=1\nremote0=ReaperAccessible FR|https://github.com/reaperaccessible/rap_fr/raw/main/index.xml|1|2\n",
+        )
+        .unwrap();
+
+        let outcome = upsert_remote(
+            dir.path(),
+            "ReaperAccessible scripts",
+            "https://github.com/reaperaccessible/rap_fr/raw/main/index.xml",
+        )
+        .unwrap();
+        assert_eq!(outcome, RemoteUpsertOutcome::Renamed);
+
+        let ini = fs::read_to_string(&ini_path).unwrap();
+        // Name corrected, URL and the rest of the line preserved, no duplicate.
+        assert!(ini.contains(
+            "remote0=ReaperAccessible scripts|https://github.com/reaperaccessible/rap_fr/raw/main/index.xml|1|2"
+        ));
+        assert!(!ini.contains("ReaperAccessible FR"));
+        assert!(ini.contains("size=1"));
+        assert_eq!(
+            ini.matches("rap_fr/raw/main/index.xml").count(),
+            1,
+            "must not duplicate the remote"
+        );
+    }
+
+    #[test]
+    fn upsert_is_a_no_op_when_name_and_url_both_already_match() {
+        let dir = tempdir().unwrap();
+        let ini_path = dir.path().join(REAPACK_INI_RELATIVE_PATH);
+        fs::write(
+            &ini_path,
+            format!("[remotes]\nsize=1\nremote0={TEST_REPO_NAME}|{TEST_REPO_URL}|1|2\n"),
+        )
+        .unwrap();
+        let outcome = upsert_remote(dir.path(), TEST_REPO_NAME, TEST_REPO_URL).unwrap();
+        assert_eq!(outcome, RemoteUpsertOutcome::AlreadyPresent);
     }
 
     #[test]

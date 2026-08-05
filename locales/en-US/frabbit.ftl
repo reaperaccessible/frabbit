@@ -270,6 +270,7 @@ package-automation-extension-binary = direct file install
 config-message-reapack-remote-already-present = ReaPack remote { $name } ({ $url }) is already configured in reapack.ini.
 config-message-reapack-remote-added = Added ReaPack remote { $name } ({ $url }) to reapack.ini.
 config-message-reapack-remote-created-file = Created reapack.ini with ReaPack remote { $name } ({ $url }).
+config-message-reapack-remote-renamed = Corrected the ReaPack remote name for ({ $url }) to { $name } in reapack.ini (ReaPack uses it as the scripts folder name).
 config-message-reapack-remote-dry-run = Would add ReaPack remote { $name } ({ $url }) to reapack.ini.
 config-message-reapack-defaults-curated = Configured ReaPack to skip its default repositories and to not install anything automatically, so synchronizing won't pull in thousands of unwanted scripts. You stay in control: browse ReaPack and install only what you want.
 config-message-reapack-defaults-left-existing = ReaPack already had its own configuration, so FRABBIT left it completely untouched: none of your repositories were removed and no setting was changed.

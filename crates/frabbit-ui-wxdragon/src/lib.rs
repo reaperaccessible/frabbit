@@ -2612,6 +2612,10 @@ fn localized_configuration_message(
             "config-message-reapack-remote-created-file",
             &[("name", name.as_str()), ("url", url.as_str())],
         ),
+        Msg::ReapackRemoteRenamed { name, url } => localizer.format(
+            "config-message-reapack-remote-renamed",
+            &[("name", name.as_str()), ("url", url.as_str())],
+        ),
         Msg::ReapackRemoteDryRun { name, url } => localizer.format(
             "config-message-reapack-remote-dry-run",
             &[("name", name.as_str()), ("url", url.as_str())],

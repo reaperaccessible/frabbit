@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.12] - 2026-08-05
+
+### Corrections
+
+- **Le nom du dépôt ReaperAccessible est corrigé même s'il avait déjà été ajouté sous l'ancien nom.** La 1.0.11 écrivait le bon nom (« ReaperAccessible scripts ») uniquement pour une configuration ReaPack neuve. Mais si une version précédente de FRABBIT avait déjà ajouté le dépôt sous « ReaperAccessible FR », FRABBIT n'y touchait pas (il ne re-modifie pas un dépôt dont l'adresse est déjà présente) — le mauvais nom restait, et ReaPack rangeait donc toujours les scripts dans un dossier au mauvais nom. FRABBIT **corrige désormais le nom en place** : si l'adresse du dépôt est déjà là mais sous un nom erroné, il le renomme au nom correct. (Après la mise à jour, ouvrez ReaPack et synchronisez pour que les scripts soient réinstallés dans le bon dossier ; l'ancien dossier peut être supprimé.)
+
 ## [1.0.11] - 2026-08-05
 
 ### Corrections

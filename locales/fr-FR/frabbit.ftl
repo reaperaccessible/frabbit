@@ -271,6 +271,7 @@ package-automation-extension-binary = installation directe de fichier
 config-message-reapack-remote-already-present = Le dépôt distant ReaPack { $name } ({ $url }) est déjà configuré dans reapack.ini.
 config-message-reapack-remote-added = Le dépôt distant ReaPack { $name } ({ $url }) a été ajouté à reapack.ini.
 config-message-reapack-remote-created-file = reapack.ini a été créé avec le dépôt distant ReaPack { $name } ({ $url }).
+config-message-reapack-remote-renamed = Le nom du dépôt distant ReaPack ({ $url }) a été corrigé en { $name } dans reapack.ini (ReaPack l'utilise comme nom du dossier des scripts).
 config-message-reapack-remote-dry-run = Ajouterait le dépôt distant ReaPack { $name } ({ $url }) à reapack.ini.
 config-message-reapack-defaults-curated = ReaPack a été configuré pour ne pas ajouter ses dépôts par défaut ni rien installer automatiquement : lors de la synchronisation, des milliers de scripts non désirés ne seront pas installés. Vous gardez le contrôle : parcourez ReaPack et installez uniquement ce que vous voulez.
 config-message-reapack-defaults-left-existing = ReaPack avait déjà sa propre configuration : FRABBIT n'y a pas touché du tout. Aucun de vos dépôts n'a été supprimé et aucun réglage n'a été modifié.
