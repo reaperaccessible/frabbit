@@ -278,6 +278,22 @@ pub fn is_remote_configured(resource_path: &Path, url: &str) -> Result<bool> {
     Ok(url_is_already_present(&text, url))
 }
 
+/// `true` only when the `[remotes]` section already lists `url` **under the
+/// name `name`**. This is stricter than [`is_remote_configured`] on purpose:
+/// the wizard uses it to decide whether the "add ReaperAccessible remote"
+/// step is already done. A URL present under a *stale* name (an older FRABBIT
+/// wrote "ReaperAccessible FR") must read as NOT-done so the step still runs
+/// and [`upsert_remote`] can rename it — otherwise the step is silently
+/// skipped and the wrong name (hence the wrong scripts folder) sticks.
+pub fn is_remote_configured_with_name(resource_path: &Path, name: &str, url: &str) -> Result<bool> {
+    let ini_path = resource_path.join(REAPACK_INI_RELATIVE_PATH);
+    if !ini_path.is_file() {
+        return Ok(false);
+    }
+    let text = fs::read_to_string(&ini_path).with_path(&ini_path)?;
+    Ok(remote_name_for_url(&text, url).as_deref() == Some(name))
+}
+
 /// `true` when the `[remotes]` section already contains an entry whose
 /// URL field matches `url` (the second pipe-delimited field of any
 /// `remote<N>=...` line).

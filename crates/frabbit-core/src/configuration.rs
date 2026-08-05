@@ -19,7 +19,7 @@ use crate::Result;
 use crate::package::PACKAGE_REAPACK;
 use crate::reapack::{
     CuratedDefaultsOutcome, RemoteUpsertOutcome, apply_curated_reapack_defaults,
-    is_remote_configured, upsert_remote,
+    is_remote_configured_with_name, upsert_remote,
 };
 
 /// Stable id for the "configure REAPER Accessibility ReaPack remote"
@@ -196,8 +196,13 @@ pub fn is_configuration_step_applied(
     step: &ConfigurationStep,
 ) -> Result<bool> {
     match &step.kind {
-        ConfigurationStepKind::AddReapackRemote { url, .. } => {
-            is_remote_configured(resource_path, url)
+        ConfigurationStepKind::AddReapackRemote { name, url } => {
+            // Name-aware on purpose: a URL present under a STALE name (an
+            // older FRABBIT wrote "ReaperAccessible FR") must read as
+            // not-yet-applied, so the wizard keeps the step actionable and
+            // `upsert_remote` gets to rename it. A plain URL check would
+            // report "already done" and silently skip the correction.
+            is_remote_configured_with_name(resource_path, name, url)
         }
     }
 }
@@ -454,6 +459,39 @@ mod tests {
         assert!(!is_configuration_step_applied(dir.path(), step).unwrap());
         apply_configuration_step(dir.path(), step, false).unwrap();
         assert!(is_configuration_step_applied(dir.path(), step).unwrap());
+    }
+
+    #[test]
+    fn is_applied_reports_false_when_url_present_under_a_stale_name() {
+        // The exact reproduction: an older FRABBIT wrote the FR repo under
+        // "ReaperAccessible FR". The step must read as NOT applied so the
+        // wizard keeps it actionable and the rename can run — a URL-only
+        // check would wrongly report "done" and the wrong scripts folder
+        // would stick.
+        let dir = tempdir().unwrap();
+        let ini_path = dir.path().join(crate::reapack::REAPACK_INI_RELATIVE_PATH);
+        std::fs::write(
+            &ini_path,
+            "[remotes]\nsize=1\nremote0=ReaperAccessible FR|https://github.com/reaperaccessible/rap_fr/raw/main/index.xml|1|2\n",
+        )
+        .unwrap();
+
+        let steps = builtin_configuration_steps("fr-FR");
+        let step = steps
+            .iter()
+            .find(|s| s.id == CONFIG_REAPER_ACCESSIBILITY_REPACK_REMOTE)
+            .unwrap();
+
+        // Stale name → not applied → the step stays selectable.
+        assert!(!is_configuration_step_applied(dir.path(), step).unwrap());
+
+        // Running it corrects the name in place, and then it reads as applied.
+        let report = apply_configuration_step(dir.path(), step, false).unwrap();
+        assert_eq!(report.status, ConfigurationStatus::Applied);
+        assert!(is_configuration_step_applied(dir.path(), step).unwrap());
+        let ini = std::fs::read_to_string(&ini_path).unwrap();
+        assert!(ini.contains("remote0=ReaperAccessible scripts|"));
+        assert!(!ini.contains("ReaperAccessible FR"));
     }
 
     #[test]

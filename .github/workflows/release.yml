@@ -418,8 +418,12 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          # NOTE: `release/frabbit-*` already covers frabbit-update-stable.json
+          # (it starts with "frabbit-"). Do NOT list the manifest again — a
+          # duplicate entry makes the upload action try to update an asset it
+          # just created, which can 404 under GitHub's tag-propagation race and
+          # DROP the manifest, breaking self-update. One glob, no duplicates.
           files: |
             release/frabbit-*
             release/SHA256SUMS.txt
-            release/frabbit-update-stable.json
           body_path: ${{ steps.notes.outputs.notes_path }}
