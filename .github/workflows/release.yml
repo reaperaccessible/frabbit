@@ -197,12 +197,8 @@ jobs:
             --out "dist" \
             --zip-name "${ARTIFACT}.app.zip" \
             --adhoc-sign
-          # The zipped bundle is a self-update asset now, not just a download
-          # for the Finder, so it needs a checksum the updater can verify
-          # against the manifest.
-          shasum -a 256 "dist/${ARTIFACT}.app.zip" \
-            | awk -v name="${ARTIFACT}.app.zip" '{print tolower($1) "  " name}' \
-            > "dist/${ARTIFACT}.app.zip.sha256"
+          # build-bundle.sh already writes <zip>.sha256 next to the archive,
+          # which is what the manifest step reads for the bundle asset.
 
       - name: Upload Windows release artifact
         if: matrix.platform_id == 'windows'
