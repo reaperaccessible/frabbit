@@ -1,11 +1,15 @@
 # Changelog
 
-## [Non publié]
+## [1.0.10] - 2026-08-05
 
 ### Nouveautés
 
 - **Mise à jour automatique de FRABBIT sur macOS.** L'équivalent de ce qui existe sous Windows depuis la 1.0.8 : au démarrage, FRABBIT vérifie s'il existe une version plus récente et propose de l'installer dans une boîte de dialogue accessible. Sur Mac, FRABBIT télécharge et vérifie la nouvelle version, remplace **l'application entière** (`Frabbit.app`), puis se relance. Remplacer l'application complète plutôt que son seul programme interne est nécessaire : c'est l'application qui porte le numéro de version affiché par le Finder, les repères de langue que VoiceOver utilise pour choisir sa voix, et la signature qui scelle le tout. Si l'application se trouve dans un dossier en lecture seule, FRABBIT propose d'ouvrir la page de téléchargement ; en cas d'échec à n'importe quelle étape, l'application en place est restaurée telle quelle et FRABBIT continue de fonctionner dans sa version actuelle.
 - FRABBIT lancé en ligne de commande sur Mac (un binaire seul, hors application) continue de se mettre à jour comme avant, en remplaçant ce seul fichier.
+
+### Corrections
+
+- L'application macOS n'annonce plus l'allemand au système ; elle déclare le français et l'anglais, les deux langues réellement proposées.
 
 ## [1.0.9] - 2026-08-04
 
